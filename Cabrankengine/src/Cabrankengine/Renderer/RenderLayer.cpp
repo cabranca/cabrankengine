@@ -11,6 +11,7 @@
 namespace cbk::rendering {
 
 	using namespace ecs;
+	using namespace scene;
 
 	RenderLayer::RenderLayer() {
 		CBK_CORE_ASSERT(!s_Instance, "RenderLayer already exists!");
@@ -18,40 +19,40 @@ namespace cbk::rendering {
 	}
 
 	void RenderLayer::onAttach() {
-		if (m_Registry)
+		if (m_Scene)
 			loadRegistry();
 	}
 
 	void RenderLayer::onUpdate(Timestep dt) {
-		RenderCommand::setClearColor({ .2f, .2f, .2f, 1.f });
+		RenderCommand::setClearColor(m_Scene->getMetadata().BackgroundColor);
 		RenderCommand::clear();
 
-		m_CameraControllerSystem->update(*m_Registry, dt);
-		m_CameraSystem->update(*m_Registry, dt);
+		m_CameraControllerSystem->update(*m_Scene->getRegistry(), dt);
+		m_CameraSystem->update(*m_Scene->getRegistry(), dt);
 
 		Renderer2D::beginScene(m_CameraSystem->getViewProjectionMatrix());
-		m_SpriteRenderSystem->update(*m_Registry, dt);
+		m_SpriteRenderSystem->update(*m_Scene->getRegistry(), dt);
 		Renderer2D::endScene();
 
 		LightEnvironment lights;
 		for (auto e : m_DirLightSystem->getEntities()) {
-			auto dl = m_Registry->getComponent<ecs::CDirectionalLight>(e).value();
+			auto dl = m_Scene->getRegistry()->getComponent<ecs::CDirectionalLight>(e).value();
 			lights.DirLight = { dl->Direction, dl->Radiance };
 			break;
 		}
 		for (auto e : m_PointLightSystem->getEntities()) {
-			auto transform = m_Registry->getComponent<ecs::CTransform>(e).value();
-			auto pl = m_Registry->getComponent<ecs::CPointLight>(e).value();
+			auto transform = m_Scene->getRegistry()->getComponent<ecs::CTransform>(e).value();
+			auto pl = m_Scene->getRegistry()->getComponent<ecs::CPointLight>(e).value();
 			lights.PointLights.push_back({ transform->Position, pl->Radiance, pl->Constant, pl->Linear, pl->Quadratic });
 		}
 
 		Renderer::beginScene(m_CameraSystem->getViewProjectionMatrix(), m_CameraSystem->getCameraWorldPosition(), lights);
-		m_PhongRenderSystem->update(*m_Registry, dt);
-		m_PBRRenderSystem->update(*m_Registry, dt);
+		m_PhongRenderSystem->update(*m_Scene->getRegistry(), dt);
+		m_PBRRenderSystem->update(*m_Scene->getRegistry(), dt);
 		Renderer::endScene();
 
 		TextRenderer::beginScene(m_CameraSystem->getViewProjectionMatrix());
-		m_TextRenderSystem->update(*m_Registry, dt);
+		m_TextRenderSystem->update(*m_Scene->getRegistry(), dt);
 		TextRenderer::endScene();
 	}
 
@@ -60,68 +61,68 @@ namespace cbk::rendering {
 		dispatcher.dispatch<WindowResizeEvent>(BIND_EVENT_FN(&RenderLayer::onWindowResize, this));
 	}
 
-	void RenderLayer::setRegistry(const Ref<Registry>& reg) {
-		s_Instance->m_Registry = reg;
+	void RenderLayer::setScene(Scene* scene) {
+		s_Instance->m_Scene = scene;
 	}
 
 	void RenderLayer::loadRegistry() {
-		m_Registry->registerComponent<CTransform>();
-		m_Registry->registerComponent<CCamera>();
-		m_Registry->registerComponent<CCameraController>();
-		m_Registry->registerComponent<CDirectionalLight>();
-		m_Registry->registerComponent<CPointLight>();
-		m_Registry->registerComponent<CSprite>();
-		m_Registry->registerComponent<CPhongModel>();
-		m_Registry->registerComponent<CPBRModel>();
-		m_Registry->registerComponent<CText>();
+		m_Scene->getRegistry()->registerComponent<CTransform>();
+		m_Scene->getRegistry()->registerComponent<CCamera>();
+		m_Scene->getRegistry()->registerComponent<CCameraController>();
+		m_Scene->getRegistry()->registerComponent<CDirectionalLight>();
+		m_Scene->getRegistry()->registerComponent<CPointLight>();
+		m_Scene->getRegistry()->registerComponent<CSprite>();
+		m_Scene->getRegistry()->registerComponent<CPhongModel>();
+		m_Scene->getRegistry()->registerComponent<CPBRModel>();
+		m_Scene->getRegistry()->registerComponent<CText>();
 
-		m_CameraSystem = m_Registry->registerSystem<CameraSystem>();
-		m_CameraControllerSystem = m_Registry->registerSystem<CameraControllerSystem>();
-		m_DirLightSystem = m_Registry->registerSystem<DirectionalLightSystem>();
-		m_PointLightSystem = m_Registry->registerSystem<PointLightSystem>();
-		m_SpriteRenderSystem = m_Registry->registerSystem<SpriteRenderSystem>();
-		m_PhongRenderSystem = m_Registry->registerSystem<PhongRenderSystem>();
-		m_PBRRenderSystem = m_Registry->registerSystem<PBRRenderSystem>();
-		m_TextRenderSystem = m_Registry->registerSystem<TextRenderSystem>();
+		m_CameraSystem = m_Scene->getRegistry()->registerSystem<CameraSystem>();
+		m_CameraControllerSystem = m_Scene->getRegistry()->registerSystem<CameraControllerSystem>();
+		m_DirLightSystem = m_Scene->getRegistry()->registerSystem<DirectionalLightSystem>();
+		m_PointLightSystem = m_Scene->getRegistry()->registerSystem<PointLightSystem>();
+		m_SpriteRenderSystem = m_Scene->getRegistry()->registerSystem<SpriteRenderSystem>();
+		m_PhongRenderSystem = m_Scene->getRegistry()->registerSystem<PhongRenderSystem>();
+		m_PBRRenderSystem = m_Scene->getRegistry()->registerSystem<PBRRenderSystem>();
+		m_TextRenderSystem = m_Scene->getRegistry()->registerSystem<TextRenderSystem>();
 
 		Signature sig;
-		sig.set(m_Registry->getComponentType<CTransform>());
-		sig.set(m_Registry->getComponentType<CCamera>());
-		m_Registry->setSystemSignature<CameraSystem>(sig);
+		sig.set(m_Scene->getRegistry()->getComponentType<CTransform>());
+		sig.set(m_Scene->getRegistry()->getComponentType<CCamera>());
+		m_Scene->getRegistry()->setSystemSignature<CameraSystem>(sig);
 
 		sig.reset();
-		sig.set(m_Registry->getComponentType<CTransform>());
-		sig.set(m_Registry->getComponentType<CCameraController>());
-		m_Registry->setSystemSignature<CameraControllerSystem>(sig);
+		sig.set(m_Scene->getRegistry()->getComponentType<CTransform>());
+		sig.set(m_Scene->getRegistry()->getComponentType<CCameraController>());
+		m_Scene->getRegistry()->setSystemSignature<CameraControllerSystem>(sig);
 
 		sig.reset();
-		sig.set(m_Registry->getComponentType<CDirectionalLight>());
-		m_Registry->setSystemSignature<DirectionalLightSystem>(sig);
+		sig.set(m_Scene->getRegistry()->getComponentType<CDirectionalLight>());
+		m_Scene->getRegistry()->setSystemSignature<DirectionalLightSystem>(sig);
 
 		sig.reset();
-		sig.set(m_Registry->getComponentType<CTransform>());
-		sig.set(m_Registry->getComponentType<CPointLight>());
-		m_Registry->setSystemSignature<PointLightSystem>(sig);
+		sig.set(m_Scene->getRegistry()->getComponentType<CTransform>());
+		sig.set(m_Scene->getRegistry()->getComponentType<CPointLight>());
+		m_Scene->getRegistry()->setSystemSignature<PointLightSystem>(sig);
 
 		sig.reset();
-		sig.set(m_Registry->getComponentType<CTransform>());
-		sig.set(m_Registry->getComponentType<CSprite>());
-		m_Registry->setSystemSignature<SpriteRenderSystem>(sig);
+		sig.set(m_Scene->getRegistry()->getComponentType<CTransform>());
+		sig.set(m_Scene->getRegistry()->getComponentType<CSprite>());
+		m_Scene->getRegistry()->setSystemSignature<SpriteRenderSystem>(sig);
 
 		sig.reset();
-		sig.set(m_Registry->getComponentType<CTransform>());
-		sig.set(m_Registry->getComponentType<CPhongModel>());
-		m_Registry->setSystemSignature<PhongRenderSystem>(sig);
+		sig.set(m_Scene->getRegistry()->getComponentType<CTransform>());
+		sig.set(m_Scene->getRegistry()->getComponentType<CPhongModel>());
+		m_Scene->getRegistry()->setSystemSignature<PhongRenderSystem>(sig);
 
 		sig.reset();
-		sig.set(m_Registry->getComponentType<CTransform>());
-		sig.set(m_Registry->getComponentType<CPBRModel>());
-		m_Registry->setSystemSignature<PBRRenderSystem>(sig);
+		sig.set(m_Scene->getRegistry()->getComponentType<CTransform>());
+		sig.set(m_Scene->getRegistry()->getComponentType<CPBRModel>());
+		m_Scene->getRegistry()->setSystemSignature<PBRRenderSystem>(sig);
 
 		sig.reset();
-		sig.set(m_Registry->getComponentType<CTransform>());
-		sig.set(m_Registry->getComponentType<CText>());
-		m_Registry->setSystemSignature<TextRenderSystem>(sig);
+		sig.set(m_Scene->getRegistry()->getComponentType<CTransform>());
+		sig.set(m_Scene->getRegistry()->getComponentType<CText>());
+		m_Scene->getRegistry()->setSystemSignature<TextRenderSystem>(sig);
 	}
 
 	bool RenderLayer::onWindowResize(WindowResizeEvent& event) {

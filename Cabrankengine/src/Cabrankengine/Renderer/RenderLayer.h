@@ -2,7 +2,7 @@
 
 #include <Cabrankengine/Core/Layer.h>
 #include <Cabrankengine/ECS/BuiltInSystems.h>
-#include <Cabrankengine/ECS/Registry.hpp>
+#include <Cabrankengine/Scene/Scene.h>
 
 namespace cbk::rendering {
 
@@ -14,10 +14,12 @@ namespace cbk::rendering {
 		void onUpdate(Timestep dt) override;
 		void onEvent(Event& event) override;
 
-		static void setRegistry(const Ref<ecs::Registry>& reg);
+		static void setScene(scene::Scene* scene);
 
 	  private:
-		Ref<ecs::Registry> m_Registry = nullptr;
+		scene::Scene* m_Scene = nullptr; // Application owns the Scene
+
+		// The ownership is shared with the Registry
 		Ref<ecs::CameraSystem> m_CameraSystem = nullptr;
 		Ref<ecs::CameraControllerSystem> m_CameraControllerSystem = nullptr;
 		Ref<ecs::DirectionalLightSystem> m_DirLightSystem = nullptr;
