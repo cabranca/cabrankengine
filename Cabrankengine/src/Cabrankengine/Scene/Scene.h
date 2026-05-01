@@ -25,7 +25,7 @@ namespace cbk::scene {
 		[[nodiscard]] std::string_view getEntityName(ecs::Entity e) const;
 		void setEntityName(ecs::Entity e, const std::string& name);
 
-		[[nodiscard]] ecs::Registry& getRegistry();
+		[[nodiscard]] ecs::Registry* getRegistry();
 		[[nodiscard]] const SceneMetadata& getMetadata() const; // TODO: non-const getter or name setter
 
 	  private:

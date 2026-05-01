@@ -41,8 +41,8 @@ namespace cbk::scene {
 		it->second = name;
 	}
 
-	Registry& Scene::getRegistry() {
-		return m_Registry;
+	Registry* Scene::getRegistry() {
+		return &m_Registry;
 	}
 
 	const SceneMetadata& Scene::getMetadata() const {
