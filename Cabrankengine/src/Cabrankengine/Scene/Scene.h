@@ -13,8 +13,8 @@ namespace cbk::scene {
 
 	class Scene {
 	  public:
-        Scene() = default;
-        Scene(SceneMetadata metadata);  
+		Scene() = default;
+		Scene(SceneMetadata metadata);
 
 		[[nodiscard]] ecs::Entity createEntity();
 		void destroyEntity(ecs::Entity e);
@@ -31,6 +31,6 @@ namespace cbk::scene {
 	  private:
 		ecs::Registry m_Registry;
 		SceneMetadata m_Metadata;
-        std::unordered_map<ecs::Entity, std::string> m_EntityToName;
+		std::unordered_map<ecs::Entity, std::string> m_EntityToName;
 	};
 } // namespace cbk::scene

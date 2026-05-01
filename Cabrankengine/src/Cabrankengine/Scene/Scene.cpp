@@ -3,49 +3,49 @@
 
 namespace cbk::scene {
 
-    using namespace ecs;
-    using namespace math;
+	using namespace ecs;
+	using namespace math;
 
-    Scene::Scene(SceneMetadata metadata) : m_Metadata(std::move(metadata)) {}
+	Scene::Scene(SceneMetadata metadata) : m_Metadata(std::move(metadata)) {}
 
-    Entity Scene::createEntity() {
-        return m_Registry.createEntity();
-    }
+	Entity Scene::createEntity() {
+		return m_Registry.createEntity();
+	}
 
-    void Scene::destroyEntity(Entity e) {
-        m_Registry.destroyEntity(e);
-    }
+	void Scene::destroyEntity(Entity e) {
+		m_Registry.destroyEntity(e);
+	}
 
-    Entity Scene::findEntityByName(std::string_view name) const {
-        for (auto& [entity, n] : m_EntityToName)
-            if (n == name) 
-                return entity;
-        
-        CBK_CORE_WARN("findEntityByName: there is no entity with the given name ({})", name);
-        return INVALID_ENTITY;
-    }
+	Entity Scene::findEntityByName(std::string_view name) const {
+		for (auto& [entity, n]: m_EntityToName)
+			if (n == name)
+				return entity;
 
-    std::span<Entity> Scene::getAllEntities() const {
-        return {};
-    }
+		CBK_CORE_WARN("findEntityByName: there is no entity with the given name ({})", name);
+		return INVALID_ENTITY;
+	}
 
-    std::string_view Scene::getEntityName(Entity e) const {
-        auto it = m_EntityToName.find(e);
-        CBK_CORE_ASSERT(it != m_EntityToName.end(), "getEntityName: entity does not exist!");
-        return it->second;
-    }
+	std::span<Entity> Scene::getAllEntities() const {
+		return {};
+	}
 
-    void Scene::setEntityName(Entity e, const std::string& name) {
-        auto it = m_EntityToName.find(e);
-        CBK_CORE_ASSERT(it != m_EntityToName.end(), "setEntityName: entity does not exist!");
-        it->second = name;
-    }
+	std::string_view Scene::getEntityName(Entity e) const {
+		auto it = m_EntityToName.find(e);
+		CBK_CORE_ASSERT(it != m_EntityToName.end(), "getEntityName: entity does not exist!");
+		return it->second;
+	}
 
-    Registry& Scene::getRegistry() {
-        return m_Registry;
-    }
+	void Scene::setEntityName(Entity e, const std::string& name) {
+		auto it = m_EntityToName.find(e);
+		CBK_CORE_ASSERT(it != m_EntityToName.end(), "setEntityName: entity does not exist!");
+		it->second = name;
+	}
 
-    const SceneMetadata& Scene::getMetadata() const {
-        return m_Metadata;
-    }
-}
+	Registry& Scene::getRegistry() {
+		return m_Registry;
+	}
+
+	const SceneMetadata& Scene::getMetadata() const {
+		return m_Metadata;
+	}
+} // namespace cbk::scene
