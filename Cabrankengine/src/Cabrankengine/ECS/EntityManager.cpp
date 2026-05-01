@@ -11,7 +11,10 @@ namespace cbk::ecs {
 	}
 
 	Entity EntityManager::createEntity() {
-		CBK_CORE_ASSERT(m_LivingEntityCount < MAX_ENTITIES, "Maximum amount of entities reached!");
+		if (m_LivingEntityCount >= MAX_ENTITIES) {
+			CBK_CORE_WARN("Maximum entity count ({0}) reached. Entity not created.", MAX_ENTITIES);
+			return INVALID_ENTITY;
+		}
 		Entity id = m_AvailableEntities.front();
 		m_AvailableEntities.pop();
 		m_LivingEntityCount++;

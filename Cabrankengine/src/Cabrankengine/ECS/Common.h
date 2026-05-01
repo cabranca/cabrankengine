@@ -6,8 +6,9 @@ namespace cbk::ecs {
 
 	using Entity = uint32_t;
 
-	constexpr Entity MAX_ENTITIES = 5000;
-	constexpr size_t MAX_COMPONENTS = 32;
+	constexpr Entity MAX_ENTITIES = 10000;
+	constexpr Entity INVALID_ENTITY = std::numeric_limits<Entity>::max();
+	constexpr size_t MAX_COMPONENTS = 64;
 
 	using Signature = std::bitset<MAX_COMPONENTS>;
 }
