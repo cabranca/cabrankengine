@@ -5,7 +5,6 @@
 // --- Entry Point ---
 #include "Cabrankengine/Core/EntryPoint.h"
 
-
 #include "Sandbox2D.h"
 
 using namespace cbk;
@@ -62,12 +61,12 @@ class ExampleLayer : public Layer {
 #ifdef CBK_RENDERER_OPENGL
 class ExampleLayer : public Layer {
   public:
-	ExampleLayer(const Ref<Registry>& reg) : Layer("Example"), m_Registry(reg) {
+	ExampleLayer() : Layer("Example") {
 		CameraControllerArch cameraController(ProjectionType::Perspective);
 
 		PBRModelArch gun{};
-		gun.transform().Position = {2.f, -2.f, 2.f};
-		gun.transform().Rotation = {-90.f, 0.f, 0.f};
+		gun.transform().Position = { 2.f, -2.f, 2.f };
+		gun.transform().Rotation = { -90.f, 0.f, 0.f };
 		gun.transform().Scale = Vector3(0.1f);
 		gun.model().Model = Model<PBRMaterial>::create("assets/models/gun/Cerberus_LP.cbkm");
 
@@ -75,9 +74,9 @@ class ExampleLayer : public Layer {
 		backpack.model().Model = Model<PhongMaterial>::create("assets/models/backpack/backpack.cbkm");
 
 		TextArch text{};
-		text.transform().Position = {5.f, 0.f, 0.f};
+		text.transform().Position = { 5.f, 0.f, 0.f };
 		text.text().Text = "ALLA LA ESTAN RENDERIZANDO";
-		text.text().Color = {1.f, 1.f, 1.0f, 1.f};
+		text.text().Color = { 1.f, 1.f, 1.0f, 1.f };
 
 		DirectionalLightArch dirLight{};
 		dirLight.light().Direction = { 0.0f, -1.0f, 0.0f };
@@ -94,17 +93,14 @@ class ExampleLayer : public Layer {
 	void onImGuiRender() override {
 		CBK_PROFILE_FUNCTION();
 	}
-
-  private:
-	Ref<Registry> m_Registry;
 };
 #endif
 
 class Sandbox : public Application {
   public:
 	Sandbox() {
-		pushLayer(new ExampleLayer(m_Registry));
-		//pushLayer(new Sandbox2D(m_Registry));
+		pushLayer(new ExampleLayer());
+		// pushLayer(new Sandbox2D());
 	}
 	~Sandbox() {}
 };

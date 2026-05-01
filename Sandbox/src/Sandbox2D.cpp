@@ -1,6 +1,5 @@
 #include "Sandbox2D.h"
 
-#include <Cabrankengine/ECS/Components.h>
 #include <imgui.h>
 
 using namespace cbk;
@@ -10,7 +9,7 @@ using namespace cbk::rendering;
 using namespace cbk::scene;
 using namespace cbk::scene::arch;
 
-Sandbox2D::Sandbox2D(const Ref<Registry>& reg) : Layer("Sandbox2D"), m_Registry(reg) {}
+Sandbox2D::Sandbox2D() : Layer("Sandbox2D") {}
 
 void Sandbox2D::onAttach() {
 	CBK_PROFILE_FUNCTION();
@@ -31,9 +30,7 @@ void Sandbox2D::onDetach() {
 void Sandbox2D::onUpdate(cbk::Timestep delta) {
 	CBK_PROFILE_FUNCTION();
 
-	{
-		CBK_PROFILE_SCOPE("Renderer Draw");
-	}
+	{ CBK_PROFILE_SCOPE("Renderer Draw"); }
 }
 
 void Sandbox2D::onImGuiRender() {
