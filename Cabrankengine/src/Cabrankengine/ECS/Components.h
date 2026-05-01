@@ -42,17 +42,20 @@ namespace cbk::ecs {
 	};
 
 	struct CSprite {
+		std::string Path;
 		Ref<rendering::Texture2D> Texture;
 		math::Vector4 Tint{ 1.f };
 		float TilingFactor{ 1.f };
 	};
 
 	struct CPhongModel {
-		Ref<scene::Model<rendering::PhongMaterial>> Model;
+		std::string Path;
+		Ref<scene::Model<rendering::PhongMaterial>> Ref;
 	};
 
 	struct CPBRModel {
-		Ref<scene::Model<rendering::PBRMaterial>> Model;
+		std::string Path;
+		Ref<scene::Model<rendering::PBRMaterial>> Ref;
 	};
 
 	struct CText {
