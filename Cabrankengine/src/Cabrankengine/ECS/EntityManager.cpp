@@ -33,6 +33,7 @@ namespace cbk::ecs {
 		m_Signatures[e] = signature;
 	}
 
+	// I don't like that one could get the signature of a non existing entity (it would be 0, but still)
 	Signature EntityManager::getSignature(Entity e) {
 		CBK_CORE_ASSERT(e < MAX_ENTITIES, "Entity out of bound Identifiers!");
 		return m_Signatures[e];
