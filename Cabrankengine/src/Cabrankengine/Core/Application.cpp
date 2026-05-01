@@ -38,10 +38,9 @@ namespace cbk {
 
 		Renderer::init();
 		DefaultLibrary::init();
-		m_Registry = createRef<Registry>();
 
 		m_RenderLayer = new RenderLayer();
-		RenderLayer::setRegistry(m_Registry);
+		RenderLayer::setScene(&m_Scene);
 		pushLayer(m_RenderLayer);
 
 		m_ImGuiLayer = new ImGuiLayer();

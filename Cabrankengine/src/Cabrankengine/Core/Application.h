@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Cabrankengine/ECS/Registry.hpp>
+#include <Cabrankengine/Scene/Scene.h>
 #include <Cabrankengine/Renderer/RenderLayer.h>
 
 #include "LayerStack.h"
@@ -41,14 +41,14 @@ namespace cbk {
 			// Returns a reference to the Window
 			Window& getWindow() { return *m_Window; }
 
+			// Returns a const-ref to the game scene
+			const scene::Scene& getScene() const { return m_Scene; }
+
 			// Returns a Ref to the ECS Registry
-			Ref<ecs::Registry> getRegistry() { return m_Registry; }
+			ecs::Registry* getRegistry() { return m_Scene.getRegistry(); }
 	
 			// Returns a reference to the app (Singleton-ish pattern)
 			static Application& get() { return *s_Instance; }
-
-		protected:
-			Ref<ecs::Registry> m_Registry;
 
 		private:
 			// Callback for the WindowClose Event
@@ -64,7 +64,8 @@ namespace cbk {
 			LayerStack m_LayerStack; // Stack of layers to forward the events to
 			float m_LastFrameTime; // Time of the last frame
 			bool m_Minimized = false; // Whether the window is minimized or not
-	
+			scene::Scene m_Scene; // Scene with the game world and registry
+			
 			inline static Application* s_Instance = nullptr; // Static instance of the app (Singleton-ish pattern)
 	};
 
