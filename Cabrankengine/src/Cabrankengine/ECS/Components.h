@@ -16,7 +16,7 @@ namespace cbk::ecs {
 		math::Vector3 Scale{ 1.f };
 	};
 
-	enum class ProjectionType { Perspective, Orthographic };
+	enum class ProjectionType : uint8_t { Perspective, Orthographic };
 
 	// Can this be done with two components? Variants?
 	struct CCamera {

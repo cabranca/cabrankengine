@@ -51,8 +51,13 @@ namespace cbk::ecs {
 			std::optional<T*> get(Entity e) {
 				if (!m_EntityToIndex.contains(e))
 					return std::nullopt;
-
 				return &m_Components[m_EntityToIndex[e]];
+			}
+
+			std::optional<const T*> get(Entity e) const {
+				if (!m_EntityToIndex.contains(e))
+					return std::nullopt;
+				return &m_Components[m_EntityToIndex.at(e)];
 			}
 
 			// This must be called after a call to EntityManager::destroyEntity()
@@ -73,11 +78,15 @@ namespace cbk::ecs {
 	/// </summary>
 	class ComponentManager {
 		public:
-			// Registers a component type T and assigns it a unique ID
+			// Registers a component type T and assigns it a unique ID (idempotent)
 			template<typename T>
 			void registerComponent() {
 				const char* typeName = typeid(T).name();
-				CBK_CORE_ASSERT(!m_ComponentTypes.contains(typeName), "Component added twice!");
+				if (m_ComponentTypes.contains(typeName)) {
+					CBK_CORE_ERROR("Component {} added twice!", typeName);
+					return;
+				}
+					
 				m_ComponentTypes[typeName] = m_NextComponentType++;
 				m_ComponentArrays[typeName] = std::make_shared<ComponentArray<T>>();
 			}
@@ -108,6 +117,11 @@ namespace cbk::ecs {
 				return getComponentArray<T>()->get(e);
 			}
 
+			template<typename T>
+			std::optional<const T*> getComponent(Entity e) const {
+				return getComponentArray<T>()->get(e);
+			}
+
 			// This must be called after a call to EntityManager::destroyEntity()
 			void entityDestroyed(Entity e) {
 				for (auto const& pair : m_ComponentArrays)
@@ -125,6 +139,13 @@ namespace cbk::ecs {
 				const char* typeName = typeid(T).name();
 				CBK_CORE_ASSERT(m_ComponentTypes.contains(typeName), "Component not registered!");
 				return std::static_pointer_cast<ComponentArray<T>>(m_ComponentArrays[typeName]);
+			}
+
+			template<typename T>
+			std::shared_ptr<const ComponentArray<T>> getComponentArray() const {
+				const char* typeName = typeid(T).name();
+				CBK_CORE_ASSERT(m_ComponentTypes.contains(typeName), "Component not registered!");
+				return std::static_pointer_cast<ComponentArray<T>>(m_ComponentArrays.at(typeName));
 			}
 	};
 }

@@ -77,6 +77,12 @@ namespace cbk::ecs {
                 return m_ComponentManager->getComponent<T>(e);
             }
 
+			template<typename T>
+			std::optional<const T*> getComponent(Entity e) const {
+				const ComponentManager* cm = m_ComponentManager.get();
+				return cm->getComponent<T>(e);
+			}
+
 			// Returns the unique ID assigned to the component type T
 			template<typename T>
 			uint8_t getComponentType() {
