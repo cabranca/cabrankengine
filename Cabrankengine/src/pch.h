@@ -9,6 +9,7 @@
 #include <memory>
 #include <queue>
 #include <sstream>
+#include <span>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
