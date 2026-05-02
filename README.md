@@ -27,7 +27,6 @@ Here are some examples of prototypes and experiments made with Cabrankengine:
 - 2D and 3D rendering with OpenGL.
 - Cross-platform input system.
 - 2D/3D camera with movement controls.
-- Basic audio support using irrKlang.
 - ImGui integration for real-time debugging and parameter editing.
 - Initial 2D/3D collision support.
 - Unit testing with Catch2.
@@ -41,7 +40,6 @@ Here are some examples of prototypes and experiments made with Cabrankengine:
 - [ImGui](https://github.com/ocornut/imgui) – immediate mode GUI  
 - [stb_image](https://github.com/nothings/stb) – image loading  
 - [spdlog](https://github.com/gabime/spdlog) – logging  
-- [irrKlang](http://www.ambiera.com/irrklang/) – audio playback  
 - [nlohmann/json](https://github.com/nlohmann/json) – JSON serialization  
 - [Catch2](https://github.com/catchorg/Catch2) – unit testing  
 

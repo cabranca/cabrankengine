@@ -19,10 +19,10 @@ project "Cabrankengine"
     {
         "src",
         "%{IncludeDir.spdlog}", "%{IncludeDir.Common}", "%{IncludeDir.GLFW}", "%{IncludeDir.glad}", "%{IncludeDir.ImGui}",
-        "%{IncludeDir.irrKlang}", "%{IncludeDir.json}", "%{IncludeDir.FreeType}", "%{IncludeDir.lz4}"
+        "%{IncludeDir.json}", "%{IncludeDir.FreeType}", "%{IncludeDir.lz4}"
     }
 
-    links { "Common", "GLFW", "ImGui", "IrrKlang", "FreeType" }
+    links { "Common", "GLFW", "ImGui", "FreeType" }
 
     filter "system:windows"
         systemversion "latest"
@@ -42,7 +42,6 @@ project "Cabrankengine"
             "src/Platform/OpenGL/**.cpp",
         }
 
-        libdirs { "vendor/irrKlang/lib" }
         links {"opengl32.lib", "glad" }
         defines {"GLFW_INCLUDE_NONE"}
 
@@ -62,7 +61,6 @@ project "Cabrankengine"
         }
 
         includedirs { "src" }
-        libdirs {  "%{wks.location}/Cabrankengine/vendor/irrKlang/so" }
         links { "X11", "Xrandr", "Xi", "Xxf86vm", "Xcursor", "pthread", "dl", "GL", "glad" }
 
     filter "system:macosx"
