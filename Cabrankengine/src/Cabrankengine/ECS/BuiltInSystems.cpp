@@ -138,7 +138,7 @@ namespace cbk::ecs {
 		for (auto& e: m_Entities) {
 			auto transform = reg.getComponent<CTransform>(e).value();
 			auto model = reg.getComponent<CPhongModel>(e).value();
-			model->Model->draw(fromTransform(transform->Position, transform->Rotation, transform->Scale));
+			model->Res->draw(fromTransform(transform->Position, transform->Rotation, transform->Scale));
 		}
 	}
 
@@ -146,7 +146,7 @@ namespace cbk::ecs {
 		for (auto& e: m_Entities) {
 			auto transform = reg.getComponent<CTransform>(e).value();
 			auto model = reg.getComponent<CPBRModel>(e).value();
-			model->Model->draw(fromTransform(transform->Position, transform->Rotation, transform->Scale));
+			model->Res->draw(fromTransform(transform->Position, transform->Rotation, transform->Scale));
 		}
 	}
 

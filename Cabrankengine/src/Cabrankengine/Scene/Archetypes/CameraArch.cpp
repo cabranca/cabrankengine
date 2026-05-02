@@ -9,10 +9,10 @@ namespace cbk::scene::arch {
 	using namespace ecs;
 
 	CameraArch::CameraArch(ProjectionType type) {
-		auto reg = Application::get().getRegistry();
-		m_Entity = reg->createEntity();
-		reg->addComponent(m_Entity, CTransform());
-		reg->addComponent(m_Entity, CCamera{ .Type = type });
+		auto& scene = Application::get().getScene();
+		m_Entity = scene.createEntity();
+		scene.getRegistry()->addComponent(m_Entity, CTransform());
+		scene.getRegistry()->addComponent(m_Entity, CCamera{ .Type = type });
 	}
 
 	CTransform& CameraArch::transform() {

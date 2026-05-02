@@ -13,7 +13,7 @@ namespace cbk::scene {
 
 	class Scene {
 	  public:
-		Scene() = default;
+		Scene();
 		Scene(SceneMetadata metadata);
 
 		[[nodiscard]] ecs::Entity createEntity();

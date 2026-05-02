@@ -40,4 +40,5 @@
 // --- Scene ---
 #include <Cabrankengine/Scene/DefaultLibrary.h>
 #include <Cabrankengine/Scene/Model.h>
+#include <Cabrankengine/Scene/SceneSerializer.h>
 #include <Cabrankengine/Scene/Archetypes/Archetypes.h>

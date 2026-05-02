@@ -9,10 +9,10 @@ namespace cbk::scene::arch {
 	using namespace ecs;
 
 	PBRModelArch::PBRModelArch() {
-		auto reg = Application::get().getRegistry();
-		m_Entity = reg->createEntity();
-		reg->addComponent(m_Entity, CTransform());
-		reg->addComponent(m_Entity, CPBRModel());
+		auto& scene = Application::get().getScene();
+		m_Entity = scene.createEntity();
+		scene.getRegistry()->addComponent(m_Entity, CTransform());
+		scene.getRegistry()->addComponent(m_Entity, CPBRModel());
 	}
 
 	CTransform& PBRModelArch::transform() {

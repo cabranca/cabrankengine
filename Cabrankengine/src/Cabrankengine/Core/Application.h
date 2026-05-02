@@ -41,7 +41,8 @@ namespace cbk {
 			// Returns a reference to the Window
 			Window& getWindow() { return *m_Window; }
 
-			// Returns a const-ref to the game scene
+			// Returns a ref to the game scene
+			scene::Scene& getScene() { return m_Scene; }
 			const scene::Scene& getScene() const { return m_Scene; }
 
 			// Returns a Ref to the ECS Registry

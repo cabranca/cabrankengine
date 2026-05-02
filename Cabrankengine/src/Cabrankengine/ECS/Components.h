@@ -50,12 +50,12 @@ namespace cbk::ecs {
 
 	struct CPhongModel {
 		std::string Path;
-		Ref<scene::Model<rendering::PhongMaterial>> Ref;
+		Ref<scene::Model<rendering::PhongMaterial>> Res;
 	};
 
 	struct CPBRModel {
 		std::string Path;
-		Ref<scene::Model<rendering::PBRMaterial>> Ref;
+		Ref<scene::Model<rendering::PBRMaterial>> Res;
 	};
 
 	struct CText {
