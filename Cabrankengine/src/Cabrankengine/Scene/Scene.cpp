@@ -1,19 +1,39 @@
 #include <pch.h>
 #include "Scene.h"
+#include <Cabrankengine/ECS/Components.h>
 
 namespace cbk::scene {
 
 	using namespace ecs;
 	using namespace math;
 
-	Scene::Scene(SceneMetadata metadata) : m_Metadata(std::move(metadata)) {}
+	static void registerBuiltInComponents(Registry& reg) {
+		reg.registerComponent<CTransform>();
+		reg.registerComponent<CCamera>();
+		reg.registerComponent<CCameraController>();
+		reg.registerComponent<CDirectionalLight>();
+		reg.registerComponent<CPointLight>();
+		reg.registerComponent<CSprite>();
+		reg.registerComponent<CPhongModel>();
+		reg.registerComponent<CPBRModel>();
+		reg.registerComponent<CText>();
+	}
+
+	Scene::Scene() { registerBuiltInComponents(m_Registry); }
+
+	Scene::Scene(SceneMetadata metadata) : m_Metadata(std::move(metadata)) { registerBuiltInComponents(m_Registry); }
 
 	Entity Scene::createEntity() {
-		return m_Registry.createEntity();
+		auto entity = m_Registry.createEntity();
+		m_Entities.push_back(entity);
+		m_EntityToName[entity] = "Entity";
+		return entity;
 	}
 
 	void Scene::destroyEntity(Entity e) {
 		m_Registry.destroyEntity(e);
+		std::erase(m_Entities, e);
+		m_EntityToName.erase(e);
 	}
 
 	Entity Scene::findEntityByName(std::string_view name) const {
@@ -25,8 +45,8 @@ namespace cbk::scene {
 		return INVALID_ENTITY;
 	}
 
-	std::span<Entity> Scene::getAllEntities() const {
-		return {};
+	std::span<const Entity> Scene::getAllEntities() const {
+		return m_Entities;
 	}
 
 	std::string_view Scene::getEntityName(Entity e) const {
@@ -42,6 +62,10 @@ namespace cbk::scene {
 	}
 
 	Registry* Scene::getRegistry() {
+		return &m_Registry;
+	}
+
+	const Registry* Scene::getRegistry() const {
 		return &m_Registry;
 	}
 

@@ -20,17 +20,19 @@ namespace cbk::scene {
 		void destroyEntity(ecs::Entity e);
 
 		[[nodiscard]] ecs::Entity findEntityByName(std::string_view name) const;
-		[[nodiscard]] std::span<ecs::Entity> getAllEntities() const;
+		[[nodiscard]] std::span<const ecs::Entity> getAllEntities() const;
 
 		[[nodiscard]] std::string_view getEntityName(ecs::Entity e) const;
 		void setEntityName(ecs::Entity e, const std::string& name);
 
 		[[nodiscard]] ecs::Registry* getRegistry();
+		[[nodiscard]] const ecs::Registry* getRegistry() const;
 		[[nodiscard]] const SceneMetadata& getMetadata() const; // TODO: non-const getter or name setter
 
 	  private:
 		ecs::Registry m_Registry;
 		SceneMetadata m_Metadata;
+		std::vector<ecs::Entity> m_Entities;
 		std::unordered_map<ecs::Entity, std::string> m_EntityToName;
 	};
 } // namespace cbk::scene

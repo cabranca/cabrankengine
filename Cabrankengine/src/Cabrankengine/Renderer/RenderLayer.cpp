@@ -66,15 +66,6 @@ namespace cbk::rendering {
 	}
 
 	void RenderLayer::loadRegistry() {
-		m_Scene->getRegistry()->registerComponent<CTransform>();
-		m_Scene->getRegistry()->registerComponent<CCamera>();
-		m_Scene->getRegistry()->registerComponent<CCameraController>();
-		m_Scene->getRegistry()->registerComponent<CDirectionalLight>();
-		m_Scene->getRegistry()->registerComponent<CPointLight>();
-		m_Scene->getRegistry()->registerComponent<CSprite>();
-		m_Scene->getRegistry()->registerComponent<CPhongModel>();
-		m_Scene->getRegistry()->registerComponent<CPBRModel>();
-		m_Scene->getRegistry()->registerComponent<CText>();
 
 		m_CameraSystem = m_Scene->getRegistry()->registerSystem<CameraSystem>();
 		m_CameraControllerSystem = m_Scene->getRegistry()->registerSystem<CameraControllerSystem>();
