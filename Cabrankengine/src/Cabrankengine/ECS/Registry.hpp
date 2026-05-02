@@ -99,6 +99,11 @@ namespace cbk::ecs {
 				return m_SystemManager->RegisterSystem<T>();
 			}
 
+            template<typename T>
+            std::shared_ptr<T> getSystem() {
+                return m_SystemManager->getSystem<T>();
+            }
+
 			// Sets the required component signature for a given system type T
 			template<typename T>
 			void setSystemSignature(Signature signature) {

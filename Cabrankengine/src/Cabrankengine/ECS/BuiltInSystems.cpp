@@ -160,4 +160,54 @@ namespace cbk::ecs {
 			TextRenderer::drawText(text->Text, transform->Position, text->FontScale, text->Color);
 		}
 	}
+
+	void initDefaultSystems(Registry &reg) {
+		reg.registerSystem<CameraSystem>();
+		reg.registerSystem<CameraControllerSystem>();
+		reg.registerSystem<DirectionalLightSystem>();
+		reg.registerSystem<PointLightSystem>();
+		reg.registerSystem<SpriteRenderSystem>();
+		reg.registerSystem<PhongRenderSystem>();
+		reg.registerSystem<PBRRenderSystem>();
+		reg.registerSystem<TextRenderSystem>();
+
+		Signature sig;
+		sig.set(reg.getComponentType<CTransform>());
+		sig.set(reg.getComponentType<CCamera>());
+		reg.setSystemSignature<CameraSystem>(sig);
+
+		sig.reset();
+		sig.set(reg.getComponentType<CTransform>());
+		sig.set(reg.getComponentType<CCameraController>());
+		reg.setSystemSignature<CameraControllerSystem>(sig);
+
+		sig.reset();
+		sig.set(reg.getComponentType<CDirectionalLight>());
+		reg.setSystemSignature<DirectionalLightSystem>(sig);
+
+		sig.reset();
+		sig.set(reg.getComponentType<CTransform>());
+		sig.set(reg.getComponentType<CPointLight>());
+		reg.setSystemSignature<PointLightSystem>(sig);
+
+		sig.reset();
+		sig.set(reg.getComponentType<CTransform>());
+		sig.set(reg.getComponentType<CSprite>());
+		reg.setSystemSignature<SpriteRenderSystem>(sig);
+
+		sig.reset();
+		sig.set(reg.getComponentType<CTransform>());
+		sig.set(reg.getComponentType<CPhongModel>());
+		reg.setSystemSignature<PhongRenderSystem>(sig);
+
+		sig.reset();
+		sig.set(reg.getComponentType<CTransform>());
+		sig.set(reg.getComponentType<CPBRModel>());
+		reg.setSystemSignature<PBRRenderSystem>(sig);
+
+		sig.reset();
+		sig.set(reg.getComponentType<CTransform>());
+		sig.set(reg.getComponentType<CText>());
+		reg.setSystemSignature<TextRenderSystem>(sig);
+	}
 } // namespace cbk::ecs

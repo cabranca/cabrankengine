@@ -48,6 +48,16 @@ namespace cbk::ecs {
 				return system;
 			}
 
+			template<typename T>
+			std::shared_ptr<T> getSystem() {
+				const char* typeName = typeid(T).name();
+				auto it = m_Systems.find(typeName);
+
+				CBK_CORE_ASSERT(m_Systems.contains(typeName), "The system is not registered!");
+
+				return std::static_pointer_cast<T>(m_Systems.at(typeName));
+			}
+
 			// Sets the signature for the system of type T
 			template<typename T>
 			void SetSignature(Signature signature) {

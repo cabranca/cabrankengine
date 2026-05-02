@@ -58,4 +58,6 @@ namespace cbk::ecs {
 	  public:
 		void update(Registry& reg, float dt) override;
 	};
+
+	void initDefaultSystems(Registry& reg);
 } // namespace cbk::ecs
