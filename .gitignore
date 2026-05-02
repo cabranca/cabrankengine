@@ -30,3 +30,6 @@ premake5.exe
 
 # Assets
 *.cbk*
+
+# Tools
+tools/
