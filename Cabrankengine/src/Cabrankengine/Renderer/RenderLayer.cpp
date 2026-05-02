@@ -18,10 +18,7 @@ namespace cbk::rendering {
 		s_Instance = this;
 	}
 
-	void RenderLayer::onAttach() {
-		if (m_Scene)
-			loadRegistry();
-	}
+	void RenderLayer::onAttach() {}
 
 	void RenderLayer::onUpdate(Timestep dt) {
 		RenderCommand::setClearColor(m_Scene->getMetadata().BackgroundColor);
@@ -63,6 +60,7 @@ namespace cbk::rendering {
 
 	void RenderLayer::setScene(Scene* scene) {
 		s_Instance->m_Scene = scene;
+		s_Instance->loadRegistry();
 	}
 
 	void RenderLayer::loadRegistry() {
@@ -114,6 +112,8 @@ namespace cbk::rendering {
 		sig.set(m_Scene->getRegistry()->getComponentType<CTransform>());
 		sig.set(m_Scene->getRegistry()->getComponentType<CText>());
 		m_Scene->getRegistry()->setSystemSignature<TextRenderSystem>(sig);
+
+		m_Scene->getRegistry()->rebuildSystemMembership();
 	}
 
 	bool RenderLayer::onWindowResize(WindowResizeEvent& event) {

@@ -7,7 +7,7 @@ namespace cbk::scene::arch {
 
 	class SpriteArch {
 	  public:
-		SpriteArch();
+		SpriteArch(std::string_view path);
 
 		ecs::CTransform& transform();
 		ecs::CSprite& sprite();

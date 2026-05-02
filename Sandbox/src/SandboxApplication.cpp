@@ -64,26 +64,28 @@ class ExampleLayer : public Layer {
 	ExampleLayer() : Layer("Example") {
 		CameraControllerArch cameraController(ProjectionType::Perspective);
 
-		PBRModelArch gun{};
-		gun.transform().Position = { 2.f, -2.f, 2.f };
-		gun.transform().Rotation = { -90.f, 0.f, 0.f };
-		gun.transform().Scale = Vector3(0.1f);
-		gun.model().Ref = Model<PBRMaterial>::create("assets/models/gun/Cerberus_LP.cbkm");
+		// PBRModelArch gun{ "assets/models/gun/Cerberus_LP.cbkm" };
+		// gun.transform().Position = { 2.f, -2.f, 2.f };
+		// gun.transform().Rotation = { -90.f, 0.f, 0.f };
+		// gun.transform().Scale = Vector3(0.1f);
 
-		PhongModelArch backpack{};
-		backpack.model().Ref = Model<PhongMaterial>::create("assets/models/backpack/backpack.cbkm");
+		// PhongModelArch backpack{ "assets/models/backpack/backpack.cbkm" };
 
-		TextArch text{};
-		text.transform().Position = { 5.f, 0.f, 0.f };
-		text.text().Text = "ALLA LA ESTAN RENDERIZANDO";
-		text.text().Color = { 1.f, 1.f, 1.0f, 1.f };
+		// TextArch text{};
+		// text.transform().Position = { 5.f, 0.f, 0.f };
+		// text.text().Text = "ALLA LA ESTAN RENDERIZANDO";
+		// text.text().Color = { 1.f, 1.f, 1.0f, 1.f };
 
-		DirectionalLightArch dirLight{};
-		dirLight.light().Direction = { 0.0f, -1.0f, 0.0f };
-		dirLight.light().Radiance = { 0.5f, 0.5f, 0.5f };
+		// DirectionalLightArch dirLight{};
+		// dirLight.light().Direction = { 0.0f, -1.0f, 0.0f };
+		// dirLight.light().Radiance = { 0.5f, 0.5f, 0.5f };
 
-		PointLightArch lamp{};
-		lamp.transform().Position = { 0.0f, 0.0f, 8.0f };
+		// PointLightArch lamp{};
+		// lamp.transform().Position = { 0.0f, 0.0f, 8.0f };
+
+		// SceneSerializer::serialize(Application::get().getScene(), "scene.json");
+
+		Application::get().loadScene(SceneSerializer::deserialize("scene.json"));
 	}
 
 	void onUpdate(Timestep delta) override {

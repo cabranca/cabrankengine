@@ -7,7 +7,7 @@ namespace cbk::scene::arch {
 
 	class PBRModelArch {
 	  public:
-		PBRModelArch();
+		PBRModelArch(std::string_view path);
 
 		ecs::CTransform& transform();
 		ecs::CPBRModel& model();

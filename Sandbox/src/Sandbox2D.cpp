@@ -18,8 +18,7 @@ void Sandbox2D::onAttach() {
 	camera.camera().Far = 1.f;
 	camera.camera().Near = -1.f;
 
-	SpriteArch box{};
-	box.sprite().Texture = Texture2D::create("assets/textures/container2.cbkt");
+	SpriteArch box{"assets/textures/container2.cbkt"};
 	box.transform().Scale = Vector3(500.f, 500.f, 0.f);
 }
 

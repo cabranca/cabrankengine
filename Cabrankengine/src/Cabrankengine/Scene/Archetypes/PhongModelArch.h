@@ -7,7 +7,7 @@ namespace cbk::scene::arch {
 
 	class PhongModelArch {
 	  public:
-		PhongModelArch();
+		PhongModelArch(std::string_view path);
 
 		ecs::CTransform& transform();
 		ecs::CPhongModel& model();

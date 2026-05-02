@@ -105,6 +105,16 @@ namespace cbk::ecs {
 				m_SystemManager->SetSignature<T>(signature);
 			}
 
+			// Re-evaluates all existing entities against registered system signatures.
+			// Call this after registering systems on a registry that already has entities (e.g. after scene load).
+			void rebuildSystemMembership() {
+				for (Entity e = 0; e < MAX_ENTITIES; e++) {
+					Signature sig = m_EntityManager->getSignature(e);
+					if (sig.any())
+						m_SystemManager->EntitySignatureChanged(e, sig);
+				}
+			}
+
         private:
 			std::unique_ptr<ComponentManager> m_ComponentManager; // Manages component storage and access
 			std::unique_ptr<EntityManager> m_EntityManager; // Manages entity creation and destruction

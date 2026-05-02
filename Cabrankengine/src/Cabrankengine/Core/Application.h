@@ -45,6 +45,9 @@ namespace cbk {
 			scene::Scene& getScene() { return m_Scene; }
 			const scene::Scene& getScene() const { return m_Scene; }
 
+			// Loads a scene with its register and resets systems
+			void loadScene(scene::Scene scene) { m_Scene = std::move(scene); m_RenderLayer->setScene(&m_Scene); }
+
 			// Returns a Ref to the ECS Registry
 			ecs::Registry* getRegistry() { return m_Scene.getRegistry(); }
 	

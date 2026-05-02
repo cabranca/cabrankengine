@@ -106,6 +106,8 @@ inline void from_json(const nlohmann::json& j, CSprite& c) {
     j.at("path").get_to(c.Path);
     j.at("tint").get_to(c.Tint);
     j.at("tiling_factor").get_to(c.TilingFactor);
+
+    c.Texture = rendering::Texture2D::create(c.Path);
 }
 
 inline void to_json(nlohmann::json& j, const CPhongModel& c) {
@@ -115,6 +117,8 @@ inline void to_json(nlohmann::json& j, const CPhongModel& c) {
 
 inline void from_json(const nlohmann::json& j, CPhongModel& c) {
     j.at("path").get_to(c.Path);
+
+    c.Res = scene::Model<rendering::PhongMaterial>::create(c.Path);
 }
 
 inline void to_json(nlohmann::json& j, const CPBRModel& c) {
@@ -124,6 +128,8 @@ inline void to_json(nlohmann::json& j, const CPBRModel& c) {
 
 inline void from_json(const nlohmann::json& j, CPBRModel& c) {
     j.at("path").get_to(c.Path);
+
+    c.Res = scene::Model<rendering::PBRMaterial>::create(c.Path);
 }
 
 inline void to_json(nlohmann::json& j, const CText& c) {
