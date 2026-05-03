@@ -65,6 +65,13 @@ jobs:
 
       - uses: microsoft/setup-msbuild@v2
 
+      - name: Get MSVC toolset version
+        id: msvc
+        shell: pwsh
+        run: |
+          $ver = [System.Diagnostics.FileVersionInfo]::GetVersionInfo((Get-Command cl).Source).FileVersion
+          echo "toolset=$ver" >> $env:GITHUB_OUTPUT
+
       - name: Cache premake5
         id: premake-cache
         uses: actions/cache@v4
@@ -83,7 +90,7 @@ jobs:
         id: vendor-cache
         uses: actions/cache@v4
         with:
-          key: engine-vendors-release-windows-${{ hashFiles('Cabrankengine/vendor/GLFW/**', 'Cabrankengine/vendor/glad/**', 'Cabrankengine/vendor/imgui/**', 'Cabrankengine/vendor/freetype/**') }}
+          key: engine-vendors-release-windows-${{ steps.msvc.outputs.toolset }}-${{ hashFiles('Cabrankengine/vendor/GLFW/**', 'Cabrankengine/vendor/glad/**', 'Cabrankengine/vendor/imgui/**', 'Cabrankengine/vendor/freetype/**') }}
           path: |
             bin/Release-windows-x86_64/GLFW
             bin/Release-windows-x86_64/glad
@@ -157,6 +164,13 @@ jobs:
 
       - uses: microsoft/setup-msbuild@v2
 
+      - name: Get MSVC toolset version
+        id: msvc
+        shell: pwsh
+        run: |
+          $ver = [System.Diagnostics.FileVersionInfo]::GetVersionInfo((Get-Command cl).Source).FileVersion
+          echo "toolset=$ver" >> $env:GITHUB_OUTPUT
+
       - name: Cache premake5
         id: premake-cache
         uses: actions/cache@v4
@@ -174,7 +188,7 @@ jobs:
       - name: Restore engine vendor libs
         uses: actions/cache/restore@v4
         with:
-          key: engine-vendors-release-windows-${{ hashFiles('Cabrankengine/vendor/GLFW/**', 'Cabrankengine/vendor/glad/**', 'Cabrankengine/vendor/imgui/**', 'Cabrankengine/vendor/freetype/**') }}
+          key: engine-vendors-release-windows-${{ steps.msvc.outputs.toolset }}-${{ hashFiles('Cabrankengine/vendor/GLFW/**', 'Cabrankengine/vendor/glad/**', 'Cabrankengine/vendor/imgui/**', 'Cabrankengine/vendor/freetype/**') }}
           path: |
             bin/Release-windows-x86_64/GLFW
             bin/Release-windows-x86_64/glad
@@ -189,7 +203,7 @@ jobs:
         id: engine-cache
         uses: actions/cache@v4
         with:
-          key: engine-release-windows-${{ hashFiles('Cabrankengine/src/**', 'Common/**') }}
+          key: engine-release-windows-${{ steps.msvc.outputs.toolset }}-${{ hashFiles('Cabrankengine/src/**', 'Common/**') }}
           path: |
             bin/Release-windows-x86_64/Cabrankengine
             bin/Release-windows-x86_64/Common
@@ -224,6 +238,13 @@ jobs:
 
       - uses: microsoft/setup-msbuild@v2
 
+      - name: Get MSVC toolset version
+        id: msvc
+        shell: pwsh
+        run: |
+          $ver = [System.Diagnostics.FileVersionInfo]::GetVersionInfo((Get-Command cl).Source).FileVersion
+          echo "toolset=$ver" >> $env:GITHUB_OUTPUT
+
       - name: Cache premake5
         id: premake-cache
         uses: actions/cache@v4
@@ -241,7 +262,7 @@ jobs:
       - name: Restore engine vendor libs
         uses: actions/cache/restore@v4
         with:
-          key: engine-vendors-release-windows-${{ hashFiles('Cabrankengine/vendor/GLFW/**', 'Cabrankengine/vendor/glad/**', 'Cabrankengine/vendor/imgui/**', 'Cabrankengine/vendor/freetype/**') }}
+          key: engine-vendors-release-windows-${{ steps.msvc.outputs.toolset }}-${{ hashFiles('Cabrankengine/vendor/GLFW/**', 'Cabrankengine/vendor/glad/**', 'Cabrankengine/vendor/imgui/**', 'Cabrankengine/vendor/freetype/**') }}
           path: |
             bin/Release-windows-x86_64/GLFW
             bin/Release-windows-x86_64/glad
@@ -255,7 +276,7 @@ jobs:
       - name: Restore engine build outputs
         uses: actions/cache/restore@v4
         with:
-          key: engine-release-windows-${{ hashFiles('Cabrankengine/src/**', 'Common/**') }}
+          key: engine-release-windows-${{ steps.msvc.outputs.toolset }}-${{ hashFiles('Cabrankengine/src/**', 'Common/**') }}
           path: |
             bin/Release-windows-x86_64/Cabrankengine
             bin/Release-windows-x86_64/Common
@@ -334,6 +355,13 @@ jobs:
 
       - uses: microsoft/setup-msbuild@v2
 
+      - name: Get MSVC toolset version
+        id: msvc
+        shell: pwsh
+        run: |
+          $ver = [System.Diagnostics.FileVersionInfo]::GetVersionInfo((Get-Command cl).Source).FileVersion
+          echo "toolset=$ver" >> $env:GITHUB_OUTPUT
+
       - name: Cache premake5
         id: premake-cache
         uses: actions/cache@v4
@@ -351,7 +379,7 @@ jobs:
       - name: Restore engine vendor libs
         uses: actions/cache/restore@v4
         with:
-          key: engine-vendors-release-windows-${{ hashFiles('Cabrankengine/vendor/GLFW/**', 'Cabrankengine/vendor/glad/**', 'Cabrankengine/vendor/imgui/**', 'Cabrankengine/vendor/freetype/**') }}
+          key: engine-vendors-release-windows-${{ steps.msvc.outputs.toolset }}-${{ hashFiles('Cabrankengine/vendor/GLFW/**', 'Cabrankengine/vendor/glad/**', 'Cabrankengine/vendor/imgui/**', 'Cabrankengine/vendor/freetype/**') }}
           path: |
             bin/Release-windows-x86_64/GLFW
             bin/Release-windows-x86_64/glad
@@ -365,7 +393,7 @@ jobs:
       - name: Restore engine build outputs
         uses: actions/cache/restore@v4
         with:
-          key: engine-release-windows-${{ hashFiles('Cabrankengine/src/**', 'Common/**') }}
+          key: engine-release-windows-${{ steps.msvc.outputs.toolset }}-${{ hashFiles('Cabrankengine/src/**', 'Common/**') }}
           path: |
             bin/Release-windows-x86_64/Cabrankengine
             bin/Release-windows-x86_64/Common
