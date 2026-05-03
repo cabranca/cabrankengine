@@ -11,6 +11,7 @@
 namespace cbk::rendering {
 
 	using namespace ecs;
+	using namespace math;
 	using namespace scene;
 
 	RenderLayer::RenderLayer() {
@@ -24,10 +25,20 @@ namespace cbk::rendering {
 		RenderCommand::setClearColor(m_Scene->getMetadata().BackgroundColor);
 		RenderCommand::clear();
 
-		m_CameraControllerSystem->update(*m_Scene->getRegistry(), dt);
-		m_CameraSystem->update(*m_Scene->getRegistry(), dt);
+		Mat4    vp;
+		Vector3 camPos;
+		if (m_EditorMode) {
+			m_EditorCamera.update(dt);
+			vp     = m_EditorCamera.getViewProjectionMatrix();
+			camPos = m_EditorCamera.getWorldPosition();
+		} else {
+			m_CameraControllerSystem->update(*m_Scene->getRegistry(), dt);
+			m_CameraSystem->update(*m_Scene->getRegistry(), dt);
+			vp     = m_CameraSystem->getViewProjectionMatrix();
+			camPos = m_CameraSystem->getCameraWorldPosition();
+		}
 
-		Renderer2D::beginScene(m_CameraSystem->getViewProjectionMatrix());
+		Renderer2D::beginScene(vp);
 		m_SpriteRenderSystem->update(*m_Scene->getRegistry(), dt);
 		Renderer2D::endScene();
 
@@ -43,12 +54,12 @@ namespace cbk::rendering {
 			lights.PointLights.push_back({ transform->Position, pl->Radiance, pl->Constant, pl->Linear, pl->Quadratic });
 		}
 
-		Renderer::beginScene(m_CameraSystem->getViewProjectionMatrix(), m_CameraSystem->getCameraWorldPosition(), lights);
+		Renderer::beginScene(vp, camPos, lights);
 		m_PhongRenderSystem->update(*m_Scene->getRegistry(), dt);
 		m_PBRRenderSystem->update(*m_Scene->getRegistry(), dt);
 		Renderer::endScene();
 
-		TextRenderer::beginScene(m_CameraSystem->getViewProjectionMatrix());
+		TextRenderer::beginScene(vp);
 		m_TextRenderSystem->update(*m_Scene->getRegistry(), dt);
 		TextRenderer::endScene();
 	}
@@ -61,6 +72,10 @@ namespace cbk::rendering {
 	void RenderLayer::setScene(Scene* scene) {
 		s_Instance->m_Scene = scene;
 		s_Instance->loadRegistry();
+	}
+
+	void RenderLayer::setEditorMode(bool editorMode) {
+		s_Instance->m_EditorMode = editorMode;
 	}
 
 	void RenderLayer::loadRegistry() {
@@ -79,6 +94,10 @@ namespace cbk::rendering {
 	}
 
 	bool RenderLayer::onWindowResize(WindowResizeEvent& event) {
+		if (m_EditorMode) {
+			m_EditorCamera.onWindowResize(static_cast<float>(event.getWidth()) / event.getHeight());
+			return false;
+		}
 		return m_CameraSystem->onWindowResize(event);
 	}
 } // namespace cbk::rendering

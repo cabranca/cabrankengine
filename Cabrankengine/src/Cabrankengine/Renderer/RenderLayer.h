@@ -3,6 +3,7 @@
 #include <Cabrankengine/Core/Layer.h>
 #include <Cabrankengine/ECS/BuiltInSystems.h>
 #include <Cabrankengine/Scene/Scene.h>
+#include "EditorCamera.h"
 
 namespace cbk::rendering {
 
@@ -15,6 +16,7 @@ namespace cbk::rendering {
 		void onEvent(Event& event) override;
 
 		static void setScene(scene::Scene* scene);
+		static void setEditorMode(bool editorMode);
 
 	  private:
 		scene::Scene* m_Scene = nullptr; // Application owns the Scene
@@ -28,6 +30,9 @@ namespace cbk::rendering {
 		Ref<ecs::PhongRenderSystem> m_PhongRenderSystem = nullptr;
 		Ref<ecs::PBRRenderSystem> m_PBRRenderSystem = nullptr;
 		Ref<ecs::TextRenderSystem> m_TextRenderSystem = nullptr;
+
+		EditorCamera m_EditorCamera;
+		bool         m_EditorMode = false;
 
 		inline static RenderLayer* s_Instance = nullptr;
 
