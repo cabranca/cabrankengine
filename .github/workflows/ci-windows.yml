@@ -381,9 +381,5 @@ jobs:
           ./premake5 vs2022
           msbuild Cabrankengine.sln /t:UnitTests /p:Configuration=Release /p:Platform=x64 /verbosity:minimal /m
 
-      - name: Copy irrKlang DLL
-        shell: pwsh
-        run: Copy-Item "Cabrankengine\vendor\irrKlang\dll\irrKlang.dll" "bin\Release-windows-x86_64\UnitTests\"
-
       - name: Run tests
         run: bin\Release-windows-x86_64\UnitTests\UnitTests.exe

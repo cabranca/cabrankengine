@@ -385,6 +385,4 @@ jobs:
         run: ./premake5 gmake && make UnitTests config=release -j$(nproc)
 
       - name: Run tests
-        run: |
-          export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:./Cabrankengine/vendor/irrKlang/so"
-          ./bin/Release-linux-x86_64/UnitTests/UnitTests
+        run: ./bin/Release-linux-x86_64/UnitTests/UnitTests
