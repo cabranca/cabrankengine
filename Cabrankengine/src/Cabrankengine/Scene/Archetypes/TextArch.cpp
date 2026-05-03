@@ -10,7 +10,7 @@ namespace cbk::scene::arch {
 
 	TextArch::TextArch() {
 		auto& scene = Application::get().getScene();
-		m_Entity = scene.createEntity();
+		m_Entity = scene.createEntity("Text");
 		scene.getRegistry()->addComponent(m_Entity, CTransform());
 		scene.getRegistry()->addComponent(m_Entity, CText());
 	}

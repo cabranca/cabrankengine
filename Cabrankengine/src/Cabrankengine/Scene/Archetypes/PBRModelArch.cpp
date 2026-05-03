@@ -10,7 +10,7 @@ namespace cbk::scene::arch {
 
 	PBRModelArch::PBRModelArch(std::string_view path) {
 		auto& scene = Application::get().getScene();
-		m_Entity = scene.createEntity();
+		m_Entity = scene.createEntity("PBR Model");
 		scene.getRegistry()->addComponent(m_Entity, CTransform());
 		scene.getRegistry()->addComponent(m_Entity,
 		                                  CPBRModel{ .Path = path.data(), .Res = Model<rendering::PBRMaterial>::create(path.data()) });

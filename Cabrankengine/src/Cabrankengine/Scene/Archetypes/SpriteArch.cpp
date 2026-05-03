@@ -10,7 +10,7 @@ namespace cbk::scene::arch {
 
 	SpriteArch::SpriteArch(std::string_view path) {
 		auto& scene = Application::get().getScene();
-		m_Entity = scene.createEntity();
+		m_Entity = scene.createEntity("Sprite");
 		scene.getRegistry()->addComponent(m_Entity, CTransform());
 		scene.getRegistry()->addComponent(m_Entity, CSprite{ .Path = path.data(), .Texture = rendering::Texture2D::create(path.data()) });
 	}

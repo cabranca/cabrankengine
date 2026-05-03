@@ -10,7 +10,7 @@ namespace cbk::scene::arch {
 
 	DirectionalLightArch::DirectionalLightArch() {
 		auto& scene = Application::get().getScene();
-		m_Entity = scene.createEntity();
+		m_Entity = scene.createEntity("Directional Light");
 		scene.getRegistry()->addComponent(m_Entity, CTransform());
 		scene.getRegistry()->addComponent(m_Entity, CDirectionalLight());
 	}

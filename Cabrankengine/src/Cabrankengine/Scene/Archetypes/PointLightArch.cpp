@@ -10,7 +10,7 @@ namespace cbk::scene::arch {
 
 	PointLightArch::PointLightArch() {
 		auto& scene = Application::get().getScene();
-		m_Entity = scene.createEntity();
+		m_Entity = scene.createEntity("Point Light");
 		scene.getRegistry()->addComponent(m_Entity, CTransform());
 		scene.getRegistry()->addComponent(m_Entity, CPointLight());
 	}
