@@ -1,0 +1,101 @@
+name: CI - WebAssembly
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'CBKBindings/**'
+      - 'Cabrankengine/src/**'
+      - 'Common/**'
+      - '.github/workflows/ci-wasm.yml'
+
+jobs:
+  # -----------------------------------------------------------------------
+  # Detect which projects have changed
+  # -----------------------------------------------------------------------
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    outputs:
+      bindings: ${{ steps.filter.outputs.bindings }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            bindings:
+              - 'CBKBindings/**'
+              - 'Cabrankengine/src/**'
+              - 'Common/**'
+              - '.github/workflows/ci-wasm.yml'
+
+  # -----------------------------------------------------------------------
+  # WebAssembly — Linux
+  # -----------------------------------------------------------------------
+  build-wasm-linux:
+    name: Build WebAssembly (Linux)
+    needs: changes
+    if: needs.changes.outputs.bindings == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Emscripten
+        run: |
+          git clone https://github.com/emscripten-core/emsdk.git tools/emsdk
+          tools/emsdk/emsdk install latest
+          tools/emsdk/emsdk activate latest
+
+      - name: Build CBKBindings (WASM)
+        run: |
+          source tools/emsdk/emsdk_env.sh
+          mkdir -p CBKBindings/bin/wasm
+          make -C CBKBindings -f Makefile.emscripten -j$(nproc)
+
+      - name: Upload WASM artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: CBKBindings-wasm-linux
+          path: CBKBindings/bin/wasm/
+
+  # -----------------------------------------------------------------------
+  # WebAssembly — Windows
+  # -----------------------------------------------------------------------
+  build-wasm-windows:
+    name: Build WebAssembly (Windows)
+    needs: changes
+    if: needs.changes.outputs.bindings == 'true'
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install make
+        run: choco install make --no-progress -y
+
+      - name: Install Emscripten
+        shell: bash
+        run: |
+          git clone https://github.com/emscripten-core/emsdk.git tools/emsdk
+          tools/emsdk/emsdk install latest
+          tools/emsdk/emsdk activate latest
+
+      - name: Build CBKBindings (WASM)
+        shell: bash
+        run: |
+          source tools/emsdk/emsdk_env.sh
+          mkdir -p CBKBindings/bin/wasm
+          make -C CBKBindings -f Makefile.emscripten -j$(nproc)
+
+      - name: Upload WASM artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: CBKBindings-wasm-windows
+          path: CBKBindings/bin/wasm/
