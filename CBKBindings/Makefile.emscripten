@@ -1,0 +1,32 @@
+EMSDK_ENV = ../tools/emsdk/emsdk_env.sh
+
+SOURCES = \
+    src/CBKBindings.cpp \
+    ../Common/src/Common/Logger.cpp \
+    ../Cabrankengine/src/Cabrankengine/ECS/EntityManager.cpp \
+    ../Cabrankengine/src/Cabrankengine/ECS/BuiltInSystems.cpp \
+    ../Cabrankengine/src/Cabrankengine/Scene/Scene.cpp \
+    ../Cabrankengine/src/Cabrankengine/Scene/SceneSerializer.cpp
+
+INCLUDES = \
+    -I../Cabrankengine/src \
+    -I../Common/src \
+    -I../Common/vendor/spdlog/include \
+    -I../Cabrankengine/vendor/json/single_include
+
+EMCC_FLAGS = \
+    -std=c++23 \
+    --bind \
+    -sEXPORT_ES6=1 \
+    -sMODULARIZE=1 \
+    -sEXPORT_NAME='CabrankEngine' \
+    -sALLOW_MEMORY_GROWTH=1 \
+    -O2 \
+    -DCBK_WASM \
+    -fexceptions
+
+OUT = bin/wasm/CBKBindings.js
+
+.PHONY: all
+all:
+	em++ $(EMCC_FLAGS) $(INCLUDES) $(SOURCES) -o $(OUT)
