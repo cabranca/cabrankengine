@@ -32,6 +32,17 @@ namespace cbk::scene {
 		return comps;
 	}
 
+	static nlohmann::json::array_t serializeEntities(const Scene& scene) {
+		nlohmann::json entities = nlohmann::json::array();
+		for (ecs::Entity e: scene.getAllEntities()) {
+			nlohmann::json node;
+			node["name"] = scene.getEntityName(e);
+			node["components"] = serializeComponents(scene, e);
+			entities.push_back(std::move(node));
+		}
+		return entities;
+	}
+
 	static nlohmann::json toJson(const Scene& scene) {
 		const auto& meta = scene.getMetadata();
 		nlohmann::json root;
@@ -42,13 +53,7 @@ namespace cbk::scene {
 			{ "ambient_color", meta.AmbientColor },
 		};
 
-		nlohmann::json entities = nlohmann::json::array();
-		for (ecs::Entity e: scene.getAllEntities()) {
-			nlohmann::json node;
-			node["name"] = scene.getEntityName(e);
-			node["components"] = serializeComponents(scene, e);
-			entities.push_back(std::move(node));
-		}
+		auto entities = serializeEntities(scene);
 		root["entities"] = entities;
 		return root;
 	}
@@ -87,9 +92,7 @@ namespace cbk::scene {
 
 		if (root.contains("entities")) {
 			for (const auto& node: root["entities"]) {
-				auto e = scene.createEntity();
-				if (node.contains("name"))
-					scene.setEntityName(e, node["name"].get<std::string>());
+				auto e = scene.createEntity(node["name"].get<std::string>());
 				if (node.contains("components"))
 					deserializeComponents(scene, e, node["components"]);
 			}

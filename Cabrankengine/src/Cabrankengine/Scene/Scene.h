@@ -14,9 +14,9 @@ namespace cbk::scene {
 	class Scene {
 	  public:
 		Scene();
-		Scene(SceneMetadata metadata);
+		explicit Scene(SceneMetadata metadata);
 
-		[[nodiscard]] ecs::Entity createEntity();
+		[[nodiscard]] ecs::Entity createEntity(const std::string& name);
 		void destroyEntity(ecs::Entity e);
 
 		[[nodiscard]] ecs::Entity findEntityByName(std::string_view name) const;

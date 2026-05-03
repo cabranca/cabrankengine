@@ -27,10 +27,10 @@ namespace cbk::scene {
 		registerBuiltInComponents(m_Registry); 
 	}
 
-	Entity Scene::createEntity() {
+	Entity Scene::createEntity(const std::string& name) {
 		auto entity = m_Registry.createEntity();
 		m_Entities.push_back(entity);
-		m_EntityToName[entity] = "Entity";
+		m_EntityToName[entity] = name;
 		return entity;
 	}
 
