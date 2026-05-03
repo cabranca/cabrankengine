@@ -69,7 +69,9 @@ jobs:
         id: msvc
         shell: pwsh
         run: |
-          $ver = [System.Diagnostics.FileVersionInfo]::GetVersionInfo((Get-Command cl).Source).FileVersion
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $installPath = & $vswhere -latest -property installationPath
+          $ver = (Get-Content "$installPath\VC\Auxiliary\Build\Microsoft.VCToolsVersion.default.txt").Trim()
           echo "toolset=$ver" >> $env:GITHUB_OUTPUT
 
       - name: Cache premake5
@@ -168,7 +170,9 @@ jobs:
         id: msvc
         shell: pwsh
         run: |
-          $ver = [System.Diagnostics.FileVersionInfo]::GetVersionInfo((Get-Command cl).Source).FileVersion
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $installPath = & $vswhere -latest -property installationPath
+          $ver = (Get-Content "$installPath\VC\Auxiliary\Build\Microsoft.VCToolsVersion.default.txt").Trim()
           echo "toolset=$ver" >> $env:GITHUB_OUTPUT
 
       - name: Cache premake5
@@ -242,7 +246,9 @@ jobs:
         id: msvc
         shell: pwsh
         run: |
-          $ver = [System.Diagnostics.FileVersionInfo]::GetVersionInfo((Get-Command cl).Source).FileVersion
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $installPath = & $vswhere -latest -property installationPath
+          $ver = (Get-Content "$installPath\VC\Auxiliary\Build\Microsoft.VCToolsVersion.default.txt").Trim()
           echo "toolset=$ver" >> $env:GITHUB_OUTPUT
 
       - name: Cache premake5
@@ -359,7 +365,9 @@ jobs:
         id: msvc
         shell: pwsh
         run: |
-          $ver = [System.Diagnostics.FileVersionInfo]::GetVersionInfo((Get-Command cl).Source).FileVersion
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $installPath = & $vswhere -latest -property installationPath
+          $ver = (Get-Content "$installPath\VC\Auxiliary\Build\Microsoft.VCToolsVersion.default.txt").Trim()
           echo "toolset=$ver" >> $env:GITHUB_OUTPUT
 
       - name: Cache premake5
