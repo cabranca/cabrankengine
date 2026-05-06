@@ -1,98 +1,168 @@
 # Cabrankengine
 
-Cabrankengine is a 2D/3D game engine written in C++ with OpenGL, designed for Windows and Linux (64-bit).  
-The project is focused on learning, experimentation, and building a clear interface for game development.
+A 2D/3D game engine written in C++23 with OpenGL 4.5, built from scratch as a learning project and portfolio piece. The engine covers the full stack: ECS architecture, a batch renderer, Phong and PBR material pipelines, scene serialization, a custom binary asset format, and a WebAssembly compilation target.
 
 ---
 
 ## Showcase
 
-Here are some examples of prototypes and experiments made with Cabrankengine:
-
 ### Vampire Survivors style prototype
 
-![](docs/media/Survivors-like.gif)
+![Survivors-like prototype](docs/media/Survivors-like.gif)
 
 ### 2D Batch Rendering
-![2D Rendering Example](docs/media/2DBatchRender.gif)
 
-### Debug with ImGui
-![2D Rendering Example](docs/media/DebugImGui.gif)
+![2D Batch Rendering](docs/media/2DBatchRender.gif)
 
----
+### ImGui Debug Overlay
 
-## Current Features
-
-- Entity Component System (ECS) architecture (basic).
-- 2D and 3D rendering with OpenGL.
-- Cross-platform input system.
-- 2D/3D camera with movement controls.
-- ImGui integration for real-time debugging and parameter editing.
-- Initial 2D/3D collision support.
-- Unit testing with Catch2.
+![ImGui Debug Overlay](docs/media/DebugImGui.gif)
 
 ---
 
-## Dependencies
+## Features
 
-- [GLFW](https://www.glfw.org/) – window and input handling  
-- [glad](https://glad.dav1d.de/) – OpenGL function loader  
-- [ImGui](https://github.com/ocornut/imgui) – immediate mode GUI  
-- [stb_image](https://github.com/nothings/stb) – image loading  
-- [spdlog](https://github.com/gabime/spdlog) – logging  
-- [nlohmann/json](https://github.com/nlohmann/json) – JSON serialization  
-- [Catch2](https://github.com/catchorg/Catch2) – unit testing  
+- **Entity Component System** — Registry-based ECS with typed component arrays, signature-filtered systems, and up to 10 000 concurrent entities
+- **2D batch renderer** — sprites, tiling, tint; all quads submitted in a single draw call
+- **3D rendering** — Phong and PBR material pipelines (roughness/metalness, normal maps, HDR)
+- **Lighting** — directional and point lights with attenuation
+- **Camera system** — perspective and orthographic projections, first-person controller
+- **Scene serialization** — save/load scenes from JSON; entities, components, and assets round-trip cleanly
+- **Custom asset pipeline** — `CBKAssetConverter` converts `.obj/.fbx/.gltf` → `.cbkm` and images → `.cbkt`; PBR metal/roughness packing included
+- **WebAssembly target** — engine compiles to WASM via Emscripten for browser deployment
+- **ImGui integration** — real-time parameter editing and debug overlays
+- **Collision shapes** — AABB, sphere, OBB, capsule, plane, cylinder (2D/3D)
+- **Unit tests** — ECS, math, and collision solver covered with Catch2
 
 ---
 
-## Build Instructions
+## Quick Start
 
-### Requirements
-- Windows or Linux (64-bit)  
-- C++17 or higher  
-- [Premake5](https://premake.github.io/)  
+```cpp
+// MyLayer.cpp
+#include <Cabrankengine.h>
+#include <Cabrankengine/Core/EntryPoint.h>
 
-### Steps
-```bash
-# Generate build files
-premake5 gmake2      # Linux
-premake5 vs2022      # Windows (Visual Studio)
+using namespace cbk;
+using namespace cbk::scene::arch;
 
-# Build on Linux
-make
+class MyLayer : public Layer {
+public:
+    MyLayer() : Layer("MyLayer") {
+        // Camera with perspective projection + first-person controller
+        CameraControllerArch camera(ProjectionType::Perspective);
 
-# Build on Windows
-# Open the generated Visual Studio solution and build
+        // 3D model with PBR materials
+        PBRModelArch gun{ "assets/models/gun/Cerberus_LP.cbkm" };
+        gun.transform().Position = { 2.f, -2.f, 2.f };
+        gun.transform().Scale    = Vector3(0.1f);
+
+        // Directional light
+        DirectionalLightArch sun{};
+        sun.light().Direction = { 0.f, -1.f, 0.f };
+        sun.light().Radiance  = { 1.f, 1.f, 1.f };
+
+        // Or load a saved scene
+        // Application::get().loadScene(SceneSerializer::deserialize("scene.json"));
+    }
+
+    void onUpdate(Timestep dt) override {}
+    void onImGuiRender() override {}
+};
+
+class MyApp : public Application {
+public:
+    MyApp() { pushLayer(new MyLayer()); }
+};
+
+Application* cbk::createApplication() { return new MyApp(); }
 ```
 
+For a step-by-step walkthrough see [docs/getting-started.md](docs/getting-started.md).
+
 ---
 
-## Roadmap
+## Build
 
-Planned features include:
+### Requirements
 
-- Improved collision system
-- Refined ECS
-- Editor with GUI
-- Scene management
-- Filesystem support
-- Asset pipeline (textures, meshes, etc.)
+- C++23 compiler (GCC 13+ / Clang 17+ / MSVC 19.38+)
+- [Premake5](https://premake.github.io/)
+- OpenGL 4.5 (Linux/Windows) or Metal (macOS)
+- GNU Make (Linux) or Visual Studio 2022 (Windows)
+
+### Steps
+
+```bash
+# Clone with submodules (vendor dependencies are submodules)
+git clone --recurse-submodules https://github.com/cabranca/game-dev.git
+cd game-dev
+
+# Generate build files
+premake5 gmake2      # Linux
+premake5 vs2022      # Windows
+
+# Build (debug by default)
+make
+make config=release
+
+# Run the Sandbox example
+./bin/Debug-linux-x86_64/Sandbox/Sandbox
+```
+
+For the asset converter:
+
+```bash
+make config=debug CBKAssetConverter
+./bin/Debug-linux-x86_64/CBKAssetConverter/CBKAssetConverter assets/models/my_model.obj
+```
 
 ---
 
 ## Documentation
 
-More detailed documentation and tutorials will be available in the [Wiki](https://github.com/cabranca/game-dev/wiki).
+| Doc | Description |
+|-----|-------------|
+| [Getting Started](docs/getting-started.md) | Prerequisites, build steps, first entity walkthrough |
+| [Architecture](docs/architecture.md) | Module layout, ECS design, rendering pipeline, system execution order |
+| [API Reference](docs/api-reference.md) | Registry, components, archetype builders |
+| [Asset Pipeline](docs/asset-pipeline.md) | CBKAssetConverter — converting models and textures |
+
+---
+
+## Dependencies
+
+| Library | Purpose |
+|---------|---------|
+| [GLFW](https://www.glfw.org/) | Window and input |
+| [glad](https://glad.dav1d.de/) | OpenGL loader |
+| [ImGui](https://github.com/ocornut/imgui) | Immediate-mode debug UI |
+| [stb_image](https://github.com/nothings/stb) | Image loading |
+| [spdlog](https://github.com/gabime/spdlog) | Logging |
+| [nlohmann/json](https://github.com/nlohmann/json) | JSON serialization |
+| [FreeType](https://freetype.org/) | Font rendering |
+| [Catch2](https://github.com/catchorg/Catch2) | Unit testing |
+| [Assimp](https://assimp.org/) | Model loading (asset converter only) |
+
+---
+
+## Roadmap
+
+- [ ] Web editor (in progress — Cabrankeditor via WebAssembly)
+- [ ] Audio backend
+- [ ] Expanded collision and physics response
+- [ ] Scripting layer
+- [ ] Metal renderer polish (macOS)
 
 ---
 
 ## License
 
-Not yet defined. Until then, the project is intended for personal learning and portfolio purposes only.
+Not yet defined. Until then, the project is for personal learning and portfolio purposes only.
 
 ---
 
-## Authors and Contributors
+## Authors
 
-- Joaquin Cabrera (Cabranca) - Creator and main developer
-- Francisco Pintar (Franpintar) - Contributor
+- **Joaquin Cabrera** (cabranca) — creator and main developer
+- **Francisco Pintar** (Franpintar) — contributor
