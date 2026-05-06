@@ -41,11 +41,6 @@ static int entityCreate(const std::string& name) {
     return static_cast<int>(e);
 }
 
-// Have to define the exact API the front wants
-static std::string getAllEntities() {
-    return scene::SceneSerializer::serializeToString(g_Scene);
-}
-
 static void entityDestroy(int e) {
     g_Scene.destroyEntity(e);
 }
@@ -139,7 +134,6 @@ EMSCRIPTEN_BINDINGS(cbk) {
     function("serializeScene",        &serializeScene);
     function("deserializeScene",      &deserializeScene);
     function("entityCreate",          &entityCreate);
-    function("getAllEntities",         &getAllEntities);
     function("entityDestroy",          &entityDestroy);
     function("getTransform",           &getTransform);
     function("getCamera",              &getCamera);
