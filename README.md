@@ -6,6 +6,14 @@ A 2D/3D game engine written in C++23 with OpenGL 4.5, built from scratch as a le
 
 ## Showcase
 
+### Phong and PBR lighting
+
+![Phong and PBR lighting](docs/media/phong_and_pbr.gif)
+
+### PBR material detail
+
+![PBR material detail](docs/media/pbr.gif)
+
 ### Vampire Survivors style prototype
 
 ![Survivors-like prototype](docs/media/Survivors-like.gif)
@@ -88,7 +96,8 @@ For a step-by-step walkthrough see [docs/getting-started.md](docs/getting-starte
 
 - C++23 compiler (GCC 13+ / Clang 17+ / MSVC 19.38+)
 - [Premake5](https://premake.github.io/)
-- OpenGL 4.5 (Linux/Windows) or Metal (macOS)
+- OpenGL 4.5 — Linux / Windows (fully supported)
+- Metal — macOS *(WIP: compiles and renders with a hardcoded shader; material system not yet wired up)*
 - GNU Make (Linux) or Visual Studio 2022 (Windows)
 
 ### Steps
@@ -149,10 +158,12 @@ make config=debug CBKAssetConverter
 ## Roadmap
 
 - [ ] Web editor (in progress — Cabrankeditor via WebAssembly)
+- [ ] Vulkan renderer backend
+- [ ] Finish Metal integration (macOS)
+- [ ] WebGPU target
+- [ ] SIMD math library
 - [ ] Audio backend
-- [ ] Expanded collision and physics response
 - [ ] Scripting layer
-- [ ] Metal renderer polish (macOS)
 
 ---
 
