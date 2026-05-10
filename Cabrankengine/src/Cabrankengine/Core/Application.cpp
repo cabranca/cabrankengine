@@ -3,6 +3,10 @@
 
 #include <GLFW/glfw3.h>
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
+
 #include <Cabrankengine/Config/Config.h>
 #include <Cabrankengine/Events/ApplicationEvent.h>
 #include <Cabrankengine/ImGui/ImGuiLayer.h>
@@ -43,8 +47,12 @@ namespace cbk {
 		RenderLayer::setScene(&m_Scene);
 		pushLayer(m_RenderLayer);
 
+#ifndef __EMSCRIPTEN__
 		m_ImGuiLayer = new ImGuiLayer();
 		pushOverlay(m_ImGuiLayer);
+#else
+		m_ImGuiLayer = nullptr;
+#endif
 	}
 
 	Application::~Application() {
@@ -56,35 +64,46 @@ namespace cbk {
 	{
 		CBK_PROFILE_FUNCTION();
 
-		while (m_Running) {
-			CBK_PROFILE_SCOPE("RunLoop");
+#ifdef __EMSCRIPTEN__
+		// Browser owns the main thread; surrender control via requestAnimationFrame.
+		emscripten_set_main_loop_arg(&Application::tick, this, 0, 1);
+#else
+		while (m_Running) tick(this);
+#endif
+	}
 
-			float time = static_cast<float>(glfwGetTime()); // This should be in Platform::getTime() or similar
-			Timestep timestep = time - m_LastFrameTime; // Calculate the time since the last frame
-			m_LastFrameTime = time;
+	void Application::tick(void* arg)
+	{
+		Application* app = static_cast<Application*>(arg);
+		CBK_PROFILE_SCOPE("RunLoop");
 
-			if (!m_Minimized) {
-				CBK_PROFILE_SCOPE("LayerStack OnUpdate");
+		float time = static_cast<float>(glfwGetTime()); // This should be in Platform::getTime() or similar
+		Timestep timestep = time - app->m_LastFrameTime; // Calculate the time since the last frame
+		app->m_LastFrameTime = time;
 
-				for (Layer* layer : m_LayerStack)
-					layer->onUpdate(timestep);
-			}
-			 
-			m_ImGuiLayer->begin();
-			{
-				CBK_PROFILE_SCOPE("LayerStack OnImGuiRender");
-				for (Layer* layer : m_LayerStack)
-					layer->onImGuiRender();
-			}
-			m_ImGuiLayer->end();
+		if (!app->m_Minimized) {
+			CBK_PROFILE_SCOPE("LayerStack OnUpdate");
 
-			// Finalize the frame's GPU commands (commit command buffer, present drawable).
-			// This is a no-op on OpenGL. On Metal it must happen exactly once per frame,
-			// after all rendering (Renderer, Renderer2D, TextRenderer, ImGui) is complete.
-			RenderCommand::endFrame();
-
-			m_Window->onUpdate();
+			for (Layer* layer : app->m_LayerStack)
+				layer->onUpdate(timestep);
 		}
+
+#ifndef __EMSCRIPTEN__
+		app->m_ImGuiLayer->begin();
+		{
+			CBK_PROFILE_SCOPE("LayerStack OnImGuiRender");
+			for (Layer* layer : app->m_LayerStack)
+				layer->onImGuiRender();
+		}
+		app->m_ImGuiLayer->end();
+#endif
+
+		// Finalize the frame's GPU commands (commit command buffer, present drawable).
+		// This is a no-op on OpenGL. On Metal it must happen exactly once per frame,
+		// after all rendering (Renderer, Renderer2D, TextRenderer, ImGui) is complete.
+		RenderCommand::endFrame();
+
+		app->m_Window->onUpdate();
 	}
 
 	void Application::OnEvent(Event& e)

@@ -51,7 +51,9 @@ namespace cbk::scene {
 	void DefaultLibrary::setupBasicShaders() {
 		s_ErrorShader = ShaderLibrary::load("assets/shaders/Error");
 		ShaderLibrary::load("assets/shaders/Phong");
+#ifndef CBK_OPENGL_ES
 		ShaderLibrary::load("assets/shaders/PBR");
+#endif
 	}
 
 	void DefaultLibrary::setupTexture(Ref<Texture2D>& tex, uint32_t data) {

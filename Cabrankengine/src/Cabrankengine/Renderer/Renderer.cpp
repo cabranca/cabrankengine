@@ -129,7 +129,9 @@ namespace cbk::rendering {
 			currentLight++;
 		}
 
-		s_SceneData->lightSSBO->setData(bufferData.data(), bufferData.size());
-		s_SceneData->lightSSBO->bind(0);
+		if (s_SceneData->lightSSBO) {
+			s_SceneData->lightSSBO->setData(bufferData.data(), bufferData.size());
+			s_SceneData->lightSSBO->bind(0);
+		}
 	}
 } // namespace cbk::rendering

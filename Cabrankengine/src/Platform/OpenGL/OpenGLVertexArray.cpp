@@ -31,7 +31,11 @@ namespace cbk::platform::opengl {
 	OpenGLVertexArray::OpenGLVertexArray() : m_RendererId() {
 		CBK_PROFILE_FUNCTION();
 
+#ifdef CBK_OPENGL_ES
+		glGenVertexArrays(1, &m_RendererId);
+#else
 		glCreateVertexArrays(1, &m_RendererId);
+#endif
 	}
 
 	OpenGLVertexArray::~OpenGLVertexArray() {

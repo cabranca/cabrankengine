@@ -168,7 +168,9 @@ namespace cbk::ecs {
 		reg.registerSystem<PointLightSystem>();
 		reg.registerSystem<SpriteRenderSystem>();
 		reg.registerSystem<PhongRenderSystem>();
+#ifndef CBK_OPENGL_ES
 		reg.registerSystem<PBRRenderSystem>();
+#endif
 		reg.registerSystem<TextRenderSystem>();
 
 		Signature sig;
@@ -200,10 +202,12 @@ namespace cbk::ecs {
 		sig.set(reg.getComponentType<CPhongModel>());
 		reg.setSystemSignature<PhongRenderSystem>(sig);
 
+#ifndef CBK_OPENGL_ES
 		sig.reset();
 		sig.set(reg.getComponentType<CTransform>());
 		sig.set(reg.getComponentType<CPBRModel>());
 		reg.setSystemSignature<PBRRenderSystem>(sig);
+#endif
 
 		sig.reset();
 		sig.set(reg.getComponentType<CTransform>());

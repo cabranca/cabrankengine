@@ -107,9 +107,7 @@ inline void from_json(const nlohmann::json& j, CSprite& c) {
     j.at("tint").get_to(c.Tint);
     j.at("tiling_factor").get_to(c.TilingFactor);
 
-#ifndef CBK_WASM
     c.Texture = rendering::Texture2D::create(c.Path);
-#endif
 }
 
 inline void to_json(nlohmann::json& j, const CPhongModel& c) {
@@ -120,9 +118,7 @@ inline void to_json(nlohmann::json& j, const CPhongModel& c) {
 inline void from_json(const nlohmann::json& j, CPhongModel& c) {
     j.at("path").get_to(c.Path);
 
-#ifndef CBK_WASM
     c.Res = scene::Model<rendering::PhongMaterial>::create(c.Path);
-#endif
 }
 
 inline void to_json(nlohmann::json& j, const CPBRModel& c) {
@@ -133,7 +129,8 @@ inline void to_json(nlohmann::json& j, const CPBRModel& c) {
 inline void from_json(const nlohmann::json& j, CPBRModel& c) {
     j.at("path").get_to(c.Path);
 
-#ifndef CBK_WASM
+#ifndef CBK_OPENGL_ES
+    // PBR uses SSBOs which are unavailable in WebGL 2; path is recorded but the model is not loaded.
     c.Res = scene::Model<rendering::PBRMaterial>::create(c.Path);
 #endif
 }
