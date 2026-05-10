@@ -32,7 +32,7 @@ namespace cbk {
     }
 
     void LinuxWindow::setVSync(bool enabled) {
-#if !defined(__EMSCRIPTEN__) || defined(CBK_RENDERER_OPENGL)
+#if defined(CBK_RENDERER_OPENGL) && !defined(__EMSCRIPTEN__)
         // The browser drives presentation through requestAnimationFrame, so swap
         // intervals are meaningless on web. Worse, GLFW's emscripten compat layer
         // routes glfwSwapInterval through emscripten_set_main_loop_timing, which
