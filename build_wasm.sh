@@ -16,4 +16,7 @@ source "$EMSDK_ENV"
 
 mkdir -p "$SCRIPT_DIR/CBKBindings/bin/wasm"
 
-make -C "$SCRIPT_DIR/CBKBindings" -f Makefile.emscripten "$@"
+# Parallelism: default to all cores; override with JOBS=N. `make V=1` for verbose.
+JOBS="${JOBS:-$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)}"
+
+make -C "$SCRIPT_DIR/CBKBindings" -f Makefile.emscripten -j"$JOBS" "$@"

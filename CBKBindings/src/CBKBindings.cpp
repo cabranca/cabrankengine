@@ -1,9 +1,13 @@
+#include <pch.h>
+
 #include <string>
 
 #include <emscripten/bind.h>
 
 #include <nlohmann/json.hpp>
 
+#include <Cabrankengine/Core/Application.h>
+#include <Cabrankengine/Core/EntryPoint.h>
 #include <Cabrankengine/Scene/Scene.h>
 #include <Cabrankengine/Scene/SceneSerializer.h>
 #include <Cabrankengine/Scene/ComponentSerialization.h>
@@ -12,7 +16,13 @@
 using namespace cbk;
 using namespace emscripten;
 
-static scene::Scene g_Scene;
+// EntryPoint.h provides main(); this supplies the Application factory it expects.
+// JS clients drive the live scene via the bindings below.
+namespace cbk {
+    Application* createApplication() {
+        return new Application();
+    }
+}
 
 // ---------------------------------------------------------------------------
 // Scene
@@ -21,15 +31,15 @@ static scene::Scene g_Scene;
 static void sceneNew(const std::string& name) {
     scene::SceneMetadata meta;
     meta.Name = name;
-    g_Scene = scene::Scene(meta); // This isn't propagated to the Application
+    Application::get().loadScene(scene::Scene(meta));
 }
 
 static std::string serializeScene() {
-    return scene::SceneSerializer::serializeToString(g_Scene);
+    return scene::SceneSerializer::serializeToString(Application::get().getScene());
 }
 
 static void deserializeScene(const std::string& json) {
-    g_Scene = scene::SceneSerializer::deserializeFromString(json); // This isn't propagated to the Application
+    Application::get().loadScene(scene::SceneSerializer::deserializeFromString(json));
 }
 
 // ---------------------------------------------------------------------------
@@ -37,12 +47,12 @@ static void deserializeScene(const std::string& json) {
 // ---------------------------------------------------------------------------
 
 static int entityCreate(const std::string& name) {
-    ecs::Entity e = g_Scene.createEntity(name);
+    ecs::Entity e = Application::get().getScene().createEntity(name);
     return static_cast<int>(e);
 }
 
 static void entityDestroy(int e) {
-    g_Scene.destroyEntity(e);
+    Application::get().getScene().destroyEntity(e);
 }
 
 // ---------------------------------------------------------------------------
@@ -51,7 +61,7 @@ static void entityDestroy(int e) {
 
 template<typename C>
 static std::string getComponent(int entityId) {
-    auto opt = g_Scene.getRegistry()->getComponent<C>(static_cast<ecs::Entity>(entityId));
+    auto opt = Application::get().getScene().getRegistry()->getComponent<C>(static_cast<ecs::Entity>(entityId));
     if (!opt) return "";
     nlohmann::json j = **opt;
     return j.dump();
@@ -71,8 +81,8 @@ static std::string getText(int e)              { return getComponent<ecs::CText>
 template<typename C>
 static bool addComponent(int entityId, const std::string& json) {
     try {
-        g_Scene.getRegistry()->addComponent(static_cast<ecs::Entity>(entityId),
-                                            nlohmann::json::parse(json).get<C>());
+        Application::get().getScene().getRegistry()->addComponent(static_cast<ecs::Entity>(entityId),
+                                                                  nlohmann::json::parse(json).get<C>());
         return true;
     } catch (...) {
         return false;
@@ -85,6 +95,7 @@ static bool addCameraController(int e, const std::string& json) { return addComp
 static bool addDirectionalLight(int e, const std::string& json) { return addComponent<ecs::CDirectionalLight>(e, json); }
 static bool addPointLight(int e, const std::string& json)       { return addComponent<ecs::CPointLight>(e, json); }
 static bool addText(int e, const std::string& json)             { return addComponent<ecs::CText>(e, json); }
+static bool addPhongModel(int e, const std::string& json)       { return addComponent<ecs::CPhongModel>(e, json); }
 
 // ---------------------------------------------------------------------------
 // Component setters — overwrites existing component, returns false if absent
@@ -92,7 +103,7 @@ static bool addText(int e, const std::string& json)             { return addComp
 
 template<typename C>
 static bool setComponent(int entityId, const std::string& json) {
-    auto opt = g_Scene.getRegistry()->getComponent<C>(static_cast<ecs::Entity>(entityId));
+    auto opt = Application::get().getScene().getRegistry()->getComponent<C>(static_cast<ecs::Entity>(entityId));
     if (!opt) return false;
     try {
         **opt = nlohmann::json::parse(json).get<C>();
@@ -115,7 +126,7 @@ static bool setText(int e, const std::string& json)             { return setComp
 
 template<typename C>
 static void removeComponent(int entityId) {
-    g_Scene.getRegistry()->removeComponent<C>(static_cast<ecs::Entity>(entityId));
+    Application::get().getScene().getRegistry()->removeComponent<C>(static_cast<ecs::Entity>(entityId));
 }
 
 static void removeTransform(int e)        { removeComponent<ecs::CTransform>(e); }
@@ -153,6 +164,7 @@ EMSCRIPTEN_BINDINGS(cbk) {
     function("addDirectionalLight",    &addDirectionalLight);
     function("addPointLight",          &addPointLight);
     function("addText",                &addText);
+    function("addPhongModel",          &addPhongModel);
     function("removeTransform",        &removeTransform);
     function("removeCamera",           &removeCamera);
     function("removeCameraController", &removeCameraController);

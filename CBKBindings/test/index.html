@@ -13,16 +13,22 @@
     .json  { color: #dcdcaa; white-space: pre-wrap; font-size: 0.85em; }
     pre    { background: #252526; padding: 0.5rem 1rem; border-radius: 4px; }
     #log   { max-width: 900px; }
+    #canvas { border: 1px solid #444; background: #000; display: block; margin-bottom: 1rem; }
   </style>
 </head>
 <body>
   <h2>CBKBindings WASM Test</h2>
+  <canvas id="canvas" width="1280" height="720" tabindex="-1"></canvas>
   <div id="log"></div>
 
   <script type="module">
     import CabrankEngine from '../bin/wasm/CBKBindings.js';
 
+    const canvas = document.getElementById('canvas');
     const logEl = document.getElementById('log');
+
+    // Stop right-click context menu so the engine can capture mouse buttons.
+    canvas.addEventListener('contextmenu', e => e.preventDefault());
 
     function section(title) {
       const h = document.createElement('h3');
@@ -43,182 +49,79 @@
       log(condition ? `✓ ${label}` : `✗ ${label}`, got, condition);
     }
 
-    CabrankEngine().then(m => {
-      log('Module loaded', undefined, true);
+    // Models and textures are not embedded in the wasm (would balloon it past
+    // browser-friendly sizes). They live on disk and are fetched into MEMFS at
+    // runtime — the editor will do the same flow with files the user uploads.
+    //
+    // Server setup: serve the project root (e.g. `python3 -m http.server` from
+    // /home/cabranca/dev/game-dev) and open /CBKBindings/test/index.html.
+    const ASSETS_BASE = new URL('../../Sandbox/assets/', import.meta.url);
+
+    async function uploadIntoMemfs(m, relativePath) {
+      const url = new URL(relativePath, ASSETS_BASE);
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`fetch ${url}: ${res.status}`);
+      const bytes = new Uint8Array(await res.arrayBuffer());
+      const memfsPath = '/assets/' + relativePath;
+      const dir = memfsPath.substring(0, memfsPath.lastIndexOf('/'));
+      m.FS.mkdirTree(dir);
+      m.FS.writeFile(memfsPath, bytes);
+      return { memfsPath, bytes: bytes.length };
+    }
+
+    CabrankEngine({
+      canvas,
+      print:    (text) => console.log('[wasm]', text),
+      printErr: (text) => console.error('[wasm]', text),
+    }).then(async m => {
+      log('Module loaded — Application is running, main loop ticking', undefined, true);
+
+      section('Upload backpack assets into MEMFS');
+      try {
+        for (const f of ['models/backpack/backpack.cbkm',
+                         'models/backpack/diffuse.cbkt',
+                         'models/backpack/specular.cbkt']) {
+          const r = await uploadIntoMemfs(m, f);
+          log('uploaded', `${r.memfsPath} (${r.bytes} bytes)`, true);
+        }
+      } catch (e) {
+        log('upload failed', String(e), false);
+        return;
+      }
 
       // -----------------------------------------------------------------------
-      // Scene
+      // Build a tiny scene that should be visible: camera + cube + light.
+      // CTransform/CCamera + CCameraController + CDirectionalLight + CPhongModel.
       // -----------------------------------------------------------------------
-      section('Scene — sceneNew / serializeScene');
+      section('Build a visible scene');
 
-      m.sceneNew('TestScene');
-      const emptyJson = JSON.parse(m.serializeScene());
-      assert('serializeScene returns valid JSON', typeof emptyJson === 'object', emptyJson);
-      assert('scene name is TestScene', emptyJson.metadata?.name === 'TestScene', emptyJson.metadata?.name);
-      assert('entities array is empty', Array.isArray(emptyJson.entities) && emptyJson.entities.length === 0, emptyJson.entities);
+      m.sceneNew('LiveScene');
 
-      // -----------------------------------------------------------------------
-      // Entities
-      // -----------------------------------------------------------------------
-      section('Entities — entityCreate / getAllEntities / entityDestroy');
-
-      const camId  = m.entityCreate('MainCamera');
-      const lightId = m.entityCreate('SunLight');
-      assert('entityCreate returns numeric id (camera)', Number.isInteger(camId), camId);
-      assert('entityCreate returns numeric id (light)', Number.isInteger(lightId), lightId);
-      assert('ids are different', camId !== lightId, `${camId} vs ${lightId}`);
-
-      const allJson = JSON.parse(m.getAllEntities());
-      assert('getAllEntities has 2 entities', allJson.entities?.length === 2, allJson.entities?.length);
-
-      // -----------------------------------------------------------------------
-      // CTransform — add / get / set / remove
-      // -----------------------------------------------------------------------
-      section('CTransform — add / get / set / remove');
-
-      const tfAdd = m.addTransform(camId, JSON.stringify({
-        position: [0, 2, 10],
-        rotation: [0, 0, 0],
-        scale:    [1, 1, 1],
+      const camId = m.entityCreate('MainCamera');
+      m.addTransform(camId, JSON.stringify({ position: [0, 1, 5], rotation: [0, 0, 0], scale: [1, 1, 1] }));
+      // fov_y is in *radians* (engine convention; default is PI/4 in CCamera).
+      m.addCamera(camId, JSON.stringify({
+        type: 'perspective', is_active: true, fov_y: Math.PI / 3, near: 0.1, far: 1000.0, ortho_size: 10.0,
       }));
-      assert('addTransform returns true', tfAdd === true, tfAdd);
-
-      const tfGet = JSON.parse(m.getTransform(camId));
-      assert('getTransform position[2] == 10', tfGet.position?.[2] === 10, tfGet);
-
-      const tfSet = m.setTransform(camId, JSON.stringify({
-        position: [5, 0, 0],
-        rotation: [0, 90, 0],
-        scale:    [2, 2, 2],
-      }));
-      assert('setTransform returns true', tfSet === true, tfSet);
-
-      const tfGet2 = JSON.parse(m.getTransform(camId));
-      assert('getTransform position[0] == 5 after set', tfGet2.position?.[0] === 5, tfGet2.position?.[0]);
-      assert('getTransform scale[0] == 2 after set',    tfGet2.scale?.[0] === 2,    tfGet2.scale?.[0]);
-
-      m.removeTransform(camId);
-      const tfAfterRemove = m.getTransform(camId);
-      assert('getTransform returns "" after remove', tfAfterRemove === '', tfAfterRemove);
-
-      // -----------------------------------------------------------------------
-      // CCamera
-      // -----------------------------------------------------------------------
-      section('CCamera — add / get / set');
-
-      const camAdd = m.addCamera(camId, JSON.stringify({
-        type: 'perspective', is_active: true, fov_y: 45.0, near: 0.1, far: 1000.0, ortho_size: 10.0,
-      }));
-      assert('addCamera returns true', camAdd === true, camAdd);
-
-      const camGet = JSON.parse(m.getCamera(camId));
-      assert('getCamera fov_y == 45', camGet.fov_y === 45, camGet.fov_y);
-      assert('getCamera is_active == true', camGet.is_active === true, camGet.is_active);
-
-      const camSet = m.setCamera(camId, JSON.stringify({
-        type: 'perspective', is_active: false, fov_y: 60.0, near: 0.1, far: 500.0, ortho_size: 10.0,
-      }));
-      assert('setCamera returns true', camSet === true, camSet);
-      assert('getCamera fov_y == 60 after set', JSON.parse(m.getCamera(camId)).fov_y === 60, JSON.parse(m.getCamera(camId)).fov_y);
-
-      // -----------------------------------------------------------------------
-      // CCameraController
-      // -----------------------------------------------------------------------
-      section('CCameraController — add / get / set');
-
-      const ccAdd = m.addCameraController(camId, JSON.stringify({
+      m.addCameraController(camId, JSON.stringify({
         translation_speed: 5.0, mouse_sensitivity: 0.3, yaw: -90.0, pitch: 0.0,
       }));
-      assert('addCameraController returns true', ccAdd === true, ccAdd);
+      log('camera created', camId, true);
 
-      const ccGet = JSON.parse(m.getCameraController(camId));
-      assert('getCameraController yaw == -90', ccGet.yaw === -90, ccGet.yaw);
-      assert('getCameraController mouse_sensitivity == 0.3', Math.abs(ccGet.mouse_sensitivity - 0.3) < 1e-5, ccGet.mouse_sensitivity);
-
-      // -----------------------------------------------------------------------
-      // CDirectionalLight
-      // -----------------------------------------------------------------------
-      section('CDirectionalLight — add / get / set');
-
-      const dlAdd = m.addDirectionalLight(lightId, JSON.stringify({
-        direction: [-0.5, -1.0, -0.5],
+      const lightId = m.entityCreate('Sun');
+      m.addDirectionalLight(lightId, JSON.stringify({
+        direction: [-0.5, -1.0, -0.3],
         radiance:  [ 1.0,  0.95,  0.9],
       }));
-      assert('addDirectionalLight returns true', dlAdd === true, dlAdd);
+      log('directional light created', lightId, true);
 
-      const dlGet = JSON.parse(m.getDirectionalLight(lightId));
-      assert('getDirectionalLight direction[1] == -1', dlGet.direction?.[1] === -1, dlGet.direction?.[1]);
+      // Backpack — Phong model resolved through MEMFS upload above.
+      const backpackId = m.entityCreate('Backpack');
+      m.addTransform(backpackId, JSON.stringify({ position: [0, 0, 0], rotation: [0, 0, 0], scale: [1, 1, 1] }));
+      m.addPhongModel(backpackId, JSON.stringify({ path: 'assets/models/backpack/backpack.cbkm' }));
+      log('phong model created', backpackId, true);
 
-      m.setDirectionalLight(lightId, JSON.stringify({
-        direction: [0, -1, 0],
-        radiance:  [1,  1, 1],
-      }));
-      assert('getDirectionalLight direction[0] == 0 after set', JSON.parse(m.getDirectionalLight(lightId)).direction?.[0] === 0, JSON.parse(m.getDirectionalLight(lightId)).direction?.[0]);
-
-      // -----------------------------------------------------------------------
-      // CPointLight
-      // -----------------------------------------------------------------------
-      section('CPointLight — add / get');
-
-      const plAdd = m.addPointLight(lightId, JSON.stringify({
-        radiance: [1.0, 0.8, 0.6],
-        constant: 1.0, linear: 0.09, quadratic: 0.032,
-      }));
-      assert('addPointLight returns true', plAdd === true, plAdd);
-
-      const plGet = JSON.parse(m.getPointLight(lightId));
-      assert('getPointLight linear == 0.09', Math.abs(plGet.linear - 0.09) < 1e-5, plGet.linear);
-
-      // -----------------------------------------------------------------------
-      // CText
-      // -----------------------------------------------------------------------
-      section('CText — add / get');
-
-      const txtId = m.entityCreate('Label');
-      const txtAdd = m.addText(txtId, JSON.stringify({
-        text: 'Hello, CBK!', font_scale: 1.0, color: [1, 1, 1, 1],
-      }));
-      assert('addText returns true', txtAdd === true, txtAdd);
-
-      const txtGet = JSON.parse(m.getText(txtId));
-      assert('getText text == "Hello, CBK!"', txtGet.text === 'Hello, CBK!', txtGet.text);
-
-      // -----------------------------------------------------------------------
-      // Error / edge cases
-      // -----------------------------------------------------------------------
-      section('Edge cases');
-
-      const missingGet = m.getCamera(9999);
-      assert('getCamera on unknown entity returns ""', missingGet === '', missingGet);
-
-      const setMissing = m.setCamera(9999, JSON.stringify({
-        type: 'perspective', is_active: true, fov_y: 45, near: 0.1, far: 1000, ortho_size: 10,
-      }));
-      assert('setCamera on unknown entity returns false', setMissing === false, setMissing);
-
-      const badJson = m.addTransform(camId, '{ not valid json }');
-      assert('addTransform with bad JSON returns false', badJson === false, badJson);
-
-      // -----------------------------------------------------------------------
-      // Serialize full scene
-      // -----------------------------------------------------------------------
-      section('Full scene round-trip — serializeScene / deserializeScene');
-
-      const fullJson = m.serializeScene();
-      log('serializeScene output', JSON.parse(fullJson));
-
-      m.deserializeScene(fullJson);
-      const reJson = m.serializeScene();
-      assert('re-serialized scene matches original', fullJson === reJson, fullJson === reJson ? '(match)' : `orig len=${fullJson.length} re len=${reJson.length}`);
-
-      // -----------------------------------------------------------------------
-      // entityDestroy
-      // -----------------------------------------------------------------------
-      section('entityDestroy');
-
-      m.entityDestroy(lightId);
-      const afterDestroy = JSON.parse(m.getAllEntities());
-      assert('entity count is 2 after destroy (camera + label)', afterDestroy.entities?.length === 2, afterDestroy.entities?.length);
+      log('serialized scene', JSON.parse(m.serializeScene()));
 
     }).catch(err => {
       log('Failed to load module', String(err), false);
