@@ -47,7 +47,7 @@ namespace cbk::platform::opengl {
 		// Once-per-frame GL error drain. On desktop this is redundant with the debug callback,
 		// but keeping it here surfaces WebGL 2 errors (which has no debug callback) at a fixed
 		// cadence so they show up close to the frame that produced them.
-		//checkGLError("endFrame");
+		checkGLError("endFrame");
 	}
 
 	void OpenGLRendererAPI::setViewport(uint32_t x, uint32_t y, uint32_t width, uint32_t height) {
