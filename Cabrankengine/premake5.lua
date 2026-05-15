@@ -1,102 +1,118 @@
-project "Cabrankengine"
-    kind "StaticLib"
-    language "C++"
-    cppdialect "C++23"
-    staticruntime "on"
+project("Cabrankengine")
+	kind("StaticLib")
+	language("C++")
+	cppdialect("C++23")
+	staticruntime("on")
 
-    targetdir("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
-    objdir("%{wks.location}/bin-int/" .. outputdir .. "/%{prj.name}")
+	targetdir("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
+	objdir("%{wks.location}/bin-int/" .. outputdir .. "/%{prj.name}")
 
-    
+	files({
+		"src/Cabrankengine/**.h",
+		"src/Cabrankengine/**.cpp",
+	})
 
-    files
-    {
-        "src/Cabrankengine/**.h",
-		"src/Cabrankengine/**.cpp"
-    }
-    
-    externalincludedirs
-    {
-        "src",
-        "%{IncludeDir.spdlog}", "%{IncludeDir.Common}", "%{IncludeDir.GLFW}", "%{IncludeDir.glad}", "%{IncludeDir.ImGui}",
-        "%{IncludeDir.json}", "%{IncludeDir.FreeType}", "%{IncludeDir.lz4}"
-    }
+	externalincludedirs({
+		"src",
+		"%{IncludeDir.spdlog}",
+		"%{IncludeDir.Common}",
+		"%{IncludeDir.GLFW}",
+		"%{IncludeDir.glad}",
+		"%{IncludeDir.ImGui}",
+		"%{IncludeDir.json}",
+		"%{IncludeDir.FreeType}",
+		"%{IncludeDir.lz4}",
+	})
 
-    links { "Common", "GLFW", "ImGui", "FreeType" }
+	links({ "Common", "GLFW", "ImGui", "FreeType" })
 
-    filter "system:windows"
-        systemversion "latest"
-        buildoptions { "/utf-8" }
+	filter("system:windows")
+		systemversion("latest")
+		buildoptions({ "/utf-8" })
 
-        pchheader "pch.h"
-	    pchsource "src/pch.cpp"
-        forceincludes { "pch.h" }
+		pchheader("pch.h")
+		pchsource("src/pch.cpp")
+		forceincludes({ "pch.h" })
 
-        files 
-        { 
-            "src/pch.h",
-            "src/pch.cpp",
-            "src/Platform/Windows/**.h",
-            "src/Platform/Windows/**.cpp",
-            "src/Platform/OpenGL/**.h",
-            "src/Platform/OpenGL/**.cpp",
-        }
+		files({
+			"src/pch.h",
+			"src/pch.cpp",
+			"src/Platform/Windows/**.h",
+			"src/Platform/Windows/**.cpp",
+			"src/Platform/OpenGL/**.h",
+			"src/Platform/OpenGL/**.cpp",
+		})
 
-        links {"opengl32.lib", "glad" }
-        defines {"GLFW_INCLUDE_NONE"}
+		externalincludedirs({ "%{IncludeDir.vulkan}" })
+		links({ "opengl32.lib", "glad" })
+		defines({ "GLFW_INCLUDE_NONE" })
 
-    filter "system:linux"
-        systemversion "latest"
-        pic "on"
+	filter("system:linux")
+		systemversion("latest")
+		pic("on")
 
-        pchheader "pch.h"
-	    pchsource "src/pch.cpp"
+		pchheader("pch.h")
+		pchsource("src/pch.cpp")
 
-        files 
-        { 
-            "src/Platform/Linux/**.h",
-            "src/Platform/Linux/**.cpp",
-            "src/Platform/OpenGL/**.h",
-            "src/Platform/OpenGL/**.cpp",
-        }
+		files({
+			"src/Platform/Linux/**.h",
+			"src/Platform/Linux/**.cpp",
+			"src/Platform/OpenGL/**.h",
+			"src/Platform/OpenGL/**.cpp",
+			"src/Platform/Vulkan/**.h",
+			"src/Platform/Vulkan/**.cpp",
+		})
 
-        includedirs { "src" }
-        links { "X11", "Xrandr", "Xi", "Xxf86vm", "Xcursor", "pthread", "dl", "GL", "glad" }
+	includedirs({ "src" })
+	externalincludedirs({ "%{IncludeDir.vulkan}" })
+	libdirs({ "%{wks.location}/Cabrankengine/vendor/vulkan/lib" })
+	links({
+		"X11",
+		"Xrandr",
+		"Xi",
+		"Xxf86vm",
+		"Xcursor",
+		"pthread",
+		"dl",
+		"GL",
+		"glad",
+		"slang",
+		"slang-compiler",
+	})
 
-    filter "system:macosx"
-        systemversion "12.0"
-        pic "On"
-        
-        pchheader "src/pch.h"
-	    pchsource "src/pch.cpp"
+	filter("system:macosx")
+		systemversion("12.0")
+		pic("On")
 
-        defines { "IMGUI_IMPL_METAL_CPP" }
+		pchheader("src/pch.h")
+		pchsource("src/pch.cpp")
 
-        files 
-        { 
-            "src/Platform/MacOS/**.h",
-            "src/Platform/MacOS/**.cpp",
-            "src/Platform/Metal/**.h",
-            "src/Platform/Metal/**.cpp",
-            "src/Platform/Metal/**.mm",
-            "vendor/imgui/backends/imgui_impl_metal.mm"
-        }
+		defines({ "IMGUI_IMPL_METAL_CPP" })
 
-        removefiles { "src/Cabrankengine/ImGui/ImGuiBuild.cpp" }
+		files({
+		"src/Platform/MacOS/**.h",
+		"src/Platform/MacOS/**.cpp",
+		"src/Platform/Metal/**.h",
+		"src/Platform/Metal/**.cpp",
+		"src/Platform/Metal/**.mm",
+		"vendor/imgui/backends/imgui_impl_metal.mm",
+		})
 
-        externalincludedirs { "%{IncludeDir.Metal}" }
+		removefiles({ "src/Cabrankengine/ImGui/ImGuiBuild.cpp" })
 
-        links { "Cocoa.framework", "Foundation.framework", "Metal.framework", "QuartzCore.framework" }
+		externalincludedirs({ "%{IncludeDir.Metal}" })
 
-    filter "configurations:Debug"
-        defines "CBK_DEBUG"
-        runtime "Debug"
-        symbols "on"
+		links({ "Cocoa.framework", "Foundation.framework", "Metal.framework", "QuartzCore.framework" })
 
-    filter "configurations:Release"
-        defines "CBK_RELEASE"
-        runtime "Release"
-        optimize "on"
+		filter("configurations:Debug")
+		defines("CBK_DEBUG")
+		runtime("Debug")
+		symbols("on")
 
-    filter "files:**.mm"
-        flags { "NoPCH" }
+	filter("configurations:Release")
+		defines("CBK_RELEASE")
+		runtime("Release")
+		optimize("on")
+
+	filter("files:**.mm")
+	flags({ "NoPCH" })
