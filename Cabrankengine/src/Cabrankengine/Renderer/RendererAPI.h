@@ -11,7 +11,7 @@ namespace cbk::rendering {
 	// RendererAPI is an abstract class that defines the interface for the low level rendering operations.
 	class RendererAPI {
 		public:
-			enum class API { None = 0, OpenGL = 1, Metal = 2 }; // Enum representing the different rendering APIs supported.
+			enum class API { None = 0, OpenGL = 1, Metal = 2, Vulkan = 3 }; // Enum representing the different rendering APIs supported.
 
 			virtual ~RendererAPI() = default;
 
