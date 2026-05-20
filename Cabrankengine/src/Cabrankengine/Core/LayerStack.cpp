@@ -11,8 +11,13 @@ namespace cbk {
 
 	LayerStack::~LayerStack()
 	{
-		for (Layer* layer : m_Layers)
+		// onDetach releases backend resources (e.g. ImGui's Vulkan objects). It must
+		// run before the renderer device is gone — ~LayerStack precedes the Window's
+		// destruction, so the device is still alive here.
+		for (Layer* layer : m_Layers) {
+			layer->onDetach();
 			delete layer;
+		}
 	}
 
 	void LayerStack::pushLayer(Layer* layer)

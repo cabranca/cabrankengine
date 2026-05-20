@@ -44,12 +44,7 @@ namespace cbk::ecs {
 		void update(Registry& reg, float dt) override;
 	};
 
-	class PhongRenderSystem : public ISystem {
-	  public:
-		void update(Registry& reg, float dt) override;
-	};
-
-	class PBRRenderSystem : public ISystem {
+	class ModelRenderSystem : public ISystem {
 	  public:
 		void update(Registry& reg, float dt) override;
 	};

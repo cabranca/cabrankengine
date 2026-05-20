@@ -28,14 +28,20 @@ namespace cbk {
 
     void LinuxWindow::onUpdate() {
         glfwPollEvents();
+#ifdef CBK_RENDERER_OPENGL
         m_Context->swapBuffers();
+#endif
+        // Vulkan presents via vkQueuePresentKHR inside the RendererAPI; no GLFW swap call here.
     }
 
     void LinuxWindow::setVSync(bool enabled) {
+#ifdef CBK_RENDERER_OPENGL
         if (enabled)
             glfwSwapInterval(1);
         else
             glfwSwapInterval(0);
+#endif
+        // Vulkan: vsync is the swapchain present mode (FIFO_KHR), not a GLFW knob.
         m_Data.VSync = enabled;
     }
 
@@ -44,8 +50,8 @@ namespace cbk {
     }
 
 	rendering::GraphicsContext* LinuxWindow::getContext() const {
-		return m_Context;
-	}
+        return m_Context.get();
+    }
 
 	void LinuxWindow::init(const WindowProps& props) {
 		m_Data.Title = props.Title;
@@ -61,9 +67,14 @@ namespace cbk {
             s_GLFWInitialized = true;
         }
 
+#ifdef CBK_RENDERER_VULKAN
+        // Vulkan owns the surface, so GLFW must not create an OpenGL context.
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+#endif
+
         m_Window = glfwCreateWindow(props.Width, props.Height, m_Data.Title.c_str(), nullptr, nullptr);
         
-        m_Context = new platform::opengl::OpenGLContext(m_Window);
+        m_Context = rendering::GraphicsContext::create(m_Window);
 		m_Context->init();
 
         glfwSetWindowUserPointer(m_Window, &m_Data);
@@ -143,6 +154,10 @@ namespace cbk {
 	}
 
 	void LinuxWindow::shutdown() {
+        // Tear down the graphics backend (Vulkan device/allocator/instance, or no-op
+        // for OpenGL) before the surface/window goes away.
+        if (m_Context)
+            m_Context->shutdown();
         glfwDestroyWindow(m_Window);
     }
 

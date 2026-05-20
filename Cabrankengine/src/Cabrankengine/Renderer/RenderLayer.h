@@ -27,8 +27,7 @@ namespace cbk::rendering {
 		Ref<ecs::DirectionalLightSystem> m_DirLightSystem = nullptr;
 		Ref<ecs::PointLightSystem> m_PointLightSystem = nullptr;
 		Ref<ecs::SpriteRenderSystem> m_SpriteRenderSystem = nullptr;
-		Ref<ecs::PhongRenderSystem> m_PhongRenderSystem = nullptr;
-		Ref<ecs::PBRRenderSystem> m_PBRRenderSystem = nullptr;
+		Ref<ecs::ModelRenderSystem> m_ModelRenderSystem = nullptr;
 		Ref<ecs::TextRenderSystem> m_TextRenderSystem = nullptr;
 
 		EditorCamera m_EditorCamera;

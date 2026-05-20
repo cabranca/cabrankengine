@@ -33,11 +33,11 @@ namespace cbk {
             // Returns whether VSync is enabled or not
             virtual bool isVSync() const override;
 
+            rendering::GraphicsContext* getContext() const override;
+
             // Returns the Windows specific window.
 		    // TODO: I think it must be marked override
 		    virtual void* getNativeWindow() const override { return m_Window; }
-
-            rendering::GraphicsContext* getContext() const override;
 
         private:
             // Initialize the window from the given properties
@@ -47,7 +47,7 @@ namespace cbk {
             void shutdown();
 
             GLFWwindow* m_Window; // Actual window object
-		    rendering::GraphicsContext* m_Context; // Graphics context for rendering
+		    Scope<rendering::GraphicsContext> m_Context; // Graphics context for rendering
 
             // Data of the window to work with GLFW
             struct WindowData {

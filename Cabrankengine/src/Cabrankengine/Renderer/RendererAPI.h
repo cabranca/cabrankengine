@@ -2,11 +2,13 @@
 
 #include <pch.h>
 
+#include <Cabrankengine/Math/Mat4.h>
 #include <Cabrankengine/Math/Vector4.h>
 
 namespace cbk::rendering {
 
-	class VertexArray; // Forward declaration of VertexArray class.
+	class GeometryDescriptor; // Forward declaration of VertexArray class.
+	class Material;
 
 	// RendererAPI is an abstract class that defines the interface for the low level rendering operations.
 	class RendererAPI {
@@ -18,17 +20,23 @@ namespace cbk::rendering {
 			// Initializes the renderer API. This method should be called before any rendering operations.
 			virtual void init() = 0;
 
+			virtual void shutdown() = 0;
+
 			// Sets the color used to clear the screen.
 			virtual void setClearColor(const math::Vector4& color) = 0;
 
 			// Clears the screen with the previously set clear color.
 			virtual void clear() = 0;
 
-			// Draws the vertex array vertices in order
-			virtual void draw(const Ref<VertexArray>& vertexArray) = 0;
+			virtual void beginFrame() = 0;
 
-			// Draws the indexed vertices from the vertex array.
-			virtual void drawIndexed(const Ref<VertexArray>& vertexArray, uint32_t indexCount = 0) = 0;
+			// Draws the vertex array vertices in order
+			virtual void draw(const Ref<GeometryDescriptor>& vertexArray) = 0;
+
+			// Draws the indexed vertices from the vertex array. The transform is the per-draw
+			// model matrix — backends consume it differently (uniform on GL, push constant on Vulkan).
+			virtual void drawIndexed(const Ref<Material>& material, const Ref<GeometryDescriptor>& vertexArray, const math::Mat4& transform,
+			                         uint32_t indexCount = 0) = 0;
 
 			virtual void endFrame() = 0;
 

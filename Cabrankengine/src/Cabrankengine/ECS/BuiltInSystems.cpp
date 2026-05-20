@@ -134,19 +134,12 @@ namespace cbk::ecs {
 		}
 	}
 
-	void PhongRenderSystem::update(Registry& reg, float dt) {
+	void ModelRenderSystem::update(Registry& reg, float dt) {
 		for (auto& e: m_Entities) {
 			auto transform = reg.getComponent<CTransform>(e).value();
-			auto model = reg.getComponent<CPhongModel>(e).value();
-			model->Res->draw(fromTransform(transform->Position, transform->Rotation, transform->Scale));
-		}
-	}
-
-	void PBRRenderSystem::update(Registry& reg, float dt) {
-		for (auto& e: m_Entities) {
-			auto transform = reg.getComponent<CTransform>(e).value();
-			auto model = reg.getComponent<CPBRModel>(e).value();
-			model->Res->draw(fromTransform(transform->Position, transform->Rotation, transform->Scale));
+			auto model     = reg.getComponent<CModel>(e).value();
+			if (model->Res)
+				model->Res->draw(fromTransform(transform->Position, transform->Rotation, transform->Scale));
 		}
 	}
 
@@ -167,8 +160,7 @@ namespace cbk::ecs {
 		reg.registerSystem<DirectionalLightSystem>();
 		reg.registerSystem<PointLightSystem>();
 		reg.registerSystem<SpriteRenderSystem>();
-		reg.registerSystem<PhongRenderSystem>();
-		reg.registerSystem<PBRRenderSystem>();
+		reg.registerSystem<ModelRenderSystem>();
 		reg.registerSystem<TextRenderSystem>();
 
 		Signature sig;
@@ -197,13 +189,8 @@ namespace cbk::ecs {
 
 		sig.reset();
 		sig.set(reg.getComponentType<CTransform>());
-		sig.set(reg.getComponentType<CPhongModel>());
-		reg.setSystemSignature<PhongRenderSystem>(sig);
-
-		sig.reset();
-		sig.set(reg.getComponentType<CTransform>());
-		sig.set(reg.getComponentType<CPBRModel>());
-		reg.setSystemSignature<PBRRenderSystem>(sig);
+		sig.set(reg.getComponentType<CModel>());
+		reg.setSystemSignature<ModelRenderSystem>(sig);
 
 		sig.reset();
 		sig.set(reg.getComponentType<CTransform>());

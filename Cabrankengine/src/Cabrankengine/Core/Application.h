@@ -62,7 +62,7 @@ namespace cbk {
 			bool onWindowResize(WindowResizeEvent& e);
 
 			std::unique_ptr<Window> m_Window; // Ptr to the app window
-			ImGuiLayer* m_ImGuiLayer; // ImGui layer for rendering the UI
+			ImGuiLayer* m_ImGuiLayer = nullptr; // ImGui layer for rendering the UI (null on Vulkan for now)
 			rendering::RenderLayer* m_RenderLayer;
 			bool m_Running; // Whether the app must stop or not
 			LayerStack m_LayerStack; // Stack of layers to forward the events to

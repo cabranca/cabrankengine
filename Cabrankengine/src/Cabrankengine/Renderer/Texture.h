@@ -42,7 +42,7 @@ namespace cbk::rendering {
 			virtual uint32_t getHeight() const = 0;
 
 			// Returns the texture's renderer ID, which is used by the graphics API to identify the texture.
-			virtual uint32_t getRendererID() const = 0;
+			virtual uint64_t getRendererID() const = 0;
 
 			// Returns the path to the texture file.
 			virtual const std::string& getPath() const = 0;

@@ -1,14 +1,17 @@
 #include <pch.h>
 #include "Renderer.h"
 
+#include <Cabrankengine/Scene/DefaultLibrary.h>
+
 #include "Lights.h"
 #include "Materials/Material.h"
 #include "Renderer2D.h"
 #include "RenderCommand.h"
+#include "Shader.h"
 #include "StorageBuffer.h"
-#include "TextRenderer.h"
 #include "UniformBuffer.h"
-#include "VertexArray.h"
+#include "GeometryDescriptor.h"
+#include "TextRenderer.h"
 
 
 namespace cbk::rendering {
@@ -55,14 +58,29 @@ namespace cbk::rendering {
 		CBK_PROFILE_FUNCTION();
 
 		RenderCommand::init();
-		Renderer2D::init();
-		TextRenderer::init();
+		// Scene UBO must exist before Renderer2D/TextRenderer init, because the
+		// Vulkan materials they create pull the scene descriptor set layout from it
+		// at pipeline-layout construction time.
 		s_SceneData->lightSSBO = StorageBuffer::create(sizeof(LightBufferHeader) + sizeof(PointLightGPU));
 		s_SceneUBO = UniformBuffer::create(sizeof(AltSceneData), 0);
+		Renderer2D::init();
+		TextRenderer::init();
 	}
 
 	void Renderer::shutdown() {
+		// Release GPU-backed resources while the Application/window/device are still
+		// alive. Anything held by program-scope statics (DefaultLibrary, ShaderLibrary,
+		// s_SceneUBO, s_SceneData->lightSSBO) would otherwise destruct after
+		// ~Application and segfault on Application::get().getWindow().getContext().
+		s_SceneUBO.reset();
+		if (s_SceneData)
+			s_SceneData->lightSSBO.reset();
+		scene::DefaultLibrary::shutdown();
+		ShaderLibrary::shutdown();
+
 		Renderer2D::shutdown();
+		TextRenderer::shutdown();
+		RenderCommand::shutdown();
 	}
 
 	void Renderer::beginScene(const math::Mat4& viewProjectionMatrix, const math::Vector3& cameraWorldPosition,
@@ -75,24 +93,30 @@ namespace cbk::rendering {
 		                    sizeof(AltSceneData)); // TODO: if this is the same size as in the initialization, why pass it again?
 		s_SceneData->lightEnvironment = environment;
 
+#ifndef CBK_RENDERER_VULKAN
 		uploadLightEnvironment();
+#endif
 	}
 
-	void Renderer::endScene() {
-		// endFrame() is now called once per frame in the application loop,
-		// after all rendering subsystems (Renderer, Renderer2D, etc.) are done.
-	}
+	void Renderer::endScene() {}
 
-	void Renderer::submit(const Ref<Shader>& shader, const Ref<VertexArray>& vertexArray, const Mat4& transform) {
+	void Renderer::submit(const Ref<Shader>& shader, const Ref<GeometryDescriptor>& desc, const Mat4& transform) {
+		// Shader-only path: no material → backend's drawIndexed can't reach a shader,
+		// so we set the model matrix here. Vulkan doesn't use this overload.
 		shader->bind();
 		shader->setMat4("u_Model", transform);
-		RenderCommand::drawIndexed(vertexArray);
+		RenderCommand::drawIndexed(nullptr, desc, transform);
 	}
 
-	void Renderer::submit(const Ref<Material>& material, const Ref<VertexArray>& vertexArray, const Mat4& transform) {
+	void Renderer::submit(const Ref<Material>& material, const Ref<GeometryDescriptor>& desc, const Mat4& transform) {
+		// Per-draw transform travels with the draw call. The OpenGL backend writes it as
+		// the u_Model uniform on the material's shader; Vulkan pushes it as a push constant.
 		material->bind();
-		material->getShader()->setMat4("u_Model", transform);
-		RenderCommand::drawIndexed(vertexArray);
+		RenderCommand::drawIndexed(material, desc, transform);
+	}
+
+	Ref<UniformBuffer> Renderer::getSceneUBO() {
+		return s_SceneUBO;
 	}
 
 	void Renderer::onWindowResize(uint32_t width, uint32_t height) {

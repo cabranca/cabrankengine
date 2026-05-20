@@ -15,7 +15,7 @@
 #ifdef __linux__
 	#ifdef __x86_64__
 		#define CBK_PLATFORM_LINUX
-		#define CBK_RENDERER_OPENGL
+		#define CBK_RENDERER_VULKAN
 	#else
 		#error "Cabrankengine only supports 64-bit Linux!"
 	#endif

@@ -4,11 +4,11 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
-#include "Buffer.h"
+#include "GeometryDescriptor.h"
+#include "Materials/TextMaterial.h"
 #include "RenderCommand.h"
 #include "Shader.h"
 #include "Texture.h"
-#include "VertexArray.h"
 
 namespace cbk::rendering {
 
@@ -27,9 +27,8 @@ namespace cbk::rendering {
 		static const uint32_t maxIndices = maxQuads * 6;
 		static const uint32_t maxTextureSlots = 32;
 
-		Ref<VertexArray> textVertexArray;
-		Ref<VertexBuffer> textVertexBuffer;
-		Ref<Shader> textShader;
+		Ref<GeometryDescriptor> textVertexDesc;
+		Ref<TextMaterial> textMaterial;
 
 		uint32_t quadIndexCount = 0;
 		TextVertex* textVertexBufferBase = nullptr;
@@ -42,15 +41,6 @@ namespace cbk::rendering {
 	static TextRendererData s_Data;
 
 	void TextRenderer::init() {
-		s_Data.textVertexArray = VertexArray::create();
-
-		s_Data.textVertexBuffer = VertexBuffer::create(s_Data.maxVertices * sizeof(TextVertex));
-		s_Data.textVertexBuffer->setLayout({ { ShaderDataType::Float3, "pos" },
-		                                     { ShaderDataType::Float4, "color" },
-		                                     { ShaderDataType::Float2, "texCoord" },
-		                                     { ShaderDataType::Float, "texIndex" } });
-		s_Data.textVertexArray->addVertexBuffer(s_Data.textVertexBuffer);
-
 		s_Data.textVertexBufferBase = new TextVertex[s_Data.maxVertices];
 		uint32_t* quadIndices = new uint32_t[s_Data.maxIndices];
 
@@ -67,29 +57,39 @@ namespace cbk::rendering {
 			offset += 4;
 		}
 
-		Ref<IndexBuffer> textIndexBuffer = IndexBuffer::create(quadIndices, s_Data.maxIndices);
-		s_Data.textVertexArray->setIndexBuffer(textIndexBuffer);
+		s_Data.textVertexDesc =
+		    GeometryDescriptor::create(s_Data.maxVertices * sizeof(TextVertex), quadIndices, s_Data.maxIndices * sizeof(uint32_t),
+		                               { { ShaderDataType::Float3, "pos" },
+		                                 { ShaderDataType::Float4, "color" },
+		                                 { ShaderDataType::Float2, "texCoord" },
+		                                 { ShaderDataType::Float, "texIndex" } });
 		delete[] quadIndices;
 
-		s_Data.textShader = Shader::create("assets/shaders/Text");
-		s_Data.textShader->bind();
-
-		int32_t samplers[s_Data.maxTextureSlots];
-		for (uint32_t i = 0; i < s_Data.maxTextureSlots; i++)
-			samplers[i] = i;
-		
-		s_Data.textShader->setIntArray("u_Textures", s_Data.maxTextureSlots, samplers);
+		ShaderLibrary::load("assets/shaders/Text");
 
 		loadFont("assets/fonts/ocraext.ttf", 20);
+
+		// Material owns the batch's 32 texture slots and view-projection; the
+		// batcher repopulates the slots before each flush via setTextureSlot.
+		s_Data.textMaterial = TextMaterial::create();
 	}
 
 	void TextRenderer::shutdown() {
 		delete[] s_Data.textVertexBufferBase;
+		s_Data.textVertexBufferBase = nullptr;
+
+		// s_Data and s_Characters are program-scope statics; their Ref<>s would
+		// otherwise destruct after the Vulkan device/allocator are gone. Release the
+		// GPU-backed resources (glyph textures included) while the device is live.
+		for (auto& slot : s_Data.textureSlots)
+			slot.reset();
+		s_Data.textMaterial.reset();
+		s_Data.textVertexDesc.reset();
+		s_Characters.clear();
 	}
 
 	void TextRenderer::beginScene(const math::Mat4& viewProjection) {
-		s_Data.textShader->bind();
-		s_Data.textShader->setMat4("u_ViewProjection", viewProjection);
+		s_Data.textMaterial->setViewProjection(viewProjection);
 		startBatch();
 	}
 
@@ -98,15 +98,19 @@ namespace cbk::rendering {
 	}
 
 	void TextRenderer::flush() {
-		if (s_Data.quadIndexCount == 0) return;
+		if (s_Data.quadIndexCount == 0)
+			return;
 
 		uint32_t dataSize = (uint32_t)((uint8_t*)s_Data.textVertexBufferPtr - (uint8_t*)s_Data.textVertexBufferBase);
-		s_Data.textVertexBuffer->setData(s_Data.textVertexBufferBase, dataSize);
+		s_Data.textVertexDesc->setData(s_Data.textVertexBufferBase, dataSize);
 
 		for (uint32_t i = 0; i < s_Data.textureSlotIndex; i++)
-			s_Data.textureSlots[i]->bind(i);
+			s_Data.textMaterial->setTextureSlot(i, s_Data.textureSlots[i]);
 
-		RenderCommand::drawIndexed(s_Data.textVertexArray, s_Data.quadIndexCount);
+		// Vulkan: bind() is a no-op and drawIndexed records the descriptor set.
+		// OpenGL: bind() binds the shader + texture units, drawIndexed issues the draw.
+		s_Data.textMaterial->bind();
+		RenderCommand::drawIndexed(s_Data.textMaterial, s_Data.textVertexDesc, math::identityMat(), s_Data.quadIndexCount);
 	}
 
 	void TextRenderer::drawText(const std::string& text, math::Vector3 position, float scale, math::Vector4 color) {
@@ -116,7 +120,7 @@ namespace cbk::rendering {
 		for (char c: text) {
 			if (s_Data.quadIndexCount >= s_Data.maxIndices)
 				nextBatch();
-			
+
 			Character ch = s_Characters.at(c);
 
 			float xpos = x + ch.bearing.x * scale;
@@ -137,39 +141,39 @@ namespace cbk::rendering {
 			if (textureIndex == -1.f) {
 				if (s_Data.textureSlotIndex >= s_Data.maxTextureSlots)
 					nextBatch();
-				
-					textureIndex = (float)s_Data.textureSlotIndex;
-					s_Data.textureSlots[s_Data.textureSlotIndex] = ch.texture;
-					s_Data.textureSlotIndex++;
+
+				textureIndex = (float)s_Data.textureSlotIndex;
+				s_Data.textureSlots[s_Data.textureSlotIndex] = ch.texture;
+				s_Data.textureSlotIndex++;
 			}
 
-            s_Data.textVertexBufferPtr->position = { xpos, ypos + h, position.z };
-            s_Data.textVertexBufferPtr->color = color;
-            s_Data.textVertexBufferPtr->texCoord = { 0.0f, 0.0f };
-            s_Data.textVertexBufferPtr->texIndex = textureIndex;
-            s_Data.textVertexBufferPtr++;
+			s_Data.textVertexBufferPtr->position = { xpos, ypos + h, position.z };
+			s_Data.textVertexBufferPtr->color = color;
+			s_Data.textVertexBufferPtr->texCoord = { 0.0f, 0.0f };
+			s_Data.textVertexBufferPtr->texIndex = textureIndex;
+			s_Data.textVertexBufferPtr++;
 
-            s_Data.textVertexBufferPtr->position = { xpos + w, ypos + h, position.z };
-            s_Data.textVertexBufferPtr->color = color;
-            s_Data.textVertexBufferPtr->texCoord = { 1.0f, 0.0f };
-            s_Data.textVertexBufferPtr->texIndex = textureIndex;
-            s_Data.textVertexBufferPtr++;
+			s_Data.textVertexBufferPtr->position = { xpos + w, ypos + h, position.z };
+			s_Data.textVertexBufferPtr->color = color;
+			s_Data.textVertexBufferPtr->texCoord = { 1.0f, 0.0f };
+			s_Data.textVertexBufferPtr->texIndex = textureIndex;
+			s_Data.textVertexBufferPtr++;
 
-            s_Data.textVertexBufferPtr->position = { xpos + w, ypos, position.z };
-            s_Data.textVertexBufferPtr->color = color;
-            s_Data.textVertexBufferPtr->texCoord = { 1.0f, 1.0f };
-            s_Data.textVertexBufferPtr->texIndex = textureIndex;
-            s_Data.textVertexBufferPtr++;
+			s_Data.textVertexBufferPtr->position = { xpos + w, ypos, position.z };
+			s_Data.textVertexBufferPtr->color = color;
+			s_Data.textVertexBufferPtr->texCoord = { 1.0f, 1.0f };
+			s_Data.textVertexBufferPtr->texIndex = textureIndex;
+			s_Data.textVertexBufferPtr++;
 
-            s_Data.textVertexBufferPtr->position = { xpos, ypos, position.z };
-            s_Data.textVertexBufferPtr->color = color;
-            s_Data.textVertexBufferPtr->texCoord = { 0.0f, 1.0f };
-            s_Data.textVertexBufferPtr->texIndex = textureIndex;
-            s_Data.textVertexBufferPtr++;
+			s_Data.textVertexBufferPtr->position = { xpos, ypos, position.z };
+			s_Data.textVertexBufferPtr->color = color;
+			s_Data.textVertexBufferPtr->texCoord = { 0.0f, 1.0f };
+			s_Data.textVertexBufferPtr->texIndex = textureIndex;
+			s_Data.textVertexBufferPtr++;
 
-            s_Data.quadIndexCount += 6;
+			s_Data.quadIndexCount += 6;
 
-            x += (ch.advance >> 6) * scale;
+			x += (ch.advance >> 6) * scale;
 		}
 	}
 
@@ -204,13 +208,13 @@ namespace cbk::rendering {
 		FT_Done_Face(face);
 		FT_Done_FreeType(ft);
 	}
-	
+
 	void TextRenderer::startBatch() {
 		s_Data.quadIndexCount = 0;
 		s_Data.textVertexBufferPtr = s_Data.textVertexBufferBase;
 		s_Data.textureSlotIndex = 0;
 	}
-	
+
 	void TextRenderer::nextBatch() {
 		flush();
 		startBatch();

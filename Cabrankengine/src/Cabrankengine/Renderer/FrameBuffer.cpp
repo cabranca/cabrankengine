@@ -16,6 +16,8 @@ namespace cbk::rendering {
 		return createRef<platform::opengl::OpenGLFrameBuffer>(spec);
 #elif defined(CBK_RENDERER_METAL)
 		return createRef<platform::metal::MetalFrameBuffer>(spec);
+#elif defined(CBK_RENDERER_VULKAN)
+        return nullptr; // TODO: Vulkan FrameBuffer not yet implemented
 #else
 		CBK_CORE_ASSERT(false, "No renderer API defined!");
 		return nullptr;

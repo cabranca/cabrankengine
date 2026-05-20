@@ -61,6 +61,10 @@ namespace cbk::rendering {
 			// Retrieves a shader from the library by its name.
 			static Ref<Shader> get(const std::string& name);
 
+			// Release all cached shaders. Call from Renderer::shutdown so the Refs
+			// destruct while the Vulkan device is still alive.
+			static void shutdown() { s_Shaders.clear(); }
+
 		private:
 			static inline std::unordered_map<std::string, Ref<Shader>> s_Shaders; // A map from the shader names to the shader references.
 	};

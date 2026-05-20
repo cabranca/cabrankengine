@@ -65,11 +65,12 @@ namespace cbk {
 
 			if (!m_Minimized) {
 				CBK_PROFILE_SCOPE("LayerStack OnUpdate");
+				RenderCommand::beginFrame();
 
 				for (Layer* layer : m_LayerStack)
 					layer->onUpdate(timestep);
 			}
-			 
+
 			m_ImGuiLayer->begin();
 			{
 				CBK_PROFILE_SCOPE("LayerStack OnImGuiRender");
@@ -77,12 +78,7 @@ namespace cbk {
 					layer->onImGuiRender();
 			}
 			m_ImGuiLayer->end();
-
-			// Finalize the frame's GPU commands (commit command buffer, present drawable).
-			// This is a no-op on OpenGL. On Metal it must happen exactly once per frame,
-			// after all rendering (Renderer, Renderer2D, TextRenderer, ImGui) is complete.
 			RenderCommand::endFrame();
-
 			m_Window->onUpdate();
 		}
 	}

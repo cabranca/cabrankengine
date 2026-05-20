@@ -164,6 +164,10 @@ namespace cbk {
 	void WindowsWindow::shutdown() {
 		CBK_PROFILE_FUNCTION();
 
+		// Tear down the graphics backend (Vulkan device/allocator/instance, or no-op
+		// for OpenGL) before the surface/window goes away.
+		if (m_Context)
+			m_Context->shutdown();
 		glfwDestroyWindow(m_Window);
 	}
 }

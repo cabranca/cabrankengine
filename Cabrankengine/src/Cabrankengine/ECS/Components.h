@@ -3,10 +3,10 @@
 #include <cstdint>
 
 #include <Cabrankengine/Math/VecTraits.h>
-#include <Cabrankengine/Renderer/Materials/PBRMaterial.h>
-#include <Cabrankengine/Renderer/Materials/PhongMaterial.h>
 #include <Cabrankengine/Renderer/Texture.h>
 #include <Cabrankengine/Scene/Model.h>
+
+#include <Common/BinaryFormats.h>
 
 namespace cbk::ecs {
 
@@ -48,14 +48,10 @@ namespace cbk::ecs {
 		float TilingFactor{ 1.f };
 	};
 
-	struct CPhongModel {
+	struct CModel {
 		std::string Path;
-		Ref<scene::Model<rendering::PhongMaterial>> Res;
-	};
-
-	struct CPBRModel {
-		std::string Path;
-		Ref<scene::Model<rendering::PBRMaterial>> Res;
+		common::MaterialKind Kind = common::MaterialKind::None;
+		Ref<scene::Model> Res;
 	};
 
 	struct CText {
