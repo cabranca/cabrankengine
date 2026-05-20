@@ -10,7 +10,7 @@ namespace cbk::scene::arch {
 		PhongModelArch(std::string_view path);
 
 		ecs::CTransform& transform();
-		ecs::CPhongModel& model();
+		ecs::CModel&     model();
 
 	  private:
 		ecs::Entity m_Entity;

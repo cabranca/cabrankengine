@@ -3,6 +3,8 @@
 #include <nlohmann/json.hpp>
 
 #include <Cabrankengine/ECS/Components.h>
+#include <Cabrankengine/Renderer/Materials/PBRMaterial.h>
+#include <Cabrankengine/Renderer/Materials/PhongMaterial.h>
 
 // nlohmann ADL serialization — functions live in the same namespace as their types.
 
@@ -112,29 +114,33 @@ inline void from_json(const nlohmann::json& j, CSprite& c) {
 #endif
 }
 
-inline void to_json(nlohmann::json& j, const CPhongModel& c) {
-    j = { { "path", c.Path } };
-    // Model Ref is omitted — recreated from Path on load
+NLOHMANN_JSON_SERIALIZE_ENUM(common::MaterialKind, {
+    { common::MaterialKind::None,  "none"  },
+    { common::MaterialKind::Phong, "phong" },
+    { common::MaterialKind::PBR,   "pbr"   },
+})
+
+inline void to_json(nlohmann::json& j, const CModel& c) {
+    j = {
+        { "path", c.Path },
+        { "kind", c.Kind },
+    };
+    // Model Ref is omitted — rebuilt from Path + Kind on load.
 }
 
-inline void from_json(const nlohmann::json& j, CPhongModel& c) {
+inline void from_json(const nlohmann::json& j, CModel& c) {
     j.at("path").get_to(c.Path);
+    j.at("kind").get_to(c.Kind);
 
 #ifndef CBK_WASM
-    c.Res = scene::Model<rendering::PhongMaterial>::create(c.Path);
-#endif
-}
-
-inline void to_json(nlohmann::json& j, const CPBRModel& c) {
-    j = { { "path", c.Path } };
-    // Model Ref is omitted — recreated from Path on load
-}
-
-inline void from_json(const nlohmann::json& j, CPBRModel& c) {
-    j.at("path").get_to(c.Path);
-
-#ifndef CBK_WASM
-    c.Res = scene::Model<rendering::PBRMaterial>::create(c.Path);
+    Ref<rendering::Material> material;
+    switch (c.Kind) {
+        case common::MaterialKind::Phong: material = rendering::PhongMaterial::create(); break;
+        case common::MaterialKind::PBR:   material = rendering::PBRMaterial::create();   break;
+        default: break;
+    }
+    if (material)
+        c.Res = scene::Model::create(c.Path, material);
 #endif
 }
 

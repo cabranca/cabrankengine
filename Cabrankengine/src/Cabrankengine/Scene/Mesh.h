@@ -4,26 +4,19 @@
 #include <Cabrankengine/Renderer/Materials/Material.h>
 #include <Cabrankengine/Renderer/Shader.h>
 #include <Cabrankengine/Renderer/Texture.h>
-#include <Cabrankengine/Renderer/VertexArray.h>
+#include <Cabrankengine/Renderer/GeometryDescriptor.h>
 
 namespace cbk::scene {
-
-	struct Vertex {
-		math::Vector3 position;
-		math::Vector3 normal;
-		math::Vector2 texCoords;
-		math::Vector3 tangent;
-	};
 
 	enum class TextureType { None = 0, Diffuse, Specular, Normal, Height, Ambient };
 
 	class Mesh {
 	  public:
-		Mesh(std::vector<Vertex> vertices, std::vector<uint32_t> indices, Ref<rendering::Material> material);
+		Mesh(std::vector<rendering::Vertex> vertices, std::vector<uint32_t> indices, Ref<rendering::Material> material);
 		void draw(const math::Mat4& transform);
 
 	  private:
-		Ref<rendering::VertexArray> m_VertexArray;
+		Ref<rendering::GeometryDescriptor> m_Descriptor;
 		Ref<rendering::Material> m_Material;
 	};
 } // namespace cbk::scene

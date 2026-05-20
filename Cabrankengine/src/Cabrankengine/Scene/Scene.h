@@ -7,7 +7,7 @@ namespace cbk::scene {
 
 	struct SceneMetadata {
 		std::string Name = "DefaultScene";
-		math::Vector4 BackgroundColor{ 0.2f, 0.2f, 0.2f, 1.f };
+		math::Vector4 BackgroundColor{ 0.0f, 0.0f, 0.0f, 1.f };
 		math::Vector4 AmbientColor{ 1.f };
 	};
 

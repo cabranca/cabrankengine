@@ -2,9 +2,35 @@
 
 #include "PhongMaterial.h"
 
+#include <Cabrankengine/Renderer/RendererAPI.h>
+
+#ifdef CBK_RENDERER_OPENGL
+	#include <Platform/OpenGL/OpenGLPhongMaterial.h>
+#endif
+
+#ifdef CBK_RENDERER_VULKAN
+	#include <Platform/Vulkan/VulkanPhongMaterial.h>
+#endif
+
 namespace cbk::rendering {
 
-	PhongMaterial::PhongMaterial() : Material(ShaderLibrary::get("Phong")) {}
+	Ref<PhongMaterial> PhongMaterial::create() {
+#ifdef CBK_RENDERER_OPENGL
+		return createRef<platform::opengl::OpenGLPhongMaterial>();
+#elif defined(CBK_RENDERER_VULKAN)
+		return createRef<platform::vk::VulkanPhongMaterial>();
+#else
+		CBK_CORE_ASSERT(false, "No renderer API defined!");
+		return nullptr;
+#endif
+	}
+
+	PhongMaterial::PhongMaterial() : Material(ShaderLibrary::get("Phong")) {
+		// Default texture slots so Vulkan descriptor sets can be written immediately
+		// even before a model loader supplies real maps.
+		m_DiffuseMap  = scene::DefaultLibrary::getWhiteTexture();
+		m_SpecularMap = scene::DefaultLibrary::getWhiteTexture();
+	}
 
 	void PhongMaterial::setDiffuseMap(const Ref<Texture2D>& texture) {
 		m_DiffuseMap = texture;
@@ -18,25 +44,16 @@ namespace cbk::rendering {
 		m_Shininess = shininess;
 	}
 
-	// Esta es la función clave que llama el Renderer antes de dibujar
-	void PhongMaterial::bind() const {
-		m_Shader->bind();
-
-		// 1. Configurar propiedades escalares
-		// Nota: "material.shininess" debe coincidir con tu struct en Lightning.glsl
-		m_Shader->setFloat("material.shininess", m_Shininess);
-
-		// 2. Configurar Texturas (Slots fijos por convención)
-		// Slot 0 = Diffuse
-		if (m_DiffuseMap) {
-			m_DiffuseMap->bind(0);
-			m_Shader->setInt("material.diffuse", 0);
-		}
-
-		// Slot 1 = Specular
-		if (m_SpecularMap) {
-			m_SpecularMap->bind(1);
-			m_Shader->setInt("material.specular", 1);
+	void PhongMaterial::applyTexture(common::TextureType type, const Ref<Texture2D>& texture) {
+		switch (type) {
+			case common::TextureType::Diffuse:  setDiffuseMap(texture); break;
+			case common::TextureType::Specular: setSpecularMap(texture); break;
+			default: break;
 		}
 	}
+
+	void PhongMaterial::applyProperty(uint32_t key, float value) {
+		if (key == 1) setShininess(value); // 1 = Shininess (see Common/BinaryFormats.h property keys)
+	}
+
 } // namespace cbk::rendering

@@ -3,6 +3,7 @@
 #include <Cabrankengine/Renderer/Shader.h>
 #include <Cabrankengine/Renderer/Texture.h>
 #include <Cabrankengine/Scene/DefaultLibrary.h>
+#include <Common/BinaryFormats.h>
 
 
 namespace cbk::rendering {
@@ -13,6 +14,11 @@ namespace cbk::rendering {
 		virtual ~Material() = default;
 
 		virtual void bind() const = 0;
+
+		// Hooks consumed by model loading. Concrete materials override to wire a
+		// (TextureType, key) → setter mapping. Default is no-op.
+		virtual void applyTexture(common::TextureType type, const Ref<Texture2D>& texture) {}
+		virtual void applyProperty(uint32_t key, float value) {}
 
 		Ref<Shader> getShader() const {
 			return m_Shader;
