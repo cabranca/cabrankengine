@@ -15,7 +15,7 @@ namespace cbk::platform::opengl {
 		glBufferData(GL_ARRAY_BUFFER, size, nullptr, GL_DYNAMIC_DRAW);
 	}
 
-	OpenGLVertexBuffer::OpenGLVertexBuffer(void* vertices, uint32_t size) : m_RendererId() {
+	OpenGLVertexBuffer::OpenGLVertexBuffer(const void* vertices, uint32_t size) : m_RendererId() {
 		CBK_PROFILE_FUNCTION();
 
 		glCreateBuffers(1, &m_RendererId); // TODO: research this functions. Cherno thought that "create" elminiated the need of "bind" but it does not.
@@ -50,7 +50,7 @@ namespace cbk::platform::opengl {
 
 	// --------------------- INDEX BUFFER --------------------- //
 
-	OpenGLIndexBuffer::OpenGLIndexBuffer(uint32_t* indices, uint32_t count) : m_RendererId(), m_Count(count) {
+	OpenGLIndexBuffer::OpenGLIndexBuffer(const uint32_t* indices, uint32_t count) : m_RendererId(), m_Count(count) {
 		CBK_PROFILE_FUNCTION();
 
 		glCreateBuffers(1, &m_RendererId);
