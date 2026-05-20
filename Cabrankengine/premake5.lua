@@ -57,15 +57,13 @@ project("Cabrankengine")
 		files({
 			"src/Platform/Linux/**.h",
 			"src/Platform/Linux/**.cpp",
-			"src/Platform/OpenGL/**.h",
-			"src/Platform/OpenGL/**.cpp",
 			"src/Platform/Vulkan/**.h",
 			"src/Platform/Vulkan/**.cpp",
 		})
 
 	includedirs({ "src" })
 	externalincludedirs({ "%{IncludeDir.vulkan}" })
-	libdirs({ "%{wks.location}/Cabrankengine/vendor/vulkan/lib" })
+	libdirs({ "%{LibDir.vulkan}" })
 	links({
 		"X11",
 		"Xrandr",

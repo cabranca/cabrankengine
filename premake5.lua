@@ -6,6 +6,12 @@ configurations({ "Debug", "Release" })
 
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
+-- Vulkan SDK location, taken from the VULKAN_SDK environment variable (Linux/Windows only)
+local vulkan_sdk = os.getenv("VULKAN_SDK")
+if (os.host() == "linux" or os.host() == "windows") and not vulkan_sdk then
+	error("VULKAN_SDK environment variable is not set. Install the Vulkan SDK and set VULKAN_SDK.")
+end
+
 -- Include directories relative to root folder (solution directory)
 IncludeDir = {}
 IncludeDir["assimp"] = "%{wks.location}/CBKAssetConverter/vendor/assimp/include"
@@ -20,7 +26,13 @@ IncludeDir["Metal"] = "%{wks.location}/Cabrankengine/vendor/metal-cpp"
 IncludeDir["spdlog"] = "%{wks.location}/Common/vendor/spdlog/include"
 IncludeDir["Common"] = "%{wks.location}/Common/src"
 IncludeDir["stb_image"] = "%{wks.location}/CBKAssetConverter/vendor/stb_image"
-IncludeDir["vulkan"] = "%{wks.location}/Cabrankengine/vendor/vulkan/include"
+-- Library directories
+LibDir = {}
+
+if vulkan_sdk then
+	IncludeDir["vulkan"] = vulkan_sdk .. "/include"
+	LibDir["vulkan"] = vulkan_sdk .. "/lib"
+end
 
 include("Common")
 include("Cabrankengine")

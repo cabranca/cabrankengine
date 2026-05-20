@@ -37,7 +37,8 @@ project "Sandbox"
         systemversion "latest"
         pic "on"
 
-        links { "X11", "Xrandr", "Xi", "Xxf86vm", "Xcursor", "pthread", "dl", "GL", "z", "glad" }
+        libdirs({ "%{LibDir.vulkan}" })
+        links { "X11", "Xrandr", "Xi", "Xxf86vm", "Xcursor", "pthread", "dl", "GL", "z", "glad", "slang", "slang-compiler" }
         postbuildcommands
         {
             'cp -ru %{prj.location}/assets/ %{cfg.targetdir}/',
