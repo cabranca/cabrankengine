@@ -343,11 +343,14 @@ namespace cbk::platform::vk {
 			                          .pSwapchains = m_SwapchainManager.getSwapchain(),
 			                          .pImageIndices = &m_ImageIndex };
 		vkResult = vkQueuePresentKHR(ctx->getDeviceQueue(), &presentInfo);
+		// SUBOPTIMAL still presented the frame; OUT_OF_DATE did not. Both mean the
+		// swapchain no longer matches the surface — flag it for recreation and let
+		// endFrame() run the update block (returning false would skip it).
+		if (vkResult == VK_SUBOPTIMAL_KHR || vkResult == VK_ERROR_OUT_OF_DATE_KHR) {
+			m_UpdateSwapchain = true;
+			return true;
+		}
 		if (vkResult != VK_SUCCESS) {
-			if (vkResult == VK_ERROR_OUT_OF_DATE_KHR) {
-				m_UpdateSwapchain = true;
-				return false;
-			}
 			CBK_CORE_ERROR("VulkanRendererAPI::draw(): error presenting queue ({})", static_cast<int>(vkResult));
 			return false;
 		}

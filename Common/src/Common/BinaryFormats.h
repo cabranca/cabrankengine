@@ -16,12 +16,15 @@ namespace cbk::common {
 
 	// --- Model binary format (.cbkm) ---
 
+	// CBKM v3 layout:
+	//   ModelHeader
+	//   numMaterials x { MaterialHeader, TextureEntry[]+paths, PropertyEntry[] }
+	//   numMeshes    x { MeshHeader, Vertex[], uint32_t[] }
 	struct ModelHeader {
 		uint32_t magic = 0x43424B4D; // "CBKM" (Cabrankengine Model)
-		uint32_t version = 2;
+		uint32_t version = 3;
 		uint32_t numMeshes;
-		uint32_t numTextures;
-		uint32_t numProperties;
+		uint32_t numMaterials;
 	};
 
 	enum class TextureType : uint32_t {
@@ -61,9 +64,17 @@ namespace cbk::common {
 		float tanx, tany, tanz; // tangent
 	};
 
+	// One material's payload. Followed by numTextures TextureEntry records
+	// (each trailed by char[pathLength]) then numProperties PropertyEntry records.
+	struct MaterialHeader {
+		uint32_t numTextures;
+		uint32_t numProperties;
+	};
+
 	struct MeshHeader {
 		uint32_t numVertices;
 		uint32_t numIndices;
+		uint32_t materialIndex; // index into the model's material table
 		// followed by Vertex[numVertices] then uint32_t[numIndices]
 	};
 

@@ -20,6 +20,11 @@ namespace cbk::rendering {
 		virtual void applyTexture(common::TextureType type, const Ref<Texture2D>& texture) {}
 		virtual void applyProperty(uint32_t key, float value) {}
 
+		// Returns a fresh, blank material of the same concrete type. Used by model
+		// loading to give each material slot its own instance. Returns nullptr if
+		// the concrete type does not support it.
+		virtual Ref<Material> instantiate() const { return nullptr; }
+
 		Ref<Shader> getShader() const {
 			return m_Shader;
 		}

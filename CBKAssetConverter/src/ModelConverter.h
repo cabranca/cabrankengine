@@ -15,6 +15,7 @@ namespace cbk::ac {
 
 	  private:
 		using ModelHeader = cbk::common::ModelHeader;
+		using MaterialHeader = cbk::common::MaterialHeader;
 		using TextureEntry = cbk::common::TextureEntry;
 		using PropertyEntry = cbk::common::PropertyEntry;
 		using MeshHeader = cbk::common::MeshHeader;

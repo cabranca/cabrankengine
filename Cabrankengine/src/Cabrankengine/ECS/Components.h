@@ -39,6 +39,9 @@ namespace cbk::ecs {
 		float LastMouseX = 0.f;
 		float LastMouseY = 0.f;
 		bool MouseCaptured = false;
+		// false: FPS-style — WASD stays on the horizontal plane.
+		// true:  free-fly — WASD follows the full look direction (pitch included).
+		bool FreeFlight = false;
 	};
 
 	struct CSprite {

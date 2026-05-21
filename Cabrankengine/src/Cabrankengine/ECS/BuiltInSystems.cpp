@@ -91,24 +91,31 @@ namespace cbk::ecs {
 				             -std::cos(yawRadians) * std::cos(pitchRadians) };
 			forward.normalized();
 
-			Vector3 flatForward{ forward.x, 0.f, forward.z };
-			flatForward.normalized();
+			// In free-flight, W/D follow the full look direction; otherwise movement
+			// is projected onto the horizontal plane (FPS-style).
+			Vector3 moveForward;
+			if (controller->FreeFlight) {
+				moveForward = forward;
+			} else {
+				Vector3 flatForward{ forward.x, 0.f, forward.z };
+				flatForward.normalized();
+				if (flatForward.lengthSquared() == 0.f)
+					flatForward = Vector3::Forward;
+				moveForward = flatForward;
+			}
 
-			if (flatForward.lengthSquared() == 0.f)
-				flatForward = Vector3::Forward;
-
-			const Vector3 flatRight = cross(flatForward, Vector3::Up).normalize();
+			const Vector3 moveRight = cross(moveForward, Vector3::Up).normalize();
 
 			Vector3 movement{};
 
 			if (Input::isKeyPressed(Key::W))
-				movement += flatForward;
+				movement += moveForward;
 			if (Input::isKeyPressed(Key::S))
-				movement -= flatForward;
+				movement -= moveForward;
 			if (Input::isKeyPressed(Key::A))
-				movement -= flatRight;
+				movement -= moveRight;
 			if (Input::isKeyPressed(Key::D))
-				movement += flatRight;
+				movement += moveRight;
 			if (Input::isKeyPressed(Key::Space))
 				movement += Vector3::Up;
 			if (Input::isKeyPressed(Key::LeftShift))

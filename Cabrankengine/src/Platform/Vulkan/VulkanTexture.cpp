@@ -64,23 +64,31 @@ namespace cbk::platform::vk {
 			m_Width = header.width;
 			m_Height = header.height;
 
-			VkFormat format;
-			switch (header.channels) {
-				case 1:
-					format = VK_FORMAT_R8_UNORM;
-					break;
-				case 2:
-					format = VK_FORMAT_R8G8_UNORM;
-					break;
-				case 3:
-					format = VK_FORMAT_R8G8B8_UNORM;
-					break;
-				case 4:
-					format = VK_FORMAT_R8G8B8A8_UNORM;
-					break;
+			if (header.channels == 3) {
+				// 24-bit RGB (VK_FORMAT_R8G8B8_UNORM) is not a required format for
+				// optimal-tiled sampled images and is unsupported on most GPUs.
+				// Expand to RGBA8, which the Vulkan spec guarantees.
+				const size_t pixelCount = static_cast<size_t>(m_Width) * m_Height;
+				std::vector<uint8_t> rgba(pixelCount * 4);
+				for (size_t p = 0; p < pixelCount; p++) {
+					rgba[p * 4 + 0] = uncompressedBuffer[p * 3 + 0];
+					rgba[p * 4 + 1] = uncompressedBuffer[p * 3 + 1];
+					rgba[p * 4 + 2] = uncompressedBuffer[p * 3 + 2];
+					rgba[p * 4 + 3] = 255;
+				}
+				uploadPixels(VK_FORMAT_R8G8B8A8_UNORM, rgba.data(), rgba.size());
+			} else {
+				VkFormat format;
+				switch (header.channels) {
+					case 1: format = VK_FORMAT_R8_UNORM; break;
+					case 2: format = VK_FORMAT_R8G8_UNORM; break;
+					case 4: format = VK_FORMAT_R8G8B8A8_UNORM; break;
+					default:
+						CBK_CORE_ERROR("VulkanTexture(): unsupported channel count {0} in {1}", header.channels, path);
+						return;
+				}
+				uploadPixels(format, uncompressedBuffer.data(), uncompressedBuffer.size());
 			}
-
-			uploadPixels(format, uncompressedBuffer.data(), uncompressedBuffer.size());
 		}
 	}
 
@@ -118,7 +126,7 @@ namespace cbk::platform::vk {
 		VmaAllocationCreateInfo texImageAllocCI{ .usage = VMA_MEMORY_USAGE_AUTO };
 		auto vkResult = vmaCreateImage(ctx->getAllocator(), &texImgCI, &texImageAllocCI, &m_Texture.image, &m_Texture.allocation, nullptr);
 		if (vkResult != VK_SUCCESS) {
-			CBK_CORE_ERROR("VulkanTexture(): error creating image", static_cast<int>(vkResult));
+			CBK_CORE_ERROR("VulkanTexture(): error creating image (VkResult {0})", static_cast<int>(vkResult));
 			return;
 		}
 		VkImageViewCreateInfo texVewCI{

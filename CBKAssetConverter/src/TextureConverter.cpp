@@ -1,5 +1,6 @@
 #include "TextureConverter.h"
 
+#include <algorithm>
 #include <filesystem>
 #include <fstream>
 #include <vector>
@@ -9,6 +10,51 @@
 #include <stb_image.h>
 
 namespace cbk::ac {
+
+	uint32_t TextureConverter::s_MaxDimension = 0;
+
+	void TextureConverter::setMaxDimension(uint32_t maxDim) {
+		s_MaxDimension = maxDim;
+	}
+
+	namespace {
+		// Box-filter downscale of an interleaved 8-bit image so neither dimension
+		// exceeds maxDim. Returns an empty vector when no resize is needed (the
+		// caller then keeps the original pixels); otherwise width/height are updated.
+		std::vector<uint8_t> downscaleToFit(const uint8_t* src, int& width, int& height,
+		                                    int channels, uint32_t maxDim) {
+			if (maxDim == 0 || (width <= static_cast<int>(maxDim) && height <= static_cast<int>(maxDim)))
+				return {};
+
+			const float scale = std::min(static_cast<float>(maxDim) / width,
+			                             static_cast<float>(maxDim) / height);
+			const int dstW = std::max(1, static_cast<int>(width * scale));
+			const int dstH = std::max(1, static_cast<int>(height * scale));
+
+			std::vector<uint8_t> dst(static_cast<size_t>(dstW) * dstH * channels);
+			for (int y = 0; y < dstH; y++) {
+				const int sy0 = y * height / dstH;
+				const int sy1 = std::max(sy0 + 1, (y + 1) * height / dstH);
+				for (int x = 0; x < dstW; x++) {
+					const int sx0 = x * width / dstW;
+					const int sx1 = std::max(sx0 + 1, (x + 1) * width / dstW);
+					for (int c = 0; c < channels; c++) {
+						uint32_t sum = 0, n = 0;
+						for (int sy = sy0; sy < sy1; sy++)
+							for (int sx = sx0; sx < sx1; sx++) {
+								sum += src[(static_cast<size_t>(sy) * width + sx) * channels + c];
+								n++;
+							}
+						dst[(static_cast<size_t>(y) * dstW + x) * channels + c] =
+						    static_cast<uint8_t>(sum / n);
+					}
+				}
+			}
+			width = dstW;
+			height = dstH;
+			return dst;
+		}
+	} // namespace
 
 	void TextureConverter::convert(std::string_view path) {
 		int width, height, channels;
@@ -22,11 +68,14 @@ namespace cbk::ac {
 			return;
 		}
 
+		std::vector<uint8_t> resized = downscaleToFit(data, width, height, channels, s_MaxDimension);
+		const uint8_t* pixels = resized.empty() ? data : resized.data();
+
 		uint32_t dataSize = static_cast<uint32_t>(width) * height * channels;
 
 		int compressedCapacity = LZ4_compressBound(dataSize);
 		std::vector<char> compressedData(compressedCapacity);
-		int compressedSize = LZ4_compress_default(reinterpret_cast<const char*>(data), compressedData.data(), dataSize, compressedCapacity);
+		int compressedSize = LZ4_compress_default(reinterpret_cast<const char*>(pixels), compressedData.data(), dataSize, compressedCapacity);
 
 		if (compressedSize <= 0) {
 			CBK_AC_ERROR("LZ4 compression failed for: {}", path);
@@ -97,10 +146,15 @@ namespace cbk::ac {
 		stbi_image_free(metalData);
 		stbi_image_free(roughData);
 
+		std::vector<uint8_t> resized =
+		    downscaleToFit(packed.data(), width, height, static_cast<int>(channels), s_MaxDimension);
+		const uint8_t* pixels = resized.empty() ? packed.data() : resized.data();
+		dataSize = static_cast<uint32_t>(width) * height * channels;
+
 		int compressedCapacity = LZ4_compressBound(dataSize);
 		std::vector<char> compressedData(compressedCapacity);
 		int compressedSize = LZ4_compress_default(
-			reinterpret_cast<const char*>(packed.data()), compressedData.data(),
+			reinterpret_cast<const char*>(pixels), compressedData.data(),
 			dataSize, compressedCapacity);
 
 		if (compressedSize <= 0) {
