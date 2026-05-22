@@ -16,11 +16,6 @@
 //              float    metalness       byte  76
 //              float    roughness       byte  80
 
-// Engine matrices are stored row-major with row-vector convention (v * M).
-// Slang defaults to column-major memory layout, which would transpose every
-// matrix on read. Force row-major here.
-#pragma pack_matrix(row_major)
-
 struct DirLight {
     float3 direction;
     float  _pad0;
@@ -29,7 +24,7 @@ struct DirLight {
 };
 
 struct SceneData {
-    row_major float4x4 viewProjection;
+    float4x4 viewProjection;
     DirLight           dirLight;
     float3             cameraPosition;
     float              _pad2;
@@ -43,7 +38,7 @@ struct SceneData {
 [[vk::binding(3, 1)]] Sampler2D aoMap;
 
 struct PushConstants {
-    row_major float4x4 model;
+    float4x4 model;
     float3             albedoColor;
     float              metalness;
     float              roughness;
@@ -62,23 +57,32 @@ struct VSOutput {
     float4 svPosition : SV_POSITION;
     float3 worldPos;
     float3 worldNormal;
-    float2 texCoords;
+	float2 texCoords;
+	float3x3 tbn;
 };
 
 [shader("vertex")]
 VSOutput main(VSInput input) {
-    VSOutput o;
-    float4 worldPos = mul(float4(input.position, 1.0), pc.model);
+	VSOutput o;
+	float4 worldPos = mul(pc.model, float4(input.position, 1.0));
     o.worldPos     = worldPos.xyz;
-    // Assumes pc.model has no non-uniform scale. For non-uniform scale the proper
-    // normal transform is the inverse-transpose of model's upper-left 3x3.
-    o.worldNormal  = normalize(mul(float4(input.normal, 0.0), pc.model).xyz);
-    o.texCoords    = input.texCoords;
-    o.svPosition   = mul(worldPos, scene.viewProjection);
+
+	// TODO: SEE IF IT'S WORTH HANDLING NON UNIFORM SCALE (maybe check if uniform?)
+	// Assumes pc.model has no non-uniform scale. For non-uniform scale the proper
+	// normal transform is the inverse-transpose of model's upper-left 3x3.
+	o.worldNormal = normalize(mul(pc.model, float4(input.normal, 0.0)).xyz);
+	o.texCoords = input.texCoords;
+	o.svPosition = mul(scene.viewProjection, worldPos);
+    
+    // Are these modifications due to my perspective or view matrices?
     // Vulkan NDC has Y down (OpenGL has Y up). Flip in clip space.
     o.svPosition.y = -o.svPosition.y;
+    
     // OpenGL clip-space z is [-w, +w]; Vulkan is [0, +w]. Remap.
     o.svPosition.z = (o.svPosition.z + o.svPosition.w) * 0.5;
+
+    // Construct TBN matrix from tangent attribute
+    
     return o;
 }
 

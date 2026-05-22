@@ -9,11 +9,6 @@
 //   vertex:    float4x4 model           bytes  0..63
 //   fragment:  float    shininess       byte  64
 
-// Engine matrices are stored row-major with row-vector convention (v * M).
-// Slang defaults to column-major memory layout, which would transpose every
-// matrix on read and flatten projection. Force row-major here.
-#pragma pack_matrix(row_major)
-
 struct DirLight {
     float3 direction;
     float  _pad0;
@@ -22,7 +17,7 @@ struct DirLight {
 };
 
 struct SceneData {
-    row_major float4x4 viewProjection;
+    float4x4 viewProjection;
     DirLight           dirLight;
     float3             cameraPosition;
     float              _pad2;
@@ -34,7 +29,7 @@ struct SceneData {
 [[vk::binding(1, 1)]] Sampler2D specularMap;
 
 struct PushConstants {
-    row_major float4x4 model;
+    float4x4 model;
     float              shininess;
 };
 
@@ -57,16 +52,20 @@ struct VSOutput {
 [shader("vertex")]
 VSOutput main(VSInput input) {
     VSOutput o;
-    float4 worldPos = mul(float4(input.position, 1.0), pc.model);
+    float4 worldPos = mul(pc.model, float4(input.position, 1.0));
     o.worldPos     = worldPos.xyz;
+
+    // TODO: SEE IF IT'S WORTH HANDLING NON UNIFORM SCALE (maybe check if uniform?)
     // Assumes pc.model has no non-uniform scale. For non-uniform scale the proper
     // normal transform is the inverse-transpose of model's upper-left 3x3.
-    o.worldNormal  = normalize(mul(float4(input.normal, 0.0), pc.model).xyz);
+    o.worldNormal  = normalize(mul(pc.model, float4(input.normal, 0.0)).xyz); // So the transpose is lacking here, right?
     o.texCoords    = input.texCoords;
-    o.svPosition   = mul(worldPos, scene.viewProjection);
+    o.svPosition   = mul(scene.viewProjection, worldPos);
+    
     // Vulkan NDC has Y pointing down (OpenGL has Y up). The engine's projection
     // matrix is built for OpenGL conventions, so flip Y in clip space here.
     o.svPosition.y = -o.svPosition.y;
+    
     // Remap clip-space z from OpenGL's [-w, +w] to Vulkan's [0, +w] so that the
     // near half of the view frustum isn't clipped away.
     o.svPosition.z = (o.svPosition.z + o.svPosition.w) * 0.5;

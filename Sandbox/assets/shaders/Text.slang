@@ -7,10 +7,8 @@
 // Glyph textures are R8 — the red channel is treated as alpha and multiplied
 // by the vertex color so the mesh color controls the text color.
 
-#pragma pack_matrix(row_major)
-
 struct SceneData {
-    row_major float4x4 viewProjection;
+    float4x4 viewProjection;
     // Full scene UBO contains additional fields; only viewProjection is read here.
 };
 
@@ -34,7 +32,7 @@ struct VSOutput {
 [shader("vertex")]
 VSOutput main(VSInput input) {
     VSOutput o;
-    o.svPosition   = mul(float4(input.position, 1.0), scene.viewProjection);
+    o.svPosition   = mul(scene.viewProjection, float4(input.position, 1.0));
     o.svPosition.y = -o.svPosition.y;
     o.svPosition.z = (o.svPosition.z + o.svPosition.w) * 0.5;
     o.color        = input.color;
