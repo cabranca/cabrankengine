@@ -35,7 +35,6 @@ namespace cbk {
 		//AudioEngine::init();
 
 		Renderer::init();
-		DefaultLibrary::init();
 
 		auto renderLayer = createScope<RenderLayer>();
 		m_RenderLayer = renderLayer.get();

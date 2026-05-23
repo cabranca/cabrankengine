@@ -3,20 +3,18 @@
 
 #include <Cabrankengine/Scene/DefaultLibrary.h>
 
-#include "Lights.h"
 #include "Materials/Material.h"
 #include "Renderer2D.h"
 #include "RenderCommand.h"
-#include "Shader.h"
 #include "StorageBuffer.h"
 #include "UniformBuffer.h"
-#include "GeometryDescriptor.h"
 #include "TextRenderer.h"
 
 
 namespace cbk::rendering {
 
 	using namespace math;
+	using namespace scene;
 
 	// Estructura auxiliar para la luz (32 bytes total)
 	struct directionalLightData {
@@ -58,6 +56,7 @@ namespace cbk::rendering {
 		CBK_PROFILE_FUNCTION();
 
 		RenderCommand::init();
+		DefaultLibrary::init();
 		// Scene UBO must exist before Renderer2D/TextRenderer init, because the
 		// Vulkan materials they create pull the scene descriptor set layout from it
 		// at pipeline-layout construction time.
@@ -68,18 +67,14 @@ namespace cbk::rendering {
 	}
 
 	void Renderer::shutdown() {
-		// Release GPU-backed resources while the Application/window/device are still
-		// alive. Anything held by program-scope statics (DefaultLibrary, ShaderLibrary,
-		// s_SceneUBO, s_SceneData->lightSSBO) would otherwise destruct after
-		// ~Application and segfault on Application::get().getWindow().getContext().
+		DefaultLibrary::shutdown();
+		ShaderLibrary::shutdown();
 		s_SceneUBO.reset();
 		if (s_SceneData)
 			s_SceneData->lightSSBO.reset();
-		scene::DefaultLibrary::shutdown();
-		ShaderLibrary::shutdown();
-
-		Renderer2D::shutdown();
 		TextRenderer::shutdown();
+		Renderer2D::shutdown();
+
 		RenderCommand::shutdown();
 	}
 
@@ -100,18 +95,7 @@ namespace cbk::rendering {
 
 	void Renderer::endScene() {}
 
-	void Renderer::submit(const Ref<Shader>& shader, const Ref<GeometryDescriptor>& desc, const Mat4& transform) {
-		// Shader-only path: no material → backend's drawIndexed can't reach a shader,
-		// so we set the model matrix here. Vulkan doesn't use this overload.
-		shader->bind();
-		shader->setMat4("u_Model", transform);
-		RenderCommand::drawIndexed(nullptr, desc, transform);
-	}
-
 	void Renderer::submit(const Ref<Material>& material, const Ref<GeometryDescriptor>& desc, const Mat4& transform) {
-		// Per-draw transform travels with the draw call. The OpenGL backend writes it as
-		// the u_Model uniform on the material's shader; Vulkan pushes it as a push constant.
-		material->bind();
 		RenderCommand::drawIndexed(material, desc, transform);
 	}
 

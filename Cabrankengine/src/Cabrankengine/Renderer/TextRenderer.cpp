@@ -65,8 +65,6 @@ namespace cbk::rendering {
 		                                 { ShaderDataType::Float, "texIndex" } });
 		delete[] quadIndices;
 
-		ShaderLibrary::load("assets/shaders/Text");
-
 		loadFont("assets/fonts/ocraext.ttf", 20);
 
 		// Material owns the batch's 32 texture slots and view-projection; the

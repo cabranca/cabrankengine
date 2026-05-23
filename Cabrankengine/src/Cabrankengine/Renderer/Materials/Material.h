@@ -3,7 +3,6 @@
 #include <Cabrankengine/Renderer/Shader.h>
 #include <Cabrankengine/Renderer/Texture.h>
 #include <Cabrankengine/Scene/DefaultLibrary.h>
-#include <Common/BinaryFormats.h>
 
 
 namespace cbk::rendering {

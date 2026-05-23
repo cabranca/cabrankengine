@@ -43,6 +43,7 @@ namespace cbk::platform::opengl {
 
 	void OpenGLRendererAPI::drawIndexed(const Ref<Material>& material, const Ref<GeometryDescriptor>& desc, const math::Mat4& transform,
 	                                    uint32_t indexCount) {
+		material->bind();
 		auto vao = static_cast<OpenGLVertexArray*>(desc.get());
 		vao->bind();
 		// Per-draw model matrix lives on the material's shader as a uniform. The shader-only

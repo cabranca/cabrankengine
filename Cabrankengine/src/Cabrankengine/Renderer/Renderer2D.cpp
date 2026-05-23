@@ -76,8 +76,6 @@ namespace cbk::rendering {
 		uint32_t whiteTextureData = 0xffffffff;
 		s_Data.WhiteTexture->setData(&whiteTextureData, sizeof(uint32_t));
 
-		ShaderLibrary::load("assets/shaders/Texture");
-
 		s_Data.TextureSlots[0] = s_Data.WhiteTexture;
 
 		// Material owns the batch's 32 texture slots and view-projection; the
@@ -132,8 +130,6 @@ namespace cbk::rendering {
 		for (uint32_t i = 0; i < s_Data.TextureSlotIndex; i++)
 			s_Data.QuadMaterial->setTextureSlot(i, s_Data.TextureSlots[i]);
 
-		// Vulkan: bind() is a no-op and drawIndexed records the descriptor set.
-		// OpenGL: bind() binds the shader + texture units, drawIndexed issues the draw.
 		s_Data.QuadMaterial->bind();
 		RenderCommand::drawIndexed(s_Data.QuadMaterial, s_Data.QuadDesc, math::identityMat(), s_Data.QuadIndexCount);
 
