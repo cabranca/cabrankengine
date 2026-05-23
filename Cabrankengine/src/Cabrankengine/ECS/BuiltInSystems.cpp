@@ -147,6 +147,8 @@ namespace cbk::ecs {
 			auto model     = reg.getComponent<CModel>(e).value();
 			if (model->Res)
 				model->Res->draw(fromTransform(transform->Position, transform->Rotation, transform->Scale));
+			else
+			 	CBK_CORE_DEBUG("Entity with id {0} doesn't have a set resource", e);
 		}
 	}
 

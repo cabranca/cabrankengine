@@ -38,9 +38,8 @@ namespace cbk::common {
 	// Tags a model component so the loader knows which material factory to invoke.
 	// Stored alongside the model path in CModel; serialized to JSON.
 	enum class MaterialKind : uint32_t {
-		None  = 0,
+		PBR   = 0,
 		Phong = 1,
-		PBR   = 2,
 	};
 
 	struct TextureEntry {

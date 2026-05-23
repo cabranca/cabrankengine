@@ -13,11 +13,11 @@
 #endif
 
 #ifdef CBK_ENABLE_ASSERTS
-	#define CBK_ASSERT(x, ...)      { if(!(x)) { CBK_ERROR("Assertion failed: {0}", __VA_ARGS__); CBK_DEBUG_BREAK; } }
+	#define CBK_APP_ASSERT(x, ...)      { if(!(x)) { CBK_APP_ERROR("Assertion failed: {0}", __VA_ARGS__); CBK_DEBUG_BREAK; } }
 	#define CBK_CORE_ASSERT(x, ...) { if(!(x)) { CBK_CORE_ERROR("Assertion failed: {0}", __VA_ARGS__); CBK_DEBUG_BREAK; } }
 	#define CBK_AC_ASSERT(x, ...)  { if(!(x)) { CBK_AC_ERROR("Assertion failed: {0}", __VA_ARGS__); CBK_DEBUG_BREAK; } }
 #else
-	#define CBK_ASSERT(x, ...)
+	#define CBK_APP_ASSERT(x, ...)
 	#define CBK_CORE_ASSERT(x, ...)
 	#define CBK_AC_ASSERT(x, ...)
 #endif

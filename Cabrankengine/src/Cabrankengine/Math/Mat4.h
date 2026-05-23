@@ -41,12 +41,12 @@ namespace cbk::math {
 	};
 
 	constexpr const Vector4& Mat4::operator[](int index) const noexcept {
-		CBK_ASSERT(index >= 0 || index < 4, "Trying to acces a Vector with invalid index!");
+		CBK_CORE_ASSERT(index >= 0 || index < 4, "Trying to acces a Vector with invalid index!");
 		return elements[index];
 	}
 
 	constexpr Vector4& Mat4::operator[](int index) noexcept {
-		CBK_ASSERT(index >= 0 || index < 4, "Trying to acces a Vector with invalid index!");
+		CBK_CORE_ASSERT(index >= 0 || index < 4, "Trying to acces a Vector with invalid index!");
 		return elements[index];
 	}
 

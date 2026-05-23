@@ -19,8 +19,8 @@ namespace cbk {
 		CBK_CORE_ERROR("GLFW Error ({0}): {1}", error, description);
 	}
 
-	Window* Window::create(const WindowProps& props) {
-		return new WindowsWindow(props);
+	Scope<Window> Window::create(const WindowProps& props) {
+		return createScope<WindowsWindow>(props);
 	}
 	
 	WindowsWindow::WindowsWindow(const WindowProps& props) {

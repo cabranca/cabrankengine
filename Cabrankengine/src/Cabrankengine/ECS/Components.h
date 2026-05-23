@@ -53,7 +53,7 @@ namespace cbk::ecs {
 
 	struct CModel {
 		std::string Path;
-		common::MaterialKind Kind = common::MaterialKind::None;
+		common::MaterialKind Kind = common::MaterialKind::PBR;
 		Ref<scene::Model> Res;
 	};
 

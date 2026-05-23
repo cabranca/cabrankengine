@@ -143,7 +143,7 @@ class ExampleLayer : public Layer {
 class Sandbox : public Application {
   public:
 	Sandbox() {
-		auto layer = Scope<ExampleLayer>();
+		auto layer = createScope<ExampleLayer>();
 		m_Layer = layer.get();
 		pushLayer(std::move(layer));
 		//pushLayer(new Sandbox2D());

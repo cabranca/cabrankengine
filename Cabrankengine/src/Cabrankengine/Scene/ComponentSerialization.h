@@ -115,9 +115,8 @@ inline void from_json(const nlohmann::json& j, CSprite& c) {
 }
 
 NLOHMANN_JSON_SERIALIZE_ENUM(common::MaterialKind, {
-    { common::MaterialKind::None,  "none"  },
-    { common::MaterialKind::Phong, "phong" },
     { common::MaterialKind::PBR,   "pbr"   },
+    { common::MaterialKind::Phong, "phong" },
 })
 
 inline void to_json(nlohmann::json& j, const CModel& c) {
@@ -137,7 +136,9 @@ inline void from_json(const nlohmann::json& j, CModel& c) {
     switch (c.Kind) {
         case common::MaterialKind::Phong: material = rendering::PhongMaterial::create(); break;
         case common::MaterialKind::PBR:   material = rendering::PBRMaterial::create();   break;
-        default: break;
+        default:
+            CBK_CORE_ASSERT(false, "Unknown Material Kind! Valid kinds are Phong and PBR"); 
+            break;
     }
     if (material)
         c.Res = scene::Model::create(c.Path, material);

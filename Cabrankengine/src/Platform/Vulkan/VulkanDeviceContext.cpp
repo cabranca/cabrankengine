@@ -251,6 +251,6 @@ namespace cbk::platform::vk {
 				break;
 			}
 		}
-		CBK_ASSERT(m_DepthFormat != VK_FORMAT_UNDEFINED, "Depth Format is undefined");
+		CBK_CORE_ASSERT(m_DepthFormat != VK_FORMAT_UNDEFINED, "Depth Format is undefined");
 	}
 }

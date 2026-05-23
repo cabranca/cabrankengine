@@ -22,7 +22,7 @@ namespace cbk::platform::vk {
 			                                    .usage = VMA_MEMORY_USAGE_AUTO };
 		auto vkResult = vmaCreateBuffer(allocator, &bufferCI, &vBufferAllocCI, &m_VBuffer, &m_VBufferAllocation, &m_VBufferAllocInfo);
 		if (vkResult != VK_SUCCESS) {
-			CBK_ERROR("VulkanGeometryDescriptor(): error creating Vertex Buffer", static_cast<int>(vkResult));
+			CBK_CORE_ASSERT("VulkanGeometryDescriptor(): error creating Vertex Buffer", static_cast<int>(vkResult));
 			return;
 		}
 		memcpy(m_VBufferAllocInfo.pMappedData, vertexData, vertexDataSize);
@@ -42,7 +42,7 @@ namespace cbk::platform::vk {
 			                                    .usage = VMA_MEMORY_USAGE_AUTO };
 		auto vkResult = vmaCreateBuffer(allocator, &bufferCI, &vBufferAllocCI, &m_VBuffer, &m_VBufferAllocation, &m_VBufferAllocInfo);
 		if (vkResult != VK_SUCCESS) {
-			CBK_ERROR("VulkanGeometryDescriptor(): error creating Vertex Buffer", static_cast<int>(vkResult));
+			CBK_CORE_ASSERT("VulkanGeometryDescriptor(): error creating Vertex Buffer", static_cast<int>(vkResult));
 			return;
 		}
 		memcpy(((char*)m_VBufferAllocInfo.pMappedData) + vertexDataSize, indexData, indexDataSize);
