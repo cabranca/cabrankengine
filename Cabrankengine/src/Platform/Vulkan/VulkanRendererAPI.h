@@ -37,9 +37,9 @@ namespace cbk::platform::vk {
 		bool m_UpdateSwapchain{ false };
 		math::Vector4 m_ClearColor{ 0.5, 0.5, 0.5, 1.f };
 
-		bool createSyncObjects(VulkanDeviceContext* ctx);
-		bool createRenderCompleteSemaphores();
-		bool createCommandPool(VulkanDeviceContext* ctx);
+		void createSyncObjects(VulkanDeviceContext* ctx);
+		void createRenderCompleteSemaphores();
+		void createCommandPool(VulkanDeviceContext* ctx);
 
 		bool syncAndAcquire();
 		bool commitRenderCommands(const Ref<rendering::Material>& material, const Ref<rendering::GeometryDescriptor>& vertexArray,

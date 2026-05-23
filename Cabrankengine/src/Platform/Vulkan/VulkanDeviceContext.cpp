@@ -5,6 +5,7 @@
 
 #define VMA_IMPLEMENTATION
 #include "VulkanDeviceContext.h"
+#include "VkCheck.h"
 
 #include <GLFW/glfw3.h>
 
@@ -12,25 +13,13 @@ namespace cbk::platform::vk {
 
 	void VulkanDeviceContext::init() {
 		if (glfwVulkanSupported() != GLFW_TRUE) {
-			CBK_CORE_ERROR("Vulkan not supported");
-			return;
+			CBK_CORE_FATAL("Vulkan not supported");
+			std::abort();
 		}
-
-		auto vkResult = volkInitialize();
-		if (vkResult != VK_SUCCESS) {
-			CBK_CORE_ERROR("VulkanRendererAPI(): error initializing volk ({})", static_cast<int>(vkResult));
-			return;
-		}
-
-		if (!createVulkanInstance())
-			return;
-
-		if (!createVulkanDevice())
-			return;
-
-		if (!createAllocator())
-            return;
-
+		VK_CHECK(volkInitialize());
+		createVulkanInstance();
+		createVulkanDevice();
+		createAllocator();
 		setDepthFormat();
 	}
 
@@ -105,7 +94,7 @@ namespace cbk::platform::vk {
 	}
 #endif
 
-    bool VulkanDeviceContext::createVulkanInstance() {
+    void VulkanDeviceContext::createVulkanInstance() {
 		VkApplicationInfo appInfo{ .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
 			                       .pApplicationName = "Cabrankengine",
 			                       .apiVersion = VK_API_VERSION_1_3 };
@@ -130,36 +119,23 @@ namespace cbk::platform::vk {
 			.enabledExtensionCount = static_cast<uint32_t>(extensions.size()),
 			.ppEnabledExtensionNames = extensions.data(),
 		};
-		auto vkResult = vkCreateInstance(&instanceCI, nullptr, &m_Instance);
-		if (vkResult != VK_SUCCESS) {
-			CBK_CORE_ERROR("vkCreateInstance: error creating instance ({})", static_cast<int>(vkResult));
-			return false;
-		}
+		VK_CHECK(vkCreateInstance(&instanceCI, nullptr, &m_Instance));
 		volkLoadInstance(m_Instance);
 #ifdef CBK_DEBUG
 		auto messengerCI = makeDebugMessengerCI();
-		vkResult = vkCreateDebugUtilsMessengerEXT(m_Instance, &messengerCI, nullptr, &m_DebugMessenger);
+		VkResult vkResult = vkCreateDebugUtilsMessengerEXT(m_Instance, &messengerCI, nullptr, &m_DebugMessenger);
 		if (vkResult != VK_SUCCESS)
 			CBK_CORE_WARN("vkCreateDebugUtilsMessengerEXT failed ({}); validation messages will not be reported", static_cast<int>(vkResult));
 #endif
-		return true;
 	}
 
-	bool VulkanDeviceContext::createVulkanDevice() {
+	void VulkanDeviceContext::createVulkanDevice() {
         std::vector<VkPhysicalDevice> devices;
 		uint32_t deviceCount{ 0 };
         uint32_t deviceIndex{ 0 };
-		auto vkResult = vkEnumeratePhysicalDevices(m_Instance, &deviceCount, nullptr);
-		if (vkResult != VK_SUCCESS) {
-			CBK_CORE_ERROR("vkEnumeratePhysicalDevices: error enumerating physical devices ({})", static_cast<int>(vkResult));
-			return false;
-		}
+		VK_CHECK(vkEnumeratePhysicalDevices(m_Instance, &deviceCount, nullptr));
 		devices.resize(deviceCount);
-		vkResult = vkEnumeratePhysicalDevices(m_Instance, &deviceCount, devices.data());
-		if (vkResult != VK_SUCCESS) {
-			CBK_CORE_ERROR("vkEnumeratePhysicalDevices: error enumerating physical devices ({})", static_cast<int>(vkResult));
-			return false;
-		}
+		VK_CHECK(vkEnumeratePhysicalDevices(m_Instance, &deviceCount, devices.data()));
         m_PhysicalDevice = devices[deviceIndex];
 
 		VkPhysicalDeviceProperties2 deviceProperties{ .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2 };
@@ -178,8 +154,8 @@ namespace cbk::platform::vk {
 			}
 		}
 		if (glfwGetPhysicalDevicePresentationSupport(m_Instance, m_PhysicalDevice, m_QueueFamilyIndex) != GLFW_TRUE) {
-			CBK_CORE_ERROR("VulkanContext: Selected queue family cannot present images");
-			return false;
+			CBK_CORE_FATAL("VulkanContext: Selected queue family cannot present images");
+			std::abort();
 		}
 		const float qfPriorities{ 1.f };
 		VkDeviceQueueCreateInfo queueCI{ .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
@@ -211,16 +187,11 @@ namespace cbk::platform::vk {
 			                         .enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size()),
 			                         .ppEnabledExtensionNames = deviceExtensions.data(),
 			                         .pEnabledFeatures = &enabledVk10Features };
-		vkResult = vkCreateDevice(m_PhysicalDevice, &deviceCI, nullptr, &m_LogicalDevice);
-		if (vkResult != VK_SUCCESS) {
-			CBK_CORE_ERROR("VulkanContext: error creating Vulkan device ({})", static_cast<int>(vkResult));
-			return false;
-		}
-		vkGetDeviceQueue(m_LogicalDevice, m_QueueFamilyIndex, 0, &m_DeviceQueue); // Why not check this?
-		return true;
+		VK_CHECK(vkCreateDevice(m_PhysicalDevice, &deviceCI, nullptr, &m_LogicalDevice));
+		vkGetDeviceQueue(m_LogicalDevice, m_QueueFamilyIndex, 0, &m_DeviceQueue);
 	}
 
-	bool VulkanDeviceContext::createAllocator() {
+	void VulkanDeviceContext::createAllocator() {
 		VmaVulkanFunctions vkFunctions{ .vkGetInstanceProcAddr = vkGetInstanceProcAddr,
 			                            .vkGetDeviceProcAddr = vkGetDeviceProcAddr,
 			                            .vkCreateImage = vkCreateImage };
@@ -229,12 +200,7 @@ namespace cbk::platform::vk {
 			                                .device = m_LogicalDevice,
 			                                .pVulkanFunctions = &vkFunctions,
 			                                .instance = m_Instance };
-		auto vkResult = vmaCreateAllocator(&allocatorCI, &m_Allocator);
-		if (vkResult != VK_SUCCESS) {
-			CBK_CORE_ERROR("VulkanContext: error creating VMA Allocator ({})", static_cast<int>(vkResult));
-			return false;
-		}
-		return true;
+		VK_CHECK(vmaCreateAllocator(&allocatorCI, &m_Allocator));
 	}
 
 	void VulkanDeviceContext::setDepthFormat() {

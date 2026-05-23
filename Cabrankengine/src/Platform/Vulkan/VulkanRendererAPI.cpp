@@ -7,6 +7,7 @@
 #include <Cabrankengine/Renderer/Materials/Material.h>
 
 #include "IVulkanRecordable.h"
+#include "VkCheck.h"
 #include "VulkanDeviceContext.h"
 #include "VulkanGeometryDescriptor.h"
 #include "VulkanPBRMaterial.h"
@@ -26,12 +27,8 @@ namespace cbk::platform::vk {
 	void VulkanRendererAPI::init() {
 		auto ctx = static_cast<VulkanDeviceContext*>(Application::get().getWindow().getContext());
 		m_SwapchainManager.init(ctx);
-
-		if (!createSyncObjects(ctx))
-			return;
-
-		if (!createCommandPool(ctx))
-			return;
+		createSyncObjects(ctx);
+		createCommandPool(ctx);
 	}
 
 	void VulkanRendererAPI::shutdown() {
@@ -196,57 +193,33 @@ namespace cbk::platform::vk {
 
 	void VulkanRendererAPI::setViewport(uint32_t x, uint32_t y, uint32_t width, uint32_t height) {}
 
-	bool VulkanRendererAPI::createSyncObjects(VulkanDeviceContext* ctx) {
+	void VulkanRendererAPI::createSyncObjects(VulkanDeviceContext* ctx) {
 		VkSemaphoreCreateInfo semaphoreCI{ .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO };
 		VkFenceCreateInfo fenceCI{ .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO, .flags = VK_FENCE_CREATE_SIGNALED_BIT };
 		for (auto i = 0; i < k_MaxFramesInFlight; i++) {
-			auto vkResult = vkCreateFence(ctx->getLogicalDevice(), &fenceCI, nullptr, &m_Fences[i]);
-			if (vkResult != VK_SUCCESS) {
-				CBK_CORE_ERROR("VulkanRendererAPI: error creating fence ({})", static_cast<int>(vkResult));
-				return false;
-			}
-			vkResult = vkCreateSemaphore(ctx->getLogicalDevice(), &semaphoreCI, nullptr, &m_ImageAcquiredSemaphores[i]);
-			if (vkResult != VK_SUCCESS) {
-				CBK_CORE_ERROR("VulkanRendererAPI: error creating image_aquired Semaphore ({})", static_cast<int>(vkResult));
-				return false;
-			}
+			VK_CHECK(vkCreateFence(ctx->getLogicalDevice(), &fenceCI, nullptr, &m_Fences[i]));
+			VK_CHECK(vkCreateSemaphore(ctx->getLogicalDevice(), &semaphoreCI, nullptr, &m_ImageAcquiredSemaphores[i]));
 		}
-
-		return createRenderCompleteSemaphores();
+		createRenderCompleteSemaphores();
 	}
 
-	bool VulkanRendererAPI::createRenderCompleteSemaphores() {
+	void VulkanRendererAPI::createRenderCompleteSemaphores() {
 		VkSemaphoreCreateInfo semaphoreCI{ .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO };
 		auto ctx = static_cast<VulkanDeviceContext*>(Application::get().getWindow().getContext());
 		m_RenderCompleteSemaphores.resize(m_SwapchainManager.getSwapchainImagesSize());
-		for (auto& semaphore: m_RenderCompleteSemaphores) {
-			auto vkResult = vkCreateSemaphore(ctx->getLogicalDevice(), &semaphoreCI, nullptr, &semaphore);
-			if (vkResult != VK_SUCCESS) {
-				CBK_CORE_ERROR("VulkanRendererAPI: error creating render_complete Semaphore ({})", static_cast<int>(vkResult));
-				return false;
-			}
-		}
-		return true;
+		for (auto& semaphore: m_RenderCompleteSemaphores)
+			VK_CHECK(vkCreateSemaphore(ctx->getLogicalDevice(), &semaphoreCI, nullptr, &semaphore));
 	}
 
-	bool VulkanRendererAPI::createCommandPool(VulkanDeviceContext* ctx) {
+	void VulkanRendererAPI::createCommandPool(VulkanDeviceContext* ctx) {
 		VkCommandPoolCreateInfo commandPoolCI{ .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
 			                                   .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
 			                                   .queueFamilyIndex = ctx->getQueueFamily() };
-		auto vkResult = vkCreateCommandPool(ctx->getLogicalDevice(), &commandPoolCI, nullptr, &m_CommandPool);
-		if (vkResult != VK_SUCCESS) {
-			CBK_CORE_ERROR("VulkanRendererAPI: error creating Command Pool ({})", static_cast<int>(vkResult));
-			return false;
-		}
+		VK_CHECK(vkCreateCommandPool(ctx->getLogicalDevice(), &commandPoolCI, nullptr, &m_CommandPool));
 		VkCommandBufferAllocateInfo cbAllocCI{ .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
 			                                   .commandPool = m_CommandPool,
 			                                   .commandBufferCount = k_MaxFramesInFlight };
-		vkResult = vkAllocateCommandBuffers(ctx->getLogicalDevice(), &cbAllocCI, m_CommandBuffers.data());
-		if (vkResult != VK_SUCCESS) {
-			CBK_CORE_ERROR("VulkanRendererAPI: error creating Command Pool ({})", static_cast<int>(vkResult));
-			return false;
-		}
-		return true;
+		VK_CHECK(vkAllocateCommandBuffers(ctx->getLogicalDevice(), &cbAllocCI, m_CommandBuffers.data()));
 	}
 
 	bool VulkanRendererAPI::syncAndAcquire() {

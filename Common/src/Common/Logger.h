@@ -36,7 +36,7 @@ namespace cbk::common {
 #define CBK_CORE_INFO(...)  ::cbk::common::Logger::getCoreLogger()->info(__VA_ARGS__)
 #define CBK_CORE_WARN(...)  ::cbk::common::Logger::getCoreLogger()->warn(__VA_ARGS__)
 #define CBK_CORE_ERROR(...) ::cbk::common::Logger::getCoreLogger()->error(__VA_ARGS__)
-#define CBK_CORE_FATAL(...) ::cbk::common::Logger::getCoreLogger()->fatal(__VA_ARGS__)
+#define CBK_CORE_FATAL(...) ::cbk::common::Logger::getCoreLogger()->critical(__VA_ARGS__)
 
 // Client log macros
 #define CBK_APP_TRACE(...) ::cbk::common::Logger::getClientLogger()->trace(__VA_ARGS__)
@@ -44,7 +44,7 @@ namespace cbk::common {
 #define CBK_APP_INFO(...)  ::cbk::common::Logger::getClientLogger()->info(__VA_ARGS__)
 #define CBK_APP_WARN(...)  ::cbk::common::Logger::getClientLogger()->warn(__VA_ARGS__)
 #define CBK_APP_ERROR(...) ::cbk::common::Logger::getClientLogger()->error(__VA_ARGS__)
-#define CBK_APP_FATAL(...) ::cbk::common::Logger::getClientLogger()->fatal(__VA_ARGS__)
+#define CBK_APP_FATAL(...) ::cbk::common::Logger::getClientLogger()->critical(__VA_ARGS__)
 
 // Asset Converter log macros
 #define CBK_AC_TRACE(...) ::cbk::common::Logger::getAssetConverterLogger()->trace(__VA_ARGS__)
@@ -52,4 +52,4 @@ namespace cbk::common {
 #define CBK_AC_INFO(...)  ::cbk::common::Logger::getAssetConverterLogger()->info(__VA_ARGS__)
 #define CBK_AC_WARN(...)  ::cbk::common::Logger::getAssetConverterLogger()->warn(__VA_ARGS__)
 #define CBK_AC_ERROR(...) ::cbk::common::Logger::getAssetConverterLogger()->error(__VA_ARGS__)
-#define CBK_AC_FATAL(...) ::cbk::common::Logger::getAssetConverterLogger()->fatal(__VA_ARGS__)
+#define CBK_AC_FATAL(...) ::cbk::common::Logger::getAssetConverterLogger()->critical(__VA_ARGS__)

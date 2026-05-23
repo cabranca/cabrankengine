@@ -43,8 +43,8 @@ namespace cbk::platform::vk {
 		std::vector<VkImage>       m_DepthImages;
 		std::vector<VkImageView>   m_DepthImageViews;
 
-		bool createSwapchain(VulkanDeviceContext* ctx);
-		bool getSwapchainImages(VulkanDeviceContext* ctx);
-		bool createDepthAttachment(VulkanDeviceContext* ctx);
+		void createSwapchain(VulkanDeviceContext* ctx);
+		void getSwapchainImages(VulkanDeviceContext* ctx);
+		void createDepthAttachment(VulkanDeviceContext* ctx);
 	};
 } // namespace cbk::platform::vk

@@ -1,5 +1,6 @@
 #include <pch.h>
 #include "VulkanSwapchainManager.h"
+#include "VkCheck.h"
 
 #include <Cabrankengine/Core/Application.h>
 #include <Cabrankengine/Core/Window.h>
@@ -11,17 +12,11 @@
 namespace cbk::platform::vk {
 
     void VulkanSwapchainManager::init(VulkanDeviceContext* ctx) {
-		m_Instance = ctx->getInstance(); 
+		m_Instance = ctx->getInstance();
 		m_Device = ctx->getLogicalDevice();
-
-        if (!createSwapchain(ctx))
-            return;
-
-        if (!getSwapchainImages(ctx))
-            return;
-
-        if (!createDepthAttachment(ctx))
-            return;
+		createSwapchain(ctx);
+		getSwapchainImages(ctx);
+		createDepthAttachment(ctx);
     }
 
     void VulkanSwapchainManager::shutdown() {
@@ -64,9 +59,7 @@ namespace cbk::platform::vk {
 		for (auto i = 0; i < m_ImageCount; i++)
 			vkDestroyImageView(ctx->getLogicalDevice(), m_SwapchainImageViews[i], nullptr);
 
-		if (getSwapchainImages(ctx))
-			return;
-
+		getSwapchainImages(ctx);
 		vkDestroySwapchainKHR(ctx->getLogicalDevice(), m_SwapchainCI.oldSwapchain, nullptr);
 		for (size_t i = 0; i < m_DepthImages.size(); i++) {
 			vkDestroyImageView(ctx->getLogicalDevice(), m_DepthImageViews[i], nullptr);
@@ -78,20 +71,12 @@ namespace cbk::platform::vk {
 		createDepthAttachment(ctx);
 	}
 
-    bool VulkanSwapchainManager::createSwapchain(VulkanDeviceContext* ctx) {
+    void VulkanSwapchainManager::createSwapchain(VulkanDeviceContext* ctx) {
 		auto& window = cbk::Application::get().getWindow();
 		auto glfwWindow = static_cast<GLFWwindow*>(window.getNativeWindow());
-		auto vkResult = glfwCreateWindowSurface(m_Instance, glfwWindow, nullptr, &m_Surface);
-		if (vkResult != VK_SUCCESS) {
-			CBK_CORE_ERROR("VulkanSwapchainManager: glfwCreateWindowSurface failed ({})", static_cast<int>(vkResult));
-			return false;
-		}
+		VK_CHECK(glfwCreateWindowSurface(m_Instance, glfwWindow, nullptr, &m_Surface));
 		CBK_CORE_ASSERT(m_Surface != VK_NULL_HANDLE, "VulkanSwapchainManager: surface is null after glfwCreateWindowSurface");
-		vkResult = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(ctx->getPhysicalDevice(), m_Surface, &m_SurfaceCaps);
-		if (vkResult != VK_SUCCESS) {
-			CBK_CORE_ERROR("VulkanRendererAPI: error getting surface capabilities ({})", static_cast<int>(vkResult));
-			return false;
-		}
+		VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(ctx->getPhysicalDevice(), m_Surface, &m_SurfaceCaps));
 		VkExtent2D swapchainExtent{ m_SurfaceCaps.currentExtent };
 		if (m_SurfaceCaps.currentExtent.width == 0xFFFFFFFF) { // For wayland
 			swapchainExtent = { .width = static_cast<uint32_t>(window.getWidth()), .height = static_cast<uint32_t>(window.getHeight()) };
@@ -108,26 +93,13 @@ namespace cbk::platform::vk {
 			                                        .preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
 			                                        .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
 			                                        .presentMode = VK_PRESENT_MODE_FIFO_KHR };
-		vkResult = vkCreateSwapchainKHR(m_Device, &swapchainCI, nullptr, &m_Swapchain);
-		if (vkResult != VK_SUCCESS) {
-			CBK_CORE_ERROR("VulkanRendererAPI: error creating swapchain ({})", static_cast<int>(vkResult));
-			return false;
-		}
-		return true;
+		VK_CHECK(vkCreateSwapchainKHR(m_Device, &swapchainCI, nullptr, &m_Swapchain));
 	}
 
-	bool VulkanSwapchainManager::getSwapchainImages(VulkanDeviceContext* ctx) {
-		auto vkResult = vkGetSwapchainImagesKHR(m_Device, m_Swapchain, &m_ImageCount, nullptr);
-		if (vkResult != VK_SUCCESS) {
-			CBK_CORE_ERROR("VulkanRendererAPI: error getting swapchain images ({})", static_cast<int>(vkResult));
-			return false;
-		}
+	void VulkanSwapchainManager::getSwapchainImages(VulkanDeviceContext* ctx) {
+		VK_CHECK(vkGetSwapchainImagesKHR(m_Device, m_Swapchain, &m_ImageCount, nullptr));
 		m_SwapchainImages.resize(m_ImageCount);
-		vkResult = vkGetSwapchainImagesKHR(m_Device, m_Swapchain, &m_ImageCount, m_SwapchainImages.data());
-		if (vkResult != VK_SUCCESS) {
-			CBK_CORE_ERROR("VulkanRendererAPI: error getting swapchain images ({})", static_cast<int>(vkResult));
-			return false;
-		}
+		VK_CHECK(vkGetSwapchainImagesKHR(m_Device, m_Swapchain, &m_ImageCount, m_SwapchainImages.data()));
 		m_SwapchainImageViews.resize(m_ImageCount);
 		for (auto i = 0; i < m_ImageCount; i++) {
 			VkImageViewCreateInfo viewCI{ .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
@@ -135,13 +107,8 @@ namespace cbk::platform::vk {
 				                          .viewType = VK_IMAGE_VIEW_TYPE_2D,
 				                          .format = ctx->getImageFormat(),
 				                          .subresourceRange{ .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .levelCount = 1, .layerCount = 1 } };
-			vkResult = vkCreateImageView(m_Device, &viewCI, nullptr, &m_SwapchainImageViews[i]);
-			if (vkResult != VK_SUCCESS) {
-				CBK_CORE_ERROR("VulkanRendererAPI: error creating image view {} ({})", i, static_cast<int>(vkResult));
-				return false;
-			}
+			VK_CHECK(vkCreateImageView(m_Device, &viewCI, nullptr, &m_SwapchainImageViews[i]));
 		}
-		return true;
 	}
 
 	uint32_t VulkanSwapchainManager::getMinImageCount() const {
@@ -172,7 +139,7 @@ namespace cbk::platform::vk {
 		return m_DepthImageViews.at(index);
 	}
 
-	bool VulkanSwapchainManager::createDepthAttachment(VulkanDeviceContext* ctx) {
+	void VulkanSwapchainManager::createDepthAttachment(VulkanDeviceContext* ctx) {
 		auto& window = Application::get().getWindow();
 		VkImageCreateInfo depthImageCI {
 			.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
@@ -194,23 +161,13 @@ namespace cbk::platform::vk {
 		m_DepthImageViews.resize(m_ImageCount);
 		m_DepthImageAllocations.resize(m_ImageCount);
 		for (uint32_t i = 0; i < m_ImageCount; i++) {
-			auto vkResult = vmaCreateImage(ctx->getAllocator(), &depthImageCI, &allocCI, &m_DepthImages[i], &m_DepthImageAllocations[i], nullptr);
-			if (vkResult != VK_SUCCESS) {
-				CBK_CORE_ERROR("VulkanRendererAPI: error creating depth image {} ({})", i, static_cast<int>(vkResult));
-				return false;
-			}
-
+			VK_CHECK(vmaCreateImage(ctx->getAllocator(), &depthImageCI, &allocCI, &m_DepthImages[i], &m_DepthImageAllocations[i], nullptr));
 			VkImageViewCreateInfo depthViewCI{ .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
 				                               .image = m_DepthImages[i],
 				                               .viewType = VK_IMAGE_VIEW_TYPE_2D,
 				                               .format = ctx->getDepthFormat(),
 				                               .subresourceRange{ .aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT, .levelCount = 1, .layerCount = 1 } };
-			vkResult = vkCreateImageView(m_Device, &depthViewCI, nullptr, &m_DepthImageViews[i]);
-			if (vkResult != VK_SUCCESS) {
-				CBK_CORE_ERROR("VulkanRendererAPI: error creating depth image view {} ({})", i, static_cast<int>(vkResult));
-				return false;
-			}
+			VK_CHECK(vkCreateImageView(m_Device, &depthViewCI, nullptr, &m_DepthImageViews[i]));
 		}
-		return true;
 	}
 } // namespace cbk::platform::vk

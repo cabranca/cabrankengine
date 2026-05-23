@@ -36,9 +36,9 @@ namespace cbk::platform::vk {
 		static constexpr VkFormat k_ImageFormat{ VK_FORMAT_B8G8R8A8_SRGB };
 		VkFormat m_DepthFormat{ VK_FORMAT_UNDEFINED };
 
-		bool createVulkanInstance();
-		bool createVulkanDevice();
-		bool createAllocator();
+		void createVulkanInstance();
+		void createVulkanDevice();
+		void createAllocator();
 		void setDepthFormat();
 	};
 } // namespace cbk::platform::vk
