@@ -2,11 +2,6 @@
 #include "Model.h"
 
 #include <fstream>
-#include <unordered_map>
-
-#include <Cabrankengine/Renderer/Texture.h>
-
-#include <Common/BinaryFormats.h>
 
 namespace cbk::scene {
 
@@ -114,9 +109,9 @@ namespace cbk::scene {
 				return;
 			}
 
-			Ref<rendering::Material> meshMaterial =
-			    (mh.materialIndex < materials.size()) ? materials[mh.materialIndex] : m_Material;
-			m_Meshes.emplace_back(std::move(vertices), std::move(indices), meshMaterial);
+			CBK_CORE_ASSERT(mh.materialIndex < materials.size(), "Invalid material index for model {}!", path);
+			
+			m_Meshes.emplace_back(std::move(vertices), std::move(indices), materials[mh.materialIndex]);
 		}
 	}
 

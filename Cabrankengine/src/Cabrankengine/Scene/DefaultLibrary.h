@@ -9,9 +9,6 @@ namespace cbk::scene {
 	class DefaultLibrary {
 	  public:
 		static void init();
-		// Release all cached GPU resources. Must be called while the Vulkan device
-		// is still alive, otherwise these Refs would destruct after Application
-		// teardown and segfault on Application::get().getWindow().getContext().
 		static void shutdown();
 
 		static Ref<rendering::Texture2D> getWhiteTexture();
