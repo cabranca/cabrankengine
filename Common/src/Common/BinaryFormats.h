@@ -1,6 +1,10 @@
 #pragma once
 
 #include <cstdint>
+#include <type_traits>
+
+#include <Common/Math/Vector2.h>
+#include <Common/Math/Vector3.h>
 
 namespace cbk::common {
 
@@ -57,11 +61,14 @@ namespace cbk::common {
 	};
 
 	struct Vertex {
-		float px, py, pz;       // position
-		float nx, ny, nz;       // normal
-		float tx, ty;           // texCoords
-		float tanx, tany, tanz; // tangent
+		math::Vector3 position;
+		math::Vector3 normal;
+		math::Vector2 texCoords;
+		math::Vector3 tangent;
 	};
+
+	static_assert(sizeof(Vertex) == 44, "Vertex must be tightly packed (3+3+2+3 floats = 44 bytes) for binary IO");
+	static_assert(std::is_standard_layout_v<Vertex>, "Vertex must be standard-layout for binary IO");
 
 	// One material's payload. Followed by numTextures TextureEntry records
 	// (each trailed by char[pathLength]) then numProperties PropertyEntry records.

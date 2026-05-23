@@ -44,26 +44,16 @@ namespace cbk::ac {
 
 			for (unsigned int v = 0; v < aiM->mNumVertices; v++) {
 				ModelConverter::Vertex vert{};
-				vert.px = aiM->mVertices[v].x;
-				vert.py = aiM->mVertices[v].y;
-				vert.pz = aiM->mVertices[v].z;
+				vert.position = { aiM->mVertices[v].x, aiM->mVertices[v].y, aiM->mVertices[v].z };
 
-				if (aiM->HasNormals()) {
-					vert.nx = aiM->mNormals[v].x;
-					vert.ny = aiM->mNormals[v].y;
-					vert.nz = aiM->mNormals[v].z;
-				}
+				if (aiM->HasNormals())
+					vert.normal = { aiM->mNormals[v].x, aiM->mNormals[v].y, aiM->mNormals[v].z };
 
-				if (aiM->mTextureCoords[0]) {
-					vert.tx = aiM->mTextureCoords[0][v].x;
-					vert.ty = aiM->mTextureCoords[0][v].y;
-				}
+				if (aiM->mTextureCoords[0])
+					vert.texCoords = { aiM->mTextureCoords[0][v].x, aiM->mTextureCoords[0][v].y };
 
-				if (aiM->HasTangentsAndBitangents()) {
-					vert.tanx = aiM->mTangents[v].x;
-					vert.tany = aiM->mTangents[v].y;
-					vert.tanz = aiM->mTangents[v].z;
-				}
+				if (aiM->HasTangentsAndBitangents())
+					vert.tangent = { aiM->mTangents[v].x, aiM->mTangents[v].y, aiM->mTangents[v].z };
 
 				cm.vertices.push_back(vert);
 			}

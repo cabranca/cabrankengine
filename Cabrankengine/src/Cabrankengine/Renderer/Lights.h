@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Cabrankengine/Math/Vector3.h>
+#include <Common/Math/Vector3.h>
 
 namespace cbk::rendering {
 

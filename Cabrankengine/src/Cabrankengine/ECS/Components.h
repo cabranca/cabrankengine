@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-#include <Cabrankengine/Math/VecTraits.h>
+#include <Common/Math/VecTraits.h>
 #include <Cabrankengine/Renderer/Texture.h>
 #include <Cabrankengine/Scene/Model.h>
 

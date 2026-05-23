@@ -2,8 +2,8 @@
 
 #include <pch.h>
 
-#include <Cabrankengine/Math/Mat4.h>
-#include <Cabrankengine/Math/Vector4.h>
+#include <Common/Math/Mat4.h>
+#include <Common/Math/Vector4.h>
 
 namespace cbk::rendering {
 

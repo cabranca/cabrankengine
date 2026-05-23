@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Cabrankengine/ECS/Registry.hpp>
-#include <Cabrankengine/Math/Vector4.h>
+#include <Common/Math/Vector4.h>
 
 namespace cbk::scene {
 

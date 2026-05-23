@@ -1,15 +1,10 @@
 #pragma once
 
-#include <Cabrankengine/Math/Vector3.h>
+#include <Common/BinaryFormats.h>
 
 namespace cbk::rendering {
 
-	struct Vertex {
-		math::Vector3 position;
-		math::Vector3 normal;
-		math::Vector2 texCoords;
-		math::Vector3 tangent;
-	};
+	using Vertex = cbk::common::Vertex;
 
 	// ShaderDataType is an enum class that defines the types of data that can be used in shaders.
 	enum class ShaderDataType { None = 0, Float, Float2, Float3, Float4, Mat3, Mat4, Int, Int2, Int3, Int4, Bool };

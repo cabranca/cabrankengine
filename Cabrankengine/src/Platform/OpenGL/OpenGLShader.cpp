@@ -3,7 +3,7 @@
 
 #include <glad/glad.h>
 
-#include <Cabrankengine/Math/MatrixFactory.h>
+#include <Common/Math/MatrixFactory.h>
 
 namespace cbk::platform::opengl {
 

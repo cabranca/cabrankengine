@@ -1,7 +1,7 @@
 #pragma once
 
-#include <Cabrankengine/Math/Mat4.h>
-#include <Cabrankengine/Math/Vector3.h>
+#include <Common/Math/Mat4.h>
+#include <Common/Math/Vector3.h>
 
 namespace cbk::rendering {
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Cabrankengine/Math/MatrixFactory.h>
+#include <Common/Math/MatrixFactory.h>
 #include <Cabrankengine/Renderer/Materials/Material.h>
 #include <Cabrankengine/Renderer/Shader.h>
 #include <Cabrankengine/Renderer/Texture.h>

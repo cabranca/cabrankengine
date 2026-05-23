@@ -102,8 +102,8 @@ namespace cbk::scene {
 				return;
 			}
 
-			std::vector<cbk::common::Vertex> rawVertices(mh.numVertices);
-			if (!file.read(reinterpret_cast<char*>(rawVertices.data()), mh.numVertices * sizeof(cbk::common::Vertex))) {
+			std::vector<rendering::Vertex> vertices(mh.numVertices);
+			if (!file.read(reinterpret_cast<char*>(vertices.data()), mh.numVertices * sizeof(rendering::Vertex))) {
 				CBK_CORE_ERROR("Failed to read mesh vertices {0} from {1}", i, path);
 				return;
 			}
@@ -112,15 +112,6 @@ namespace cbk::scene {
 			if (!file.read(reinterpret_cast<char*>(indices.data()), mh.numIndices * sizeof(uint32_t))) {
 				CBK_CORE_ERROR("Failed to read mesh indices {0} from {1}", i, path);
 				return;
-			}
-
-			std::vector<rendering::Vertex> vertices;
-			vertices.reserve(mh.numVertices);
-			for (const auto& rv : rawVertices) {
-				vertices.push_back({ { rv.px, rv.py, rv.pz },
-				                     { rv.nx, rv.ny, rv.nz },
-				                     { rv.tx, rv.ty },
-				                     { rv.tanx, rv.tany, rv.tanz } });
 			}
 
 			Ref<rendering::Material> meshMaterial =

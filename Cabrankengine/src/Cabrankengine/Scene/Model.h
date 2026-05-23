@@ -3,8 +3,8 @@
 #include <string>
 #include <vector>
 
-#include <Cabrankengine/Math/Mat4.h>
-#include <Cabrankengine/Math/MatrixFactory.h>
+#include <Common/Math/Mat4.h>
+#include <Common/Math/MatrixFactory.h>
 #include <Cabrankengine/Renderer/Materials/Material.h>
 
 #include "Mesh.h"

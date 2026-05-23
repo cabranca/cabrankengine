@@ -1,7 +1,7 @@
 #include <pch.h>
 #include "Mesh.h"
 
-#include <Cabrankengine/Math/MatrixFactory.h>
+#include <Common/Math/MatrixFactory.h>
 #include <Cabrankengine/Renderer/Renderer.h>
 
 namespace cbk::scene {

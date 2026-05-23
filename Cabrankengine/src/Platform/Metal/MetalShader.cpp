@@ -6,7 +6,7 @@
 
 #include <Cabrankengine/Core/Application.h>
 #include <Cabrankengine/Core/Window.h>
-#include <Cabrankengine/Math/MatrixFactory.h>
+#include <Common/Math/MatrixFactory.h>
 #include <Platform/Metal/MetalContext.h>
 #include <Platform/Metal/MetalRendererAPI.h>
 
