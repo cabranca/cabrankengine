@@ -27,7 +27,7 @@ namespace cbk::platform::vk {
 			         VMA_ALLOCATION_CREATE_MAPPED_BIT,
 			.usage = VMA_MEMORY_USAGE_AUTO,
 		};
-		for (uint32_t i = 0; i < k_Slots; ++i) {
+		for (uint32_t i = 0; i < k_MaxFramesInFlight; ++i) {
 			auto vkResult = vmaCreateBuffer(ctx->getAllocator(), &bufferCI, &allocCI, &m_Buffers[i], &m_Allocations[i], &m_AllocationInfos[i]);
 			if (vkResult != VK_SUCCESS) {
 				CBK_CORE_ERROR("VulkanUniformBuffer: vmaCreateBuffer slot {} failed ({})", i, static_cast<int>(vkResult));
@@ -53,14 +53,14 @@ namespace cbk::platform::vk {
 			return;
 		}
 
-		// 3) Pool with k_Slots descriptor sets, one per buffer.
+		// 3) Pool with k_MaxFramesInFlight descriptor sets, one per buffer.
 		VkDescriptorPoolSize poolSize{
 			.type            = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-			.descriptorCount = k_Slots,
+			.descriptorCount = k_MaxFramesInFlight,
 		};
 		VkDescriptorPoolCreateInfo poolCI{
 			.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-			.maxSets       = k_Slots,
+			.maxSets       = k_MaxFramesInFlight,
 			.poolSizeCount = 1,
 			.pPoolSizes    = &poolSize,
 		};
@@ -70,12 +70,12 @@ namespace cbk::platform::vk {
 			return;
 		}
 
-		std::array<VkDescriptorSetLayout, k_Slots> setLayouts;
+		std::array<VkDescriptorSetLayout, k_MaxFramesInFlight> setLayouts;
 		setLayouts.fill(m_DescriptorSetLayout);
 		VkDescriptorSetAllocateInfo dsAllocCI{
 			.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
 			.descriptorPool     = m_DescriptorPool,
-			.descriptorSetCount = k_Slots,
+			.descriptorSetCount = k_MaxFramesInFlight,
 			.pSetLayouts        = setLayouts.data(),
 		};
 		vkResult = vkAllocateDescriptorSets(device, &dsAllocCI, m_DescriptorSets.data());
@@ -85,9 +85,9 @@ namespace cbk::platform::vk {
 		}
 
 		// Point each descriptor set at its own buffer.
-		std::array<VkDescriptorBufferInfo, k_Slots> bufferInfos{};
-		std::array<VkWriteDescriptorSet, k_Slots>   writes{};
-		for (uint32_t i = 0; i < k_Slots; ++i) {
+		std::array<VkDescriptorBufferInfo, k_MaxFramesInFlight> bufferInfos{};
+		std::array<VkWriteDescriptorSet, k_MaxFramesInFlight>   writes{};
+		for (uint32_t i = 0; i < k_MaxFramesInFlight; ++i) {
 			bufferInfos[i] = VkDescriptorBufferInfo{
 				.buffer = m_Buffers[i],
 				.offset = 0,
@@ -102,7 +102,7 @@ namespace cbk::platform::vk {
 				.pBufferInfo     = &bufferInfos[i],
 			};
 		}
-		vkUpdateDescriptorSets(device, k_Slots, writes.data(), 0, nullptr);
+		vkUpdateDescriptorSets(device, k_MaxFramesInFlight, writes.data(), 0, nullptr);
 	}
 
 	VulkanUniformBuffer::~VulkanUniformBuffer() {
@@ -118,16 +118,16 @@ namespace cbk::platform::vk {
 			vkDestroyDescriptorPool(device, m_DescriptorPool, nullptr);
 		if (m_DescriptorSetLayout != VK_NULL_HANDLE)
 			vkDestroyDescriptorSetLayout(device, m_DescriptorSetLayout, nullptr);
-		for (uint32_t i = 0; i < k_Slots; ++i) {
+		for (uint32_t i = 0; i < k_MaxFramesInFlight; ++i) {
 			if (m_Buffers[i] != VK_NULL_HANDLE)
 				vmaDestroyBuffer(ctx->getAllocator(), m_Buffers[i], m_Allocations[i]);
 		}
 	}
 
 	void VulkanUniformBuffer::setData(const void* data, uint32_t size, uint32_t offset) {
-		auto mapped = m_AllocationInfos[m_CurrentSlot].pMappedData;
+		auto mapped = m_AllocationInfos[m_CurrentFrame].pMappedData;
 		if (!mapped) {
-			CBK_CORE_ERROR("VulkanUniformBuffer::setData: buffer slot {} is not mapped", m_CurrentSlot);
+			CBK_CORE_ERROR("VulkanUniformBuffer::setData: buffer slot {} is not mapped", m_CurrentFrame);
 			return;
 		}
 		std::memcpy(static_cast<uint8_t*>(mapped) + offset, data, size);

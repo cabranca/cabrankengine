@@ -15,6 +15,7 @@ namespace cbk::platform::vk {
 		                         const rendering::VertexLayout& layout);
 
 		~VulkanGeometryDescriptor();
+		void shutdown();
 		
 		void setData(const void* data, uint32_t size) override;
 

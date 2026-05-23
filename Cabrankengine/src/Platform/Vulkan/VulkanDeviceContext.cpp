@@ -60,7 +60,30 @@ namespace cbk::platform::vk {
 	}
 
 	VkFormat VulkanDeviceContext::getImageFormat() const {
-		return k_ImageFormat;
+		return m_SurfaceFormat.format;
+	}
+
+	VkColorSpaceKHR VulkanDeviceContext::getImageColorSpace() const {
+		return m_SurfaceFormat.colorSpace;
+	}
+
+	void VulkanDeviceContext::selectSurfaceFormat(VkSurfaceKHR surface) {
+		uint32_t count = 0;
+		vkGetPhysicalDeviceSurfaceFormatsKHR(m_PhysicalDevice, surface, &count, nullptr);
+		std::vector<VkSurfaceFormatKHR> formats(count);
+		vkGetPhysicalDeviceSurfaceFormatsKHR(m_PhysicalDevice, surface, &count, formats.data());
+
+		constexpr VkFormat preferred[] = { VK_FORMAT_B8G8R8A8_SRGB, VK_FORMAT_R8G8B8A8_SRGB };
+		for (VkFormat pref : preferred) {
+			for (auto& f : formats) {
+				if (f.format == pref && f.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+					m_SurfaceFormat = f;
+					return;
+				}
+			}
+		}
+		m_SurfaceFormat = formats[0];
+		CBK_CORE_WARN("VulkanDeviceContext: preferred sRGB surface format unavailable, falling back to format {}", static_cast<int>(m_SurfaceFormat.format));
 	}
 
 	VkFormat VulkanDeviceContext::getDepthFormat() const {

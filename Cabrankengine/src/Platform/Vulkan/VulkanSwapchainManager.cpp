@@ -76,6 +76,7 @@ namespace cbk::platform::vk {
 		auto glfwWindow = static_cast<GLFWwindow*>(window.getNativeWindow());
 		VK_CHECK(glfwCreateWindowSurface(m_Instance, glfwWindow, nullptr, &m_Surface));
 		CBK_CORE_ASSERT(m_Surface != VK_NULL_HANDLE, "VulkanSwapchainManager: surface is null after glfwCreateWindowSurface");
+		ctx->selectSurfaceFormat(m_Surface);
 		VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(ctx->getPhysicalDevice(), m_Surface, &m_SurfaceCaps));
 		VkExtent2D swapchainExtent{ m_SurfaceCaps.currentExtent };
 		if (m_SurfaceCaps.currentExtent.width == 0xFFFFFFFF) { // For wayland
@@ -86,7 +87,7 @@ namespace cbk::platform::vk {
 			                                        .surface = m_Surface,
 			                                        .minImageCount = m_SurfaceCaps.minImageCount,
 			                                        .imageFormat = ctx->getImageFormat(),
-			                                        .imageColorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR,
+			                                        .imageColorSpace = ctx->getImageColorSpace(),
 			                                        .imageExtent{ .width = swapchainExtent.width, .height = swapchainExtent.height },
 			                                        .imageArrayLayers = 1,
 			                                        .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,

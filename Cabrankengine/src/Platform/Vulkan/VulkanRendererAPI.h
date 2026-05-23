@@ -2,6 +2,7 @@
 
 #include <Cabrankengine/Renderer/RendererAPI.h>
 
+#include "VulkanConstants.h"
 #include "VulkanSwapchainManager.h"
 
 namespace cbk::platform::vk {
@@ -25,7 +26,6 @@ namespace cbk::platform::vk {
 		[[nodiscard]] VkCommandBuffer getCommandBuffer() const;
 
 	  private:
-		static constexpr uint32_t k_MaxFramesInFlight{ 2 };
 		VulkanSwapchainManager m_SwapchainManager;
 		uint32_t m_FrameIndex{ 0 };
 		uint32_t m_ImageIndex{ 0 };

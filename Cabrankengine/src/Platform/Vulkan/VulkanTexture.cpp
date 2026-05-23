@@ -263,9 +263,12 @@ namespace cbk::platform::vk {
 
 	VulkanTexture::~VulkanTexture() {
 		auto ctx = static_cast<VulkanDeviceContext*>(Application::get().getWindow().getContext());
-		vkDestroyImageView(ctx->getLogicalDevice(), m_Texture.view, nullptr);
-		vkDestroySampler(ctx->getLogicalDevice(), m_Texture.sampler, nullptr);
-		vmaDestroyImage(ctx->getAllocator(), m_Texture.image, m_Texture.allocation);
+		if (m_Texture.view != VK_NULL_HANDLE)
+			vkDestroyImageView(ctx->getLogicalDevice(), m_Texture.view, nullptr);
+		if (m_Texture.sampler != VK_NULL_HANDLE)
+			vkDestroySampler(ctx->getLogicalDevice(), m_Texture.sampler, nullptr);
+		if (m_Texture.image != VK_NULL_HANDLE)
+			vmaDestroyImage(ctx->getAllocator(), m_Texture.image, m_Texture.allocation);
 	}
 
 	const rendering::TextureSpecification& VulkanTexture::getSpecification() const {

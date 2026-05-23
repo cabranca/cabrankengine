@@ -20,7 +20,10 @@ namespace cbk::platform::vk {
 		[[nodiscard]] VmaAllocator getAllocator() const;
         [[nodiscard]] uint32_t getQueueFamily() const;
 		[[nodiscard]] VkFormat getImageFormat() const;
+		[[nodiscard]] VkColorSpaceKHR getImageColorSpace() const;
         [[nodiscard]] VkFormat getDepthFormat() const;
+
+		void selectSurfaceFormat(VkSurfaceKHR surface);
 
 	  private:
 		VkInstance m_Instance;
@@ -33,7 +36,7 @@ namespace cbk::platform::vk {
 		VkDebugUtilsMessengerEXT m_DebugMessenger{ VK_NULL_HANDLE };
 #endif
 
-		static constexpr VkFormat k_ImageFormat{ VK_FORMAT_B8G8R8A8_SRGB };
+		VkSurfaceFormatKHR m_SurfaceFormat{};
 		VkFormat m_DepthFormat{ VK_FORMAT_UNDEFINED };
 
 		void createVulkanInstance();

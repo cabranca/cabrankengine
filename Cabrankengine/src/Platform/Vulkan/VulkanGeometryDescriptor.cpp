@@ -49,6 +49,12 @@ namespace cbk::platform::vk {
 	}
 
 	VulkanGeometryDescriptor::~VulkanGeometryDescriptor() {
+		shutdown();
+	}
+
+	void VulkanGeometryDescriptor::shutdown() {
+		if (m_VBuffer == VK_NULL_HANDLE)
+			return;
 		VmaAllocator allocator = static_cast<VulkanDeviceContext*>(Application::get().getWindow().getContext())->getAllocator();
 		vmaDestroyBuffer(allocator, m_VBuffer, m_VBufferAllocation);
 	}

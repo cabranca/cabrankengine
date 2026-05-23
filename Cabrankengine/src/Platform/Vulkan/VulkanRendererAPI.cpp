@@ -70,7 +70,7 @@ namespace cbk::platform::vk {
 		// Renderer::beginScene — prevents the CPU from trampling a UBO the GPU is
 		// still reading from for the prior in-flight frame.
 		auto sceneUbo = static_cast<VulkanUniformBuffer*>(rendering::Renderer::getSceneUBO().get());
-		sceneUbo->setCurrentSlot(m_FrameIndex);
+		sceneUbo->setCurrentFrame(m_FrameIndex);
 
 		auto cb = m_CommandBuffers[m_FrameIndex];
 		auto vkResult = vkResetCommandBuffer(cb, 0);
