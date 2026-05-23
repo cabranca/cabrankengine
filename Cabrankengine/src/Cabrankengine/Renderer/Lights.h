@@ -6,7 +6,9 @@ namespace cbk::rendering {
 
 	struct DirectionalLight {
 		math::Vector3 direction{ 0.f, -1.f, 0.f };
-		math::Vector3 radiance{ 1.f };
+		// Defaults to zero radiance: a scene with no CDirectionalLight authored
+		// gets no directional light, rather than a phantom white sun.
+		math::Vector3 radiance{ 0.f };
 	};
 
 	struct PointLight {

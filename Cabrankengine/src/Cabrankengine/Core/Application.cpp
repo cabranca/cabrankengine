@@ -10,8 +10,6 @@
 #include <Cabrankengine/Renderer/RenderCommand.h>
 #include <Cabrankengine/Scene/DefaultLibrary.h>
 
-#include "AudioEngine.h"
-#include "Logger.h"
 #include "Timestep.h"
 #include "Window.h"
 
@@ -31,7 +29,7 @@ namespace cbk {
 
 		WindowProps props(configJson.at("window").at("title"), configJson.at("window").at("width"), configJson.at("window").at("height"));
 
-		m_Window = std::unique_ptr<Window>(Window::create(props));
+		m_Window = Window::create(props);
 		m_Window->setEventCallback(BIND_EVENT_FN(&Application::OnEvent, this));
 
 		//AudioEngine::init();
@@ -39,16 +37,19 @@ namespace cbk {
 		Renderer::init();
 		DefaultLibrary::init();
 
-		m_RenderLayer = new RenderLayer();
-		RenderLayer::setScene(&m_Scene);
-		pushLayer(m_RenderLayer);
+		auto renderLayer = createScope<RenderLayer>();
+		m_RenderLayer = renderLayer.get();
+		RenderLayer::setScene(&m_Scene); // Check this static logic.
+		pushLayer(std::move(renderLayer));
 
-		m_ImGuiLayer = new ImGuiLayer();
-		pushOverlay(m_ImGuiLayer);
+		auto imGuiLayer = createScope<ImGuiLayer>();
+		m_ImGuiLayer = imGuiLayer.get();
+		pushOverlay(std::move(imGuiLayer));
 	}
 
 	Application::~Application() {
 		CBK_PROFILE_FUNCTION();
+
 		Renderer::shutdown();
 	}
 
@@ -67,14 +68,14 @@ namespace cbk {
 				CBK_PROFILE_SCOPE("LayerStack OnUpdate");
 				RenderCommand::beginFrame();
 
-				for (Layer* layer : m_LayerStack)
+				for (auto& layer : m_LayerStack)
 					layer->onUpdate(timestep);
 			}
 
 			m_ImGuiLayer->begin();
 			{
 				CBK_PROFILE_SCOPE("LayerStack OnImGuiRender");
-				for (Layer* layer : m_LayerStack)
+				for (auto& layer : m_LayerStack)
 					layer->onImGuiRender();
 			}
 			m_ImGuiLayer->end();
@@ -95,16 +96,14 @@ namespace cbk {
 		}
 	}
 
-	void Application::pushLayer(Layer* layer) {
+	void Application::pushLayer(Scope<Layer> layer) {
 		CBK_PROFILE_FUNCTION();
-		m_LayerStack.pushLayer(layer);
-		layer->onAttach();
+		m_LayerStack.pushLayer(std::move(layer));
 	}
 
-	void Application::pushOverlay(Layer* layer) {
+	void Application::pushOverlay(Scope<Layer> layer) {
 		CBK_PROFILE_FUNCTION();
-		m_LayerStack.pushOverlay(layer);
-		layer->onAttach();
+		m_LayerStack.pushOverlay(std::move(layer));
 	}
 
 	void Application::popLayer(Layer* layer) {

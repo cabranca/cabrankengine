@@ -66,19 +66,15 @@ class ExampleLayer : public Layer {
 
 		auto* reg = Application::get().getRegistry();
 
+		// Sponza is authored in centimeters — scale down to meters
+		PBRModelArch sponza{ "assets/models/sponza/Sponza.cbkm" };
+		PBRModelArch curtains{ "assets/models/sponza_curtains/Curtains.cbkm" };
+
+		// Start camera inside the main hall, looking down the corridor
 		CameraControllerArch camera(ProjectionType::Perspective);
-		camera.transform().Position = { 0.f, 1.5f, 9.f };
-
-		PBRModelArch gun{ "assets/models/gun/Cerberus_LP.cbkm" };
-		gun.transform().Position = { 2.5f, -0.5f, 0.f };
-		gun.transform().Rotation = { -90.f, 0.f, 30.f };
-		gun.transform().Scale = Vector3(0.05f);
-
-		PhongModelArch backpack{ "assets/models/backpack/backpack.cbkm" };
-		backpack.transform().Position = { -2.5f, 0.f, 0.f };
-
-		TextArch textSample{};
-		textSample.text().Text = "Renderizado con Vulkan!";
+		camera.transform().Position = { 0.f, 1.8f, 0.f };
+		camera.camera().Far = 200.f;   // Sponza is deep; default 100 clips it
+		camera.controller().FreeFlight = true; // fly freely along the look direction
 
 		// Key light — created manually so onImGuiRender can edit it
 		m_SunEntity = reg->createEntity();
@@ -102,7 +98,7 @@ class ExampleLayer : public Layer {
 			return;
 
 		m_Time += delta;
-		float angle = m_Time * 0.6f;
+		float angle = m_Time * 0.1f;
 		if (auto light = Application::get().getRegistry()->getComponent<CDirectionalLight>(m_SunEntity))
 			(*light)->Direction = { std::cos(angle), -1.2f, std::sin(angle) };
 	}
@@ -147,10 +143,15 @@ class ExampleLayer : public Layer {
 class Sandbox : public Application {
   public:
 	Sandbox() {
-		pushLayer(new ExampleLayer());
+		auto layer = Scope<ExampleLayer>();
+		m_Layer = layer.get();
+		pushLayer(std::move(layer));
 		//pushLayer(new Sandbox2D());
 	}
 	~Sandbox() {}
+
+	private:
+	ExampleLayer* m_Layer; // The stack owns this
 };
 
 Application* cbk::createApplication() {

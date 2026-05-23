@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Cabrankengine/Scene/Scene.h>
 #include <Cabrankengine/Renderer/RenderLayer.h>
 
 #include "LayerStack.h"
@@ -27,10 +26,10 @@ namespace cbk {
 			void OnEvent(Event& e);
 
 			// Pushes a layer to the stack on top of the other layers (always under the overlays)
-			void pushLayer(Layer* layer);
+			void pushLayer(Scope<Layer> layer);
 
 			// Pushes a layer to the stack on top of the other overlays
-			void pushOverlay(Layer* layer);
+			void pushOverlay(Scope<Layer> layer);
 
 			// Pops the top layer from the stack
 			void popLayer(Layer* layer);
@@ -61,11 +60,12 @@ namespace cbk {
 			// Callback for the WindowResize Event
 			bool onWindowResize(WindowResizeEvent& e);
 
-			std::unique_ptr<Window> m_Window; // Ptr to the app window
-			ImGuiLayer* m_ImGuiLayer = nullptr; // ImGui layer for rendering the UI (null on Vulkan for now)
-			rendering::RenderLayer* m_RenderLayer;
-			bool m_Running; // Whether the app must stop or not
+			// Be careful when changing the order of declaration (or destruction)
+			Scope<Window> m_Window; // Ptr to the app window
+			ImGuiLayer* m_ImGuiLayer; // ImGui layer for rendering the UI. The Stack owns this.
+			rendering::RenderLayer* m_RenderLayer; // The Stack owns this.
 			LayerStack m_LayerStack; // Stack of layers to forward the events to
+			bool m_Running; // Whether the app must stop or not
 			float m_LastFrameTime; // Time of the last frame
 			bool m_Minimized = false; // Whether the window is minimized or not
 			scene::Scene m_Scene; // Scene with the game world and registry
