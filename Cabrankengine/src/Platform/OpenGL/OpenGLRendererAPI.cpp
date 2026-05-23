@@ -46,10 +46,7 @@ namespace cbk::platform::opengl {
 		material->bind();
 		auto vao = static_cast<OpenGLVertexArray*>(desc.get());
 		vao->bind();
-		// Per-draw model matrix lives on the material's shader as a uniform. The shader-only
-		// submit path handles its own setMat4, so we only touch the shader when a material is bound.
-		if (material)
-			material->getShader()->setMat4("u_Model", transform);
+		material->getShader()->setMat4("u_Model", transform);
 		uint32_t count = indexCount == 0 ? vao->getIndexCount() : indexCount;
 		glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, nullptr);
 	}

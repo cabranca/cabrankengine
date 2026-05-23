@@ -28,10 +28,7 @@ namespace cbk {
 
     void LinuxWindow::onUpdate() {
         glfwPollEvents();
-#ifdef CBK_RENDERER_OPENGL
         m_Context->swapBuffers();
-#endif
-        // Vulkan presents via vkQueuePresentKHR inside the RendererAPI; no GLFW swap call here.
     }
 
     void LinuxWindow::setVSync(bool enabled) {

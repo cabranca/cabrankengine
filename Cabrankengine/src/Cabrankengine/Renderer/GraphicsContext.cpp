@@ -21,7 +21,7 @@ namespace cbk::rendering {
 #elif defined(CBK_RENDERER_METAL)
 		return createScope<platform::metal::MetalContext>(windowHandle);
 #elif defined(CBK_RENDERER_VULKAN)
-        return createScope<platform::vk::VulkanDeviceContext>(windowHandle);
+        return createScope<platform::vk::VulkanDeviceContext>();
 #else
 		CBK_CORE_ASSERT(false, "No renderer API defined!");
 		return nullptr;

@@ -1,7 +1,5 @@
 #pragma once
 
-#include <array>
-
 #include <Cabrankengine/Renderer/Materials/Texture2DMaterial.h>
 
 namespace cbk::platform::opengl {

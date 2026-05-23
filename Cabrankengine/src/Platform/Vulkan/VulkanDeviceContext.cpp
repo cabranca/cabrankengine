@@ -10,10 +10,6 @@
 
 namespace cbk::platform::vk {
 
-	VulkanDeviceContext::VulkanDeviceContext(GLFWwindow* windowHandle) {
-		CBK_CORE_ASSERT(windowHandle, "Window handle is null!");
-	}
-
 	void VulkanDeviceContext::init() {
 		if (glfwVulkanSupported() != GLFW_TRUE) {
 			CBK_CORE_ERROR("Vulkan not supported");

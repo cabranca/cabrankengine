@@ -153,8 +153,6 @@ namespace cbk::platform::vk {
 
 	void VulkanRendererAPI::drawIndexed(const Ref<Material>& material, const Ref<GeometryDescriptor>& desc, const math::Mat4& transform,
 	                                    uint32_t indexCount) {
-		CBK_CORE_ASSERT(material, "VulkanRendererAPI::drawIndexed(): trying to render without material!");
-
 		// Records the per-draw work into the active command buffer set up by beginFrame.
 		// No CB lifecycle, no submit, no present — those belong to beginFrame/endFrame.
 		commitRenderCommands(material, desc, transform);

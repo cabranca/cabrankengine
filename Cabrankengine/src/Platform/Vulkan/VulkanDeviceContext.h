@@ -9,8 +9,6 @@ namespace cbk::platform::vk {
 
 	class VulkanDeviceContext : public rendering::GraphicsContext {
 	  public:
-		VulkanDeviceContext(GLFWwindow* windowHandle);
-
 		void init() override;
 		void shutdown() override;
 		void swapBuffers() override;

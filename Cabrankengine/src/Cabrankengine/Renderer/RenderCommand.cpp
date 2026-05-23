@@ -56,6 +56,7 @@ namespace cbk::rendering {
 
 	void RenderCommand::drawIndexed(const Ref<Material>& material, const Ref<GeometryDescriptor>& desc, const math::Mat4& transform,
 	                                uint32_t indexCount) {
+		CBK_CORE_ASSERT(material, "RenderCommand::drawIndexed(): trying to render without material!");
 		s_RendererAPI->drawIndexed(material, desc, transform, indexCount);
 	}
 

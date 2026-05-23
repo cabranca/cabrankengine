@@ -1,7 +1,5 @@
 #pragma once
 
-#include <array>
-
 #include <Cabrankengine/Renderer/Materials/TextMaterial.h>
 
 namespace cbk::platform::opengl {
