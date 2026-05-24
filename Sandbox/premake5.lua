@@ -33,12 +33,24 @@ project "Sandbox"
             'if exist "%{prj.location}\\config.json" copy /Y "%{prj.location}\\config.json" "%{cfg.targetdir}\\config.json"'
         }
 
+    local renderer = _OPTIONS["renderer"]
+    local linuxRenderer = renderer or "vulkan"
+
     filter "system:linux"
         systemversion "latest"
         pic "on"
 
-        libdirs({ "%{LibDir.vulkan}" })
-        links { "X11", "Xrandr", "Xi", "Xxf86vm", "Xcursor", "pthread", "dl", "GL", "z", "glad", "slang", "slang-compiler" }
+        links { "X11", "Xrandr", "Xi", "Xxf86vm", "Xcursor", "pthread", "dl", "GL", "z", "glad" }
+
+    if linuxRenderer == "vulkan" then
+        filter "system:linux"
+            libdirs({ "%{LibDir.vulkan}" })
+            links { "slang", "slang-compiler" }
+            defines({ "CBK_RENDERER_VULKAN" })
+    else
+        filter "system:linux"
+            defines({ "CBK_RENDERER_OPENGL" })
+    end
         postbuildcommands
         {
             'cp -ru %{prj.location}/assets/ %{cfg.targetdir}/',

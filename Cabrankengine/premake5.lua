@@ -26,6 +26,10 @@ project("Cabrankengine")
 
 	links({ "Common", "GLFW", "ImGui", "FreeType" })
 
+	local renderer = _OPTIONS["renderer"]
+	local linuxRenderer = renderer or "vulkan"
+	local windowsRenderer = renderer or "opengl"
+
 	filter("system:windows")
 		systemversion("latest")
 		buildoptions({ "/utf-8" })
@@ -39,13 +43,29 @@ project("Cabrankengine")
 			"src/pch.cpp",
 			"src/Platform/Windows/**.h",
 			"src/Platform/Windows/**.cpp",
-			"src/Platform/OpenGL/**.h",
-			"src/Platform/OpenGL/**.cpp",
 		})
 
 		externalincludedirs({ "%{IncludeDir.vulkan}" })
-		links({ "opengl32.lib", "glad" })
 		defines({ "GLFW_INCLUDE_NONE" })
+
+	if windowsRenderer == "vulkan" then
+		filter("system:windows")
+			files({
+				"src/Platform/Vulkan/**.h",
+				"src/Platform/Vulkan/**.cpp",
+			})
+			defines({ "CBK_RENDERER_VULKAN" })
+			libdirs({ "%{LibDir.vulkan}" })
+			links({ "glad", "vulkan-1.lib" })
+	else
+		filter("system:windows")
+			files({
+				"src/Platform/OpenGL/**.h",
+				"src/Platform/OpenGL/**.cpp",
+			})
+			defines({ "CBK_RENDERER_OPENGL" })
+			links({ "opengl32.lib", "glad" })
+	end
 
 	filter("system:linux")
 		systemversion("latest")
@@ -57,26 +77,29 @@ project("Cabrankengine")
 		files({
 			"src/Platform/Linux/**.h",
 			"src/Platform/Linux/**.cpp",
-			"src/Platform/Vulkan/**.h",
-			"src/Platform/Vulkan/**.cpp",
 		})
 
-	includedirs({ "src" })
-	externalincludedirs({ "%{IncludeDir.vulkan}" })
-	libdirs({ "%{LibDir.vulkan}" })
-	links({
-		"X11",
-		"Xrandr",
-		"Xi",
-		"Xxf86vm",
-		"Xcursor",
-		"pthread",
-		"dl",
-		"GL",
-		"glad",
-		"slang",
-		"slang-compiler",
-	})
+		includedirs({ "src" })
+		links({ "X11", "Xrandr", "Xi", "Xxf86vm", "Xcursor", "pthread", "dl", "GL", "glad" })
+
+	if linuxRenderer == "vulkan" then
+		filter("system:linux")
+			files({
+				"src/Platform/Vulkan/**.h",
+				"src/Platform/Vulkan/**.cpp",
+			})
+			defines({ "CBK_RENDERER_VULKAN" })
+			externalincludedirs({ "%{IncludeDir.vulkan}" })
+			libdirs({ "%{LibDir.vulkan}" })
+			links({ "slang", "slang-compiler" })
+	else
+		filter("system:linux")
+			files({
+				"src/Platform/OpenGL/**.h",
+				"src/Platform/OpenGL/**.cpp",
+			})
+			defines({ "CBK_RENDERER_OPENGL" })
+	end
 
 	filter("system:macosx")
 		systemversion("12.0")

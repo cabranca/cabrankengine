@@ -6,7 +6,6 @@
 #ifdef _WIN32
 	#ifdef _WIN64
 		#define CBK_PLATFORM_WINDOWS
-		#define CBK_RENDERER_OPENGL
 	#else
 		#error "Cabrankengine only supports 64-bit Windows!"
 	#endif
@@ -15,7 +14,6 @@
 #ifdef __linux__
 	#ifdef __x86_64__
 		#define CBK_PLATFORM_LINUX
-		#define CBK_RENDERER_VULKAN
 	#else
 		#error "Cabrankengine only supports 64-bit Linux!"
 	#endif
