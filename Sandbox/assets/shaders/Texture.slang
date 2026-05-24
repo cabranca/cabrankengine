@@ -34,8 +34,11 @@ struct VSOutput {
 VSOutput main(VSInput input) {
     VSOutput o;
     o.svPosition    = mul(scene.viewProjection, float4(input.position, 1.0));
+
+	// Clip space transformation from OpenGL to Vulkan convention
     o.svPosition.y  = -o.svPosition.y;
     o.svPosition.z  = (o.svPosition.z + o.svPosition.w) * 0.5;
+    
     o.color         = input.color;
     o.texCoord      = input.texCoord;
     o.texIndex      = input.texIndex;
