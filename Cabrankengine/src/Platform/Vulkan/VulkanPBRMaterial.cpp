@@ -11,6 +11,7 @@
 
 #include "VulkanDeviceContext.h"
 #include "VulkanShader.h"
+#include "VulkanStorageBuffer.h"
 #include "VulkanTexture.h"
 #include "VulkanUniformBuffer.h"
 
@@ -124,11 +125,14 @@ namespace cbk::platform::vk {
 		};
 		vkCreateDescriptorPool(device, &poolCI, nullptr, &s_DescriptorPool);
 
-		// 3) Pipeline layout — set 0 = scene globals UBO, set 1 = material textures.
+		// 3) Pipeline layout — set 0 = scene globals UBO, set 1 = material textures,
+		//    set 2 = point-light SSBO (owned by Renderer, see Renderer::getLightSSBO).
 		//    Push: vertex stage [0..64) Mat4 model, fragment stage [64..) PushData.
 		auto sceneUbo    = static_cast<VulkanUniformBuffer*>(Renderer::getSceneUBO().get());
 		auto sceneLayout = sceneUbo->getDescriptorSetLayout();
-		std::array<VkDescriptorSetLayout, 2> setLayouts = { sceneLayout, s_DescriptorSetLayout };
+		auto lightSSBO   = static_cast<VulkanStorageBuffer*>(Renderer::getLightSSBO().get());
+		auto lightLayout = lightSSBO->getDescriptorSetLayout();
+		std::array<VkDescriptorSetLayout, 3> setLayouts = { sceneLayout, s_DescriptorSetLayout, lightLayout };
 
 		// Slang emits one push-constant block visible to both stages, so use a single
 		// range covering the whole block instead of splitting per stage.

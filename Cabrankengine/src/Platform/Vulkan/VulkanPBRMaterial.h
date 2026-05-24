@@ -27,6 +27,9 @@ namespace cbk::platform::vk {
 		[[nodiscard]] const VkDescriptorSet* getDescriptorSet() const override {
 			return &m_DescriptorSet;
 		}
+		[[nodiscard]] bool wantsLightSSBO() const override {
+			return true;
+		}
 		void recordCommandBuffer(VkCommandBuffer cb, VkPipelineLayout layout) const override;
 
 		// Per-class pipeline state cleanup. Called by VulkanRendererAPI::shutdown().

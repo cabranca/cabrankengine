@@ -52,6 +52,12 @@ namespace cbk::rendering {
 		int padding[3];     // Alinear a 16 bytes antes del array
 	};
 
+	// Upper bound on point lights uploaded per frame. The SSBO is sized for this
+	// many lights at init() and reused; uploadLightEnvironment() asserts the scene
+	// stays under the cap. Bump this value if you need more — the only cost is
+	// fixed GPU memory: sizeof(LightBufferHeader) + N * sizeof(PointLightGPU).
+	static constexpr uint32_t k_MaxPointLights = 64;
+
 	void Renderer::init() {
 		CBK_PROFILE_FUNCTION();
 
@@ -59,8 +65,9 @@ namespace cbk::rendering {
 		DefaultLibrary::init();
 		// Scene UBO must exist before Renderer2D/TextRenderer init, because the
 		// Vulkan materials they create pull the scene descriptor set layout from it
-		// at pipeline-layout construction time.
-		s_SceneData->lightSSBO = StorageBuffer::create(sizeof(LightBufferHeader) + sizeof(PointLightGPU));
+		// at pipeline-layout construction time. The light SSBO is consumed the same
+		// way by VulkanPBRMaterial, so it must also be alive before that point.
+		s_SceneData->lightSSBO = StorageBuffer::create(sizeof(LightBufferHeader) + k_MaxPointLights * sizeof(PointLightGPU));
 		s_SceneUBO = UniformBuffer::create(sizeof(AltSceneData), 0);
 		Renderer2D::init();
 		TextRenderer::init();
@@ -88,9 +95,7 @@ namespace cbk::rendering {
 		                    sizeof(AltSceneData)); // TODO: if this is the same size as in the initialization, why pass it again?
 		s_SceneData->lightEnvironment = environment;
 
-#ifndef CBK_RENDERER_VULKAN
 		uploadLightEnvironment();
-#endif
 	}
 
 	void Renderer::endScene() {}
@@ -103,12 +108,18 @@ namespace cbk::rendering {
 		return s_SceneUBO;
 	}
 
+	Ref<StorageBuffer> Renderer::getLightSSBO() {
+		return s_SceneData->lightSSBO;
+	}
+
 	void Renderer::onWindowResize(uint32_t width, uint32_t height) {
 		RenderCommand::setViewport(0, 0, width, height);
 	}
 	
 	void Renderer::uploadLightEnvironment() {
 		size_t count = s_SceneData->lightEnvironment.PointLights.size();
+		CBK_CORE_ASSERT(count <= k_MaxPointLights,
+		                "Point-light count exceeds k_MaxPointLights — bump the cap or cull lights upstream");
 		LightBufferHeader header;
 		header.count = static_cast<int>(count);
 

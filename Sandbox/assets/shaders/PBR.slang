@@ -1,7 +1,8 @@
 // Cross-backend PBR shader for Cabrankengine (Vulkan/Slang variant).
 //
-// Placeholder lighting model — currently directional-light diffuse + ambient
-// + AO modulation. Full Cook-Torrance evaluation (Fresnel/GGX/Smith) is TODO.
+// Cook-Torrance PBR: directional light + N point lights + ambient/AO. Matches
+// PBR.glsl byte-for-byte on the SSBO layout so Renderer::uploadLightEnvironment
+// can feed either backend.
 //
 // Bindings:
 //   set 0, binding 0  ConstantBuffer<SceneData>  view-projection, dir light, camera pos
@@ -9,6 +10,7 @@
 //   set 1, binding 1  Sampler2D                  normal map
 //   set 1, binding 2  Sampler2D                  metalRoughness map (G=rough, B=metal)
 //   set 1, binding 3  Sampler2D                  ambient occlusion map (R)
+//   set 2, binding 0  StorageBuffer<LightBuffer> point-light count + array (std430)
 //
 // Push constants:
 //   vertex:    float4x4 model           bytes  0..63
@@ -36,6 +38,28 @@ struct SceneData {
 [[vk::binding(1, 1)]] Sampler2D normalMap;
 [[vk::binding(2, 1)]] Sampler2D metalRoughMap;
 [[vk::binding(3, 1)]] Sampler2D aoMap;
+
+// Mirrors PointLightGPU in Renderer.cpp (std430, 48 bytes per element).
+struct PointLight {
+    float3 position;
+    float  _pad0;
+    float3 radiance;
+    float  _pad1;
+    float  constant;
+    float  linear;
+    float  quadratic;
+    float  _pad2;
+};
+
+// GLSL-style buffer block: layout matches the SSBO produced by
+// Renderer::uploadLightEnvironment — 16-byte LightBufferHeader (count + pad)
+// followed by an unbounded array of PointLight.
+[[vk::binding(0, 2)]]
+buffer LightBuffer {
+    int        u_PointLightCount;
+    int3       _pad;
+    PointLight pointLights[];
+} u_Lights;
 
 struct PushConstants {
     float4x4 model;
@@ -168,6 +192,32 @@ float4 main(VSOutput input) : SV_TARGET {
         float3 L        = normalize(-scene.dirLight.direction);
         float3 H        = normalize(V + L);
         float3 radiance = scene.dirLight.radiance;
+
+        float  NDF = DistributionGGX(N, H, roughness);
+        float  G   = GeometrySmith(N, V, L, roughness);
+        float3 F   = fresnelSchlick(max(dot(H, V), 0.0), F0);
+
+        float3 numerator   = NDF * G * F;
+        float  denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
+        float3 specular    = numerator / denominator;
+
+        float3 kS = F;
+        float3 kD = float3(1.0) - kS;
+        kD       *= 1.0 - metallic;
+
+        float NdotL = max(dot(N, L), 0.0);
+        Lo         += (kD * albedo / PI + specular) * radiance * NdotL;
+    }
+
+    // B. Point lights (SSBO).
+    for (int i = 0; i < u_Lights.u_PointLightCount; ++i) {
+        PointLight light = u_Lights.pointLights[i];
+        float3     L     = normalize(light.position - input.worldPos);
+        float3     H     = normalize(V + L);
+
+        float  distance    = length(light.position - input.worldPos);
+        float  attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
+        float3 radiance    = light.radiance * attenuation;
 
         float  NDF = DistributionGGX(N, H, roughness);
         float  G   = GeometrySmith(N, V, L, roughness);

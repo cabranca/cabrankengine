@@ -12,11 +12,13 @@
 #include "VulkanGeometryDescriptor.h"
 #include "VulkanPBRMaterial.h"
 #include "VulkanPhongMaterial.h"
+#include "VulkanStorageBuffer.h"
 #include "VulkanTexture2DMaterial.h"
 #include "VulkanTextMaterial.h"
 #include "VulkanUniformBuffer.h"
 
 #include <Cabrankengine/Renderer/Renderer.h>
+#include <Cabrankengine/Renderer/StorageBuffer.h>
 #include <Cabrankengine/Renderer/UniformBuffer.h>
 
 namespace cbk::platform::vk {
@@ -68,9 +70,12 @@ namespace cbk::platform::vk {
 
 		// Point the scene UBO at this frame's slot before any setData call from
 		// Renderer::beginScene — prevents the CPU from trampling a UBO the GPU is
-		// still reading from for the prior in-flight frame.
+		// still reading from for the prior in-flight frame. Same rationale for the
+		// point-light SSBO, which Renderer::beginScene rewrites every frame.
 		auto sceneUbo = static_cast<VulkanUniformBuffer*>(rendering::Renderer::getSceneUBO().get());
 		sceneUbo->setCurrentFrame(m_FrameIndex);
+		auto lightSSBO = static_cast<VulkanStorageBuffer*>(rendering::Renderer::getLightSSBO().get());
+		lightSSBO->setCurrentFrame(m_FrameIndex);
 
 		auto cb = m_CommandBuffers[m_FrameIndex];
 		auto vkResult = vkResetCommandBuffer(cb, 0);
@@ -269,6 +274,14 @@ namespace cbk::platform::vk {
 
 		// Set 1: per-material descriptor (textures).
 		vkCmdBindDescriptorSets(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 1, 1, recordable->getDescriptorSet(), 0, nullptr);
+
+		// Set 2: point-light SSBO. Only bound for pipelines whose layout actually
+		// declares it (currently PBR); other materials would fail descriptor-set-
+		// compatibility validation if we bound a set their layout doesn't expect.
+		if (recordable->wantsLightSSBO()) {
+			auto lightSSBO = static_cast<VulkanStorageBuffer*>(rendering::Renderer::getLightSSBO().get());
+			vkCmdBindDescriptorSets(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 2, 1, lightSSBO->getDescriptorSet(), 0, nullptr);
+		}
 
 		// Per-draw model matrix at offset 0. stageFlags must cover every stage of the
 		// overlapping range in the pipeline layout (VS|FS, see VulkanPhong/PBRMaterial).

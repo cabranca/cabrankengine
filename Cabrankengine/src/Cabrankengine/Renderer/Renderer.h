@@ -43,6 +43,12 @@ namespace cbk::rendering {
 			// Backend materials need its descriptor to wire pipelines on Vulkan.
 			static Ref<UniformBuffer> getSceneUBO();
 
+			// Point-light SSBO uploaded each beginScene(). Exposed for the same
+			// reason as getSceneUBO(): VulkanPBRMaterial pulls its descriptor set
+			// layout when building the pipeline layout, and VulkanRendererAPI binds
+			// the per-frame descriptor set at draw time.
+			static Ref<StorageBuffer> getLightSSBO();
+
 		private:
 			// This structure holds data that is specific to the current scene being rendered.
 			struct SceneData {
