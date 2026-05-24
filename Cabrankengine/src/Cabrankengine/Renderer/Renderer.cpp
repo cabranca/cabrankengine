@@ -96,7 +96,7 @@ namespace cbk::rendering {
 	void Renderer::endScene() {}
 
 	void Renderer::submit(const Ref<Material>& material, const Ref<GeometryDescriptor>& desc, const Mat4& transform) {
-		RenderCommand::drawIndexed(material, desc, transform);
+		RenderCommand::drawIndexed(material, desc, transform, desc->getIndexCount());
 	}
 
 	Ref<UniformBuffer> Renderer::getSceneUBO() {

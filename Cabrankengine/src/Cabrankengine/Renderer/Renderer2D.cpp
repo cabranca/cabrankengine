@@ -118,6 +118,9 @@ namespace cbk::rendering {
 	void Renderer2D::endScene() {
 		CBK_PROFILE_FUNCTION();
 
+		if (s_Data.QuadIndexCount == 0)
+			return;
+
 		uint32_t dataSize = static_cast<uint32_t>(reinterpret_cast<uint8_t*>(s_Data.QuadVertexBufferPtr) - reinterpret_cast<uint8_t*>(s_Data.QuadVertexBufferBase));
 		s_Data.QuadDesc->setData(s_Data.QuadVertexBufferBase, dataSize);
 
@@ -130,7 +133,6 @@ namespace cbk::rendering {
 		for (uint32_t i = 0; i < s_Data.TextureSlotIndex; i++)
 			s_Data.QuadMaterial->setTextureSlot(i, s_Data.TextureSlots[i]);
 
-		s_Data.QuadMaterial->bind();
 		RenderCommand::drawIndexed(s_Data.QuadMaterial, s_Data.QuadDesc, math::identityMat(), s_Data.QuadIndexCount);
 
 		s_Data.Stats.DrawCalls++;

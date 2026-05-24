@@ -26,7 +26,22 @@ namespace cbk::platform::opengl {
 	OpenGLVertexBuffer::~OpenGLVertexBuffer() {
 		CBK_PROFILE_FUNCTION();
 
-		glDeleteBuffers(1, &m_RendererId);
+		if (m_RendererId)
+			glDeleteBuffers(1, &m_RendererId);
+	}
+
+	OpenGLVertexBuffer::OpenGLVertexBuffer(OpenGLVertexBuffer&& other) noexcept : m_RendererId(other.m_RendererId) {
+		other.m_RendererId = 0;
+	}
+
+	OpenGLVertexBuffer& OpenGLVertexBuffer::operator=(OpenGLVertexBuffer&& other) noexcept {
+		if (this != &other) {
+			if (m_RendererId)
+				glDeleteBuffers(1, &m_RendererId);
+			m_RendererId = other.m_RendererId;
+			other.m_RendererId = 0;
+		}
+		return *this;
 	}
 
 	void OpenGLVertexBuffer::bind() const {
@@ -61,7 +76,26 @@ namespace cbk::platform::opengl {
 	OpenGLIndexBuffer::~OpenGLIndexBuffer() {
 		CBK_PROFILE_FUNCTION();
 
-		glDeleteBuffers(1, &m_RendererId);
+		if (m_RendererId)
+			glDeleteBuffers(1, &m_RendererId);
+	}
+
+	OpenGLIndexBuffer::OpenGLIndexBuffer(OpenGLIndexBuffer&& other) noexcept
+	    : m_RendererId(other.m_RendererId), m_Count(other.m_Count) {
+		other.m_RendererId = 0;
+		other.m_Count = 0;
+	}
+
+	OpenGLIndexBuffer& OpenGLIndexBuffer::operator=(OpenGLIndexBuffer&& other) noexcept {
+		if (this != &other) {
+			if (m_RendererId)
+				glDeleteBuffers(1, &m_RendererId);
+			m_RendererId = other.m_RendererId;
+			m_Count = other.m_Count;
+			other.m_RendererId = 0;
+			other.m_Count = 0;
+		}
+		return *this;
 	}
 
 	void OpenGLIndexBuffer::bind() const {

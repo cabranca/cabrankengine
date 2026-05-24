@@ -43,12 +43,12 @@ namespace cbk::platform::opengl {
 
 	void OpenGLRendererAPI::drawIndexed(const Ref<Material>& material, const Ref<GeometryDescriptor>& desc, const math::Mat4& transform,
 	                                    uint32_t indexCount) {
+		if (indexCount == 0)
+			return;
 		material->bind();
 		auto vao = static_cast<OpenGLVertexArray*>(desc.get());
 		vao->bind();
-		material->getShader()->setMat4("u_Model", transform);
-		uint32_t count = indexCount == 0 ? vao->getIndexCount() : indexCount;
-		glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, nullptr);
+		glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, nullptr);
 	}
 
 	void OpenGLRendererAPI::endFrame() {}

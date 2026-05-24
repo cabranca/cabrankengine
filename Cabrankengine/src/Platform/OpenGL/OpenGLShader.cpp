@@ -61,36 +61,42 @@ namespace cbk::platform::opengl {
 	void OpenGLShader::setInt(const std::string& name, int value) {
 		CBK_PROFILE_FUNCTION();
 
+		bind();
 		uploadUniformInt(name, value);
 	}
 
 	void OpenGLShader::setIntArray(const std::string& name, uint32_t count, int* values) {
 		CBK_PROFILE_FUNCTION();
 
+		bind();
 		uploadUniformIntArray(name, values, count);
 	}
 
 	void OpenGLShader::setFloat(const std::string& name, float value) {
 		CBK_PROFILE_FUNCTION();
 
+		bind();
 		uploadUniformFloat1(name, value);
 	}
 
 	void OpenGLShader::setFloat3(const std::string& name, const Vector3& vector) {
 		CBK_PROFILE_FUNCTION();
 
+		bind();
 		uploadUniformFloat3(name, vector);
 	}
 
 	void OpenGLShader::setFloat4(const std::string& name, const Vector4& vector) {
 		CBK_PROFILE_FUNCTION();
 
+		bind();
 		uploadUniformFloat4(name, vector);
 	}
 
 	void OpenGLShader::setMat4(const std::string& name, const Mat4& value) {
 		CBK_PROFILE_FUNCTION();
 
+		bind();
 		uploadUniformMat4(name, value);
 	}
 

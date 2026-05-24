@@ -19,6 +19,7 @@ namespace cbk::scene {
 	}
 
 	void Mesh::draw(const math::Mat4& transform) {
+		m_Material->getShader()->setMat4("u_Model", transform);
 		Renderer::submit(m_Material, m_Descriptor, transform);
 	}
 } // namespace cbk::scene
