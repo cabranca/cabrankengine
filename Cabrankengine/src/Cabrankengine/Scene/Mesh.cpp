@@ -1,9 +1,8 @@
 #include <pch.h>
-#include "Mesh.h"
 
-#include <Cabrankengine/Math/MatrixFactory.h>
 #include <Cabrankengine/Renderer/Renderer.h>
-#include <Cabrankengine/Renderer/Buffer.h>
+
+#include "Mesh.h"
 
 namespace cbk::scene {
 
@@ -11,18 +10,15 @@ namespace cbk::scene {
 	using namespace rendering;
 
 	Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, Ref<Material> material) : m_Material(material) {
-		m_VertexArray = VertexArray::create();
-
-		auto vertexBuffer = VertexBuffer::create(vertices.data(), vertices.size() * sizeof(Vertex));
-		vertexBuffer->setLayout(
-		    { { ShaderDataType::Float3, "pos" }, { ShaderDataType::Float3, "normal" }, { ShaderDataType::Float2, "texCoords" }, { ShaderDataType::Float3, "tangent" } });
-		m_VertexArray->addVertexBuffer(vertexBuffer);
-
-		auto indexBuffer = IndexBuffer::create(indices.data(), indices.size());
-		m_VertexArray->setIndexBuffer(indexBuffer);
+		m_Descriptor = GeometryDescriptor::create(vertices.data(), vertices.size() * sizeof(rendering::Vertex), indices.data(),
+		                                          indices.size() * sizeof(uint32_t),
+		                                          { { ShaderDataType::Float3, "pos" },
+		                                            { ShaderDataType::Float3, "normal" },
+		                                            { ShaderDataType::Float2, "texCoords" },
+		                                            { ShaderDataType::Float3, "tangent" } });
 	}
 
 	void Mesh::draw(const math::Mat4& transform) {
-		Renderer::submit(m_Material, m_VertexArray, transform);
+		Renderer::submit(m_Material, m_Descriptor, transform);
 	}
 } // namespace cbk::scene

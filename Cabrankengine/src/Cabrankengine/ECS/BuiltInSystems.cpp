@@ -91,24 +91,31 @@ namespace cbk::ecs {
 				             -std::cos(yawRadians) * std::cos(pitchRadians) };
 			forward.normalized();
 
-			Vector3 flatForward{ forward.x, 0.f, forward.z };
-			flatForward.normalized();
+			// In free-flight, W/D follow the full look direction; otherwise movement
+			// is projected onto the horizontal plane (FPS-style).
+			Vector3 moveForward;
+			if (controller->FreeFlight) {
+				moveForward = forward;
+			} else {
+				Vector3 flatForward{ forward.x, 0.f, forward.z };
+				flatForward.normalized();
+				if (flatForward.lengthSquared() == 0.f)
+					flatForward = Vector3::Forward;
+				moveForward = flatForward;
+			}
 
-			if (flatForward.lengthSquared() == 0.f)
-				flatForward = Vector3::Forward;
-
-			const Vector3 flatRight = cross(flatForward, Vector3::Up).normalize();
+			const Vector3 moveRight = cross(moveForward, Vector3::Up).normalize();
 
 			Vector3 movement{};
 
 			if (Input::isKeyPressed(Key::W))
-				movement += flatForward;
+				movement += moveForward;
 			if (Input::isKeyPressed(Key::S))
-				movement -= flatForward;
+				movement -= moveForward;
 			if (Input::isKeyPressed(Key::A))
-				movement -= flatRight;
+				movement -= moveRight;
 			if (Input::isKeyPressed(Key::D))
-				movement += flatRight;
+				movement += moveRight;
 			if (Input::isKeyPressed(Key::Space))
 				movement += Vector3::Up;
 			if (Input::isKeyPressed(Key::LeftShift))
@@ -134,19 +141,14 @@ namespace cbk::ecs {
 		}
 	}
 
-	void PhongRenderSystem::update(Registry& reg, float dt) {
+	void ModelRenderSystem::update(Registry& reg, float dt) {
 		for (auto& e: m_Entities) {
 			auto transform = reg.getComponent<CTransform>(e).value();
-			auto model = reg.getComponent<CPhongModel>(e).value();
-			model->Res->draw(fromTransform(transform->Position, transform->Rotation, transform->Scale));
-		}
-	}
-
-	void PBRRenderSystem::update(Registry& reg, float dt) {
-		for (auto& e: m_Entities) {
-			auto transform = reg.getComponent<CTransform>(e).value();
-			auto model = reg.getComponent<CPBRModel>(e).value();
-			model->Res->draw(fromTransform(transform->Position, transform->Rotation, transform->Scale));
+			auto model     = reg.getComponent<CModel>(e).value();
+			if (model->Res)
+				model->Res->draw(fromTransform(transform->Position, transform->Rotation, transform->Scale));
+			else
+			 	CBK_CORE_DEBUG("Entity with id {0} doesn't have a set resource", e);
 		}
 	}
 
@@ -167,8 +169,7 @@ namespace cbk::ecs {
 		reg.registerSystem<DirectionalLightSystem>();
 		reg.registerSystem<PointLightSystem>();
 		reg.registerSystem<SpriteRenderSystem>();
-		reg.registerSystem<PhongRenderSystem>();
-		reg.registerSystem<PBRRenderSystem>();
+		reg.registerSystem<ModelRenderSystem>();
 		reg.registerSystem<TextRenderSystem>();
 
 		Signature sig;
@@ -197,13 +198,8 @@ namespace cbk::ecs {
 
 		sig.reset();
 		sig.set(reg.getComponentType<CTransform>());
-		sig.set(reg.getComponentType<CPhongModel>());
-		reg.setSystemSignature<PhongRenderSystem>(sig);
-
-		sig.reset();
-		sig.set(reg.getComponentType<CTransform>());
-		sig.set(reg.getComponentType<CPBRModel>());
-		reg.setSystemSignature<PBRRenderSystem>(sig);
+		sig.set(reg.getComponentType<CModel>());
+		reg.setSystemSignature<ModelRenderSystem>(sig);
 
 		sig.reset();
 		sig.set(reg.getComponentType<CTransform>());

@@ -55,8 +55,7 @@ namespace cbk::rendering {
 		}
 
 		Renderer::beginScene(vp, camPos, lights);
-		m_PhongRenderSystem->update(*m_Scene->getRegistry(), dt);
-		m_PBRRenderSystem->update(*m_Scene->getRegistry(), dt);
+		m_ModelRenderSystem->update(*m_Scene->getRegistry(), dt);
 		Renderer::endScene();
 
 		TextRenderer::beginScene(vp);
@@ -86,8 +85,7 @@ namespace cbk::rendering {
 		m_DirLightSystem = m_Scene->getRegistry()->getSystem<DirectionalLightSystem>();
 		m_PointLightSystem = m_Scene->getRegistry()->getSystem<PointLightSystem>();
 		m_SpriteRenderSystem = m_Scene->getRegistry()->getSystem<SpriteRenderSystem>();
-		m_PhongRenderSystem = m_Scene->getRegistry()->getSystem<PhongRenderSystem>();
-		m_PBRRenderSystem = m_Scene->getRegistry()->getSystem<PBRRenderSystem>();
+		m_ModelRenderSystem = m_Scene->getRegistry()->getSystem<ModelRenderSystem>();
 		m_TextRenderSystem = m_Scene->getRegistry()->getSystem<TextRenderSystem>();
 
 		m_Scene->getRegistry()->rebuildSystemMembership();

@@ -19,8 +19,8 @@ namespace cbk {
 		CBK_CORE_ERROR("GLFW Error ({0}): {1}", error, description);
 	}
 
-	Window* Window::create(const WindowProps& props) {
-		return new WindowsWindow(props);
+	Scope<Window> Window::create(const WindowProps& props) {
+		return createScope<WindowsWindow>(props);
 	}
 	
 	WindowsWindow::WindowsWindow(const WindowProps& props) {
@@ -164,6 +164,10 @@ namespace cbk {
 	void WindowsWindow::shutdown() {
 		CBK_PROFILE_FUNCTION();
 
+		// Tear down the graphics backend (Vulkan device/allocator/instance, or no-op
+		// for OpenGL) before the surface/window goes away.
+		if (m_Context)
+			m_Context->shutdown();
 		glfwDestroyWindow(m_Window);
 	}
 }

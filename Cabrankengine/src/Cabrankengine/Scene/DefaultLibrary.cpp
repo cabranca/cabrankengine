@@ -1,8 +1,5 @@
-#include <Cabrankengine/Renderer/Shader.h>
 #include <pch.h>
 #include "DefaultLibrary.h"
-
-#include <Cabrankengine/Renderer/Buffer.h>
 
 namespace cbk::scene {
 
@@ -18,6 +15,16 @@ namespace cbk::scene {
         setupSphere();
 
         setupBasicShaders();
+	}
+
+	void DefaultLibrary::shutdown() {
+		s_WhiteTexture.reset();
+		s_BlackTexture.reset();
+		s_FlatNormalTexture.reset();
+		s_ErrorShader.reset();
+		s_CubeDesc.reset();
+		s_QuadDesc.reset();
+		s_SphereDesc.reset();
 	}
 
 	Ref<rendering::Texture2D> DefaultLibrary::getWhiteTexture() {
@@ -36,48 +43,43 @@ namespace cbk::scene {
 		return s_ErrorShader;
 	}
 
-	Ref<rendering::VertexArray> DefaultLibrary::getCube() {
-		return s_CubeVA;
+	Ref<rendering::GeometryDescriptor> DefaultLibrary::getCube() {
+		return s_CubeDesc;
 	}
 
-	Ref<rendering::VertexArray> DefaultLibrary::getQuad() {
-		return s_QuadVA;
+	Ref<rendering::GeometryDescriptor> DefaultLibrary::getQuad() {
+		return s_QuadDesc;
 	}
 
-	Ref<rendering::VertexArray> DefaultLibrary::getSphere() {
-		return s_SphereVA;
+	Ref<rendering::GeometryDescriptor> DefaultLibrary::getSphere() {
+		return s_SphereDesc;
 	}
 
 	void DefaultLibrary::setupBasicShaders() {
 		s_ErrorShader = ShaderLibrary::load("assets/shaders/Error");
 		ShaderLibrary::load("assets/shaders/Phong");
 		ShaderLibrary::load("assets/shaders/PBR");
+		ShaderLibrary::load("assets/shaders/Texture");
+		ShaderLibrary::load("assets/shaders/Text");
 	}
 
 	void DefaultLibrary::setupTexture(Ref<Texture2D>& tex, uint32_t data) {
         tex = Texture2D::create(s_Specs);
 		tex->setData(&data, sizeof(uint32_t));
     }
-	
-    void DefaultLibrary::setupQuad() {
-        std::array<float, (3+2)*4> quadVertices = {
-            -0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
-			 0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
-			 0.5f,  0.5f, 0.0f, 1.0f, 1.0f,
-			-0.5f,  0.5f, 0.0f, 0.0f, 1.0f
-        };
+
+	void DefaultLibrary::setupQuad() {
+		std::array<float, (3 + 2) * 4> quadVertices = { -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 0.5f,  -0.5f, 0.0f, 1.0f, 0.0f,
+			                                            0.5f,  0.5f,  0.0f, 1.0f, 1.0f, -0.5f, 0.5f,  0.0f, 0.0f, 1.0f };
 
 		std::array<uint32_t, 6> quadIndices = { 0, 1, 2, 2, 3, 0 };
 
-		s_QuadVA = VertexArray::create();
-		auto quadVB = VertexBuffer::create(quadVertices.data(), sizeof(quadVertices));
-		quadVB->setLayout({ { ShaderDataType::Float3, "a_Position" }, { ShaderDataType::Float2, "a_TexCoord" } });
-		s_QuadVA->addVertexBuffer(quadVB);
-		auto quadIB = IndexBuffer::create(quadIndices.data(), quadIndices.size());
-		s_QuadVA->setIndexBuffer(quadIB);
-    }
-	
-    void DefaultLibrary::setupCube() {
+		s_QuadDesc = GeometryDescriptor::create(quadVertices.data(), quadVertices.size() * sizeof(float), quadIndices.data(),
+		                                        quadIndices.size() * sizeof(uint32_t),
+		                                        { { ShaderDataType::Float3, "a_Position" }, { ShaderDataType::Float2, "a_TexCoords" } });
+	}
+
+	void DefaultLibrary::setupCube() {
         std::array<float, (3+3+2)*24> cubeVertices = {
             // Front Face (+Z)
                   // Pos               // Normal            // UV
@@ -127,24 +129,12 @@ namespace cbk::scene {
             20, 21, 22, 22, 23, 20  // Bottom
         };
 
-		s_CubeVA = VertexArray::create();
-
-		auto cubeVB = VertexBuffer::create(cubeVertices.data(), sizeof(cubeVertices));
-		cubeVB->setLayout({ 
-            { ShaderDataType::Float3, "a_Position" }, 
-            { ShaderDataType::Float3, "a_Normal" }, 
-            { ShaderDataType::Float2, "a_TexCoord" } 
-        });
-
-		s_CubeVA->addVertexBuffer(cubeVB);
-
-		auto cubeIB = IndexBuffer::create(cubeIndices.data(), cubeIndices.size());
-		s_CubeVA->setIndexBuffer(cubeIB);
+		s_CubeDesc = GeometryDescriptor::create(
+		    cubeVertices.data(), cubeVertices.size() * sizeof(float), cubeIndices.data(), cubeIndices.size() * sizeof(uint32_t),
+		    { { ShaderDataType::Float3, "a_Position" }, { ShaderDataType::Float3, "a_Normal" }, { ShaderDataType::Float2, "a_TexCoord" } });
 	}
 
 	void DefaultLibrary::setupSphere() {
-		s_SphereVA = VertexArray::create();
-
 		std::vector<float> vertices;
 		std::vector<uint32_t> indices;
 
@@ -208,13 +198,8 @@ namespace cbk::scene {
 			}
 		}
 
-		// Subir a GPU
-		Ref<VertexBuffer> sphereVB = VertexBuffer::create(vertices.data(), vertices.size() * sizeof(float));
-		sphereVB->setLayout(
+		s_CubeDesc = GeometryDescriptor::create(
+		    vertices.data(), vertices.size() * sizeof(float), indices.data(), indices.size() * sizeof(uint32_t),
 		    { { ShaderDataType::Float3, "a_Position" }, { ShaderDataType::Float3, "a_Normal" }, { ShaderDataType::Float2, "a_TexCoord" } });
-		s_SphereVA->addVertexBuffer(sphereVB);
-
-		Ref<IndexBuffer> sphereIB = IndexBuffer::create(indices.data(), indices.size());
-		s_SphereVA->setIndexBuffer(sphereIB);
 	}
 } // namespace cbk::scene

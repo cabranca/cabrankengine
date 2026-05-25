@@ -10,7 +10,9 @@ This guide walks you through building Cabrankengine from source and creating you
 |-------------|-------|
 | C++23 compiler | GCC 13+, Clang 17+, or MSVC 19.38+ |
 | [Premake5](https://premake.github.io/) | Build file generator |
-| OpenGL 4.5 | Linux / Windows. Metal on macOS (minimum macOS 12.0) |
+| Vulkan SDK | Linux default backend. OpenGL 4.5 fallback available (see below) |
+| OpenGL 4.5 | Windows default. Also available on Linux via `--renderer=opengl` |
+| Metal | macOS (minimum macOS 12.0) — WIP |
 | GNU Make | Linux builds |
 | Visual Studio 2022 | Windows builds |
 
@@ -33,10 +35,29 @@ git submodule update --init --recursive
 
 ---
 
+## Vulkan SDK Setup (Linux)
+
+The Linux backend defaults to Vulkan. The latest LunarG SDK installer requires `--set-dep-ld` to match the engine's linker configuration:
+
+```bash
+./vulkansdk-linux-x86_64-*.run --set-dep-ld
+export VULKAN_SDK=$HOME/VulkanSDK/<version>/x86_64
+```
+
+Add the `export` to your shell profile so it persists across sessions. Premake will error with a clear message if `VULKAN_SDK` is unset when Vulkan is the active backend.
+
+**Fallback to OpenGL:** if you don't have a Vulkan-capable driver, pass `--renderer=opengl` to Premake instead:
+
+```bash
+premake5 gmake2 --renderer=opengl
+```
+
+---
+
 ## Build (Linux)
 
 ```bash
-# Generate Makefiles
+# Generate Makefiles (Vulkan backend by default)
 premake5 gmake2
 
 # Build everything in debug mode
@@ -148,6 +169,8 @@ void MyLayer::onEvent(Event& e) {}
 
 ### 3. Register the layer in your Application
 
+`pushLayer` takes a `Scope<Layer>` (`std::unique_ptr<Layer>`). The `LayerStack` owns the layer for its lifetime.
+
 ```cpp
 // MyApp.cpp
 #include <Cabrankengine.h>
@@ -156,11 +179,27 @@ void MyLayer::onEvent(Event& e) {}
 
 class MyApp : public cbk::Application {
 public:
-    MyApp() { pushLayer(new MyLayer()); }
+    MyApp() {
+        // Simple case: stack takes full ownership
+        pushLayer(std::make_unique<MyLayer>());
+    }
 };
 
 cbk::Application* cbk::createApplication() { return new MyApp(); }
 ```
+
+If you need to call methods on the layer after pushing it, keep a raw pointer — but never delete it yourself:
+
+```cpp
+MyApp() {
+    auto layer = std::make_unique<MyLayer>();
+    MyLayer* raw = layer.get(); // borrow for later use
+    pushLayer(std::move(layer));
+    // raw remains valid while the layer is on the stack
+}
+```
+
+To remove a layer before shutdown call `popLayer(raw)` — the stack destroys the `unique_ptr` at that point.
 
 ---
 

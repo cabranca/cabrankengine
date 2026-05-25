@@ -1,19 +1,20 @@
 #include <pch.h>
 #include "Renderer.h"
 
-#include "Lights.h"
+#include <Cabrankengine/Scene/DefaultLibrary.h>
+
 #include "Materials/Material.h"
 #include "Renderer2D.h"
 #include "RenderCommand.h"
 #include "StorageBuffer.h"
-#include "TextRenderer.h"
 #include "UniformBuffer.h"
-#include "VertexArray.h"
+#include "TextRenderer.h"
 
 
 namespace cbk::rendering {
 
 	using namespace math;
+	using namespace scene;
 
 	// Estructura auxiliar para la luz (32 bytes total)
 	struct directionalLightData {
@@ -51,18 +52,37 @@ namespace cbk::rendering {
 		int padding[3];     // Alinear a 16 bytes antes del array
 	};
 
+	// Upper bound on point lights uploaded per frame. The SSBO is sized for this
+	// many lights at init() and reused; uploadLightEnvironment() asserts the scene
+	// stays under the cap. Bump this value if you need more — the only cost is
+	// fixed GPU memory: sizeof(LightBufferHeader) + N * sizeof(PointLightGPU).
+	static constexpr uint32_t k_MaxPointLights = 64;
+
 	void Renderer::init() {
 		CBK_PROFILE_FUNCTION();
 
 		RenderCommand::init();
+		DefaultLibrary::init();
+		// Scene UBO must exist before Renderer2D/TextRenderer init, because the
+		// Vulkan materials they create pull the scene descriptor set layout from it
+		// at pipeline-layout construction time. The light SSBO is consumed the same
+		// way by VulkanPBRMaterial, so it must also be alive before that point.
+		s_SceneData->lightSSBO = StorageBuffer::create(sizeof(LightBufferHeader) + k_MaxPointLights * sizeof(PointLightGPU));
+		s_SceneUBO = UniformBuffer::create(sizeof(AltSceneData), 0);
 		Renderer2D::init();
 		TextRenderer::init();
-		s_SceneData->lightSSBO = StorageBuffer::create(sizeof(LightBufferHeader) + sizeof(PointLightGPU));
-		s_SceneUBO = UniformBuffer::create(sizeof(AltSceneData), 0);
 	}
 
 	void Renderer::shutdown() {
+		DefaultLibrary::shutdown();
+		ShaderLibrary::shutdown();
+		s_SceneUBO.reset();
+		if (s_SceneData)
+			s_SceneData->lightSSBO.reset();
+		TextRenderer::shutdown();
 		Renderer2D::shutdown();
+
+		RenderCommand::shutdown();
 	}
 
 	void Renderer::beginScene(const math::Mat4& viewProjectionMatrix, const math::Vector3& cameraWorldPosition,
@@ -78,21 +98,18 @@ namespace cbk::rendering {
 		uploadLightEnvironment();
 	}
 
-	void Renderer::endScene() {
-		// endFrame() is now called once per frame in the application loop,
-		// after all rendering subsystems (Renderer, Renderer2D, etc.) are done.
+	void Renderer::endScene() {}
+
+	void Renderer::submit(const Ref<Material>& material, const Ref<GeometryDescriptor>& desc, const Mat4& transform) {
+		RenderCommand::drawIndexed(material, desc, transform, desc->getIndexCount());
 	}
 
-	void Renderer::submit(const Ref<Shader>& shader, const Ref<VertexArray>& vertexArray, const Mat4& transform) {
-		shader->bind();
-		shader->setMat4("u_Model", transform);
-		RenderCommand::drawIndexed(vertexArray);
+	Ref<UniformBuffer> Renderer::getSceneUBO() {
+		return s_SceneUBO;
 	}
 
-	void Renderer::submit(const Ref<Material>& material, const Ref<VertexArray>& vertexArray, const Mat4& transform) {
-		material->bind();
-		material->getShader()->setMat4("u_Model", transform);
-		RenderCommand::drawIndexed(vertexArray);
+	Ref<StorageBuffer> Renderer::getLightSSBO() {
+		return s_SceneData->lightSSBO;
 	}
 
 	void Renderer::onWindowResize(uint32_t width, uint32_t height) {
@@ -101,6 +118,8 @@ namespace cbk::rendering {
 	
 	void Renderer::uploadLightEnvironment() {
 		size_t count = s_SceneData->lightEnvironment.PointLights.size();
+		CBK_CORE_ASSERT(count <= k_MaxPointLights,
+		                "Point-light count exceeds k_MaxPointLights — bump the cap or cull lights upstream");
 		LightBufferHeader header;
 		header.count = static_cast<int>(count);
 

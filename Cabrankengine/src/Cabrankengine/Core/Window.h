@@ -49,7 +49,7 @@ namespace cbk {
 			virtual rendering::GraphicsContext* getContext() const = 0;
 
 			// Only access to window creation (singleton pattern?)
-			static Window* create(const WindowProps& props = WindowProps());
+			static Scope<Window> create(const WindowProps& props = WindowProps());
 	};
 }
 

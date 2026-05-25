@@ -14,6 +14,10 @@ namespace cbk::platform::opengl {
 		// Initializes the graphics context.
 		virtual void init() override;
 
+		// OpenGL has no explicit context teardown beyond glfwDestroyWindow, so this
+		// is a no-op. Implemented to satisfy the GraphicsContext interface.
+		virtual void shutdown() override {}
+
 		// Buffer swapping is the process of presenting the rendered image to the screen
 		// while also preparing the next frame for rendering.
 		virtual void swapBuffers() override;

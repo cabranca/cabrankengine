@@ -3,17 +3,20 @@
 
 #include <Cabrankengine/Core/Application.h>
 #include <Cabrankengine/ECS/Registry.hpp>
+#include <Cabrankengine/Renderer/Materials/PBRMaterial.h>
 
 namespace cbk::scene::arch {
 
 	using namespace ecs;
 
 	PBRModelArch::PBRModelArch(std::string_view path) {
-		auto& scene = Application::get().getScene();
-		m_Entity = scene.createEntity("PBR Model");
+		auto& scene    = Application::get().getScene();
+		m_Entity       = scene.createEntity("PBR Model");
+		auto material  = rendering::PBRMaterial::create();
+		auto model     = Model::create(std::string{ path }, material);
 		scene.getRegistry()->addComponent(m_Entity, CTransform());
-		scene.getRegistry()->addComponent(m_Entity,
-		                                  CPBRModel{ .Path = path.data(), .Res = Model<rendering::PBRMaterial>::create(path.data()) });
+		scene.getRegistry()->addComponent(
+		    m_Entity, CModel{ .Path = std::string{ path }, .Kind = common::MaterialKind::PBR, .Res = model });
 	}
 
 	CTransform& PBRModelArch::transform() {
@@ -21,8 +24,8 @@ namespace cbk::scene::arch {
 		return *reg->getComponent<CTransform>(m_Entity).value();
 	}
 
-	CPBRModel& PBRModelArch::model() {
+	CModel& PBRModelArch::model() {
 		auto reg = Application::get().getRegistry();
-		return *reg->getComponent<CPBRModel>(m_Entity).value();
+		return *reg->getComponent<CModel>(m_Entity).value();
 	}
 } // namespace cbk::scene::arch

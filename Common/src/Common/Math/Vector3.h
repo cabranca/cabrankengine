@@ -135,12 +135,12 @@ namespace cbk::math {
 	}
 
 	inline constexpr Vector3 Vector3::operator/(float scale) const noexcept {
-		CBK_ASSERT(scale != 0, "Trying to divide by zero!");
+		CBK_CORE_ASSERT(scale != 0, "Trying to divide by zero!");
 		return { x / scale, y / scale, z / scale };
 	}
 
 	inline constexpr Vector3& Vector3::operator/=(float scale) noexcept {
-		CBK_ASSERT(scale != 0, "Trying to divide by zero!");
+		CBK_CORE_ASSERT(scale != 0, "Trying to divide by zero!");
 		x /= scale;
 		y /= scale;
 		z /= scale;
@@ -148,12 +148,12 @@ namespace cbk::math {
 	}
 
 	inline constexpr float& Vector3::operator[](int index) noexcept {
-        CBK_ASSERT(index >= 0 || index < 3, "Trying to acces a Vector with invalid index!")
+        CBK_CORE_ASSERT(index >= 0 || index < 3, "Trying to acces a Vector with invalid index!")
 		return coords[index];
 	}
 
     inline constexpr const float& Vector3::operator[](int index) const noexcept {
-		CBK_ASSERT(index >= 0 || index < 3, "Trying to acces a Vector with invalid index!")
+		CBK_CORE_ASSERT(index >= 0 || index < 3, "Trying to acces a Vector with invalid index!")
 		return coords[index];
 	}
 

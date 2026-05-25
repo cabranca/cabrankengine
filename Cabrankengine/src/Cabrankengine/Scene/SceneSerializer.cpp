@@ -22,10 +22,8 @@ namespace cbk::scene {
 			comps["CDirectionalLight"] = **c;
 		if (auto c = reg->getComponent<ecs::CPointLight>(e))
 			comps["CPointLight"] = **c;
-		if (auto c = reg->getComponent<ecs::CPhongModel>(e))
-			comps["CPhongModel"] = **c;
-		if (auto c = reg->getComponent<ecs::CPBRModel>(e))
-			comps["CPBRModel"] = **c;
+		if (auto c = reg->getComponent<ecs::CModel>(e))
+			comps["CModel"] = **c;
 		if (auto c = reg->getComponent<ecs::CText>(e))
 			comps["CText"] = **c;
 
@@ -73,10 +71,8 @@ namespace cbk::scene {
 			reg->addComponent(e, comps["CDirectionalLight"].get<ecs::CDirectionalLight>());
 		if (comps.contains("CPointLight"))
 			reg->addComponent(e, comps["CPointLight"].get<ecs::CPointLight>());
-		if (comps.contains("CPhongModel"))
-			reg->addComponent(e, comps["CPhongModel"].get<ecs::CPhongModel>());
-		if (comps.contains("CPBRModel"))
-			reg->addComponent(e, comps["CPBRModel"].get<ecs::CPBRModel>());
+		if (comps.contains("CModel"))
+			reg->addComponent(e, comps["CModel"].get<ecs::CModel>());
 		if (comps.contains("CText"))
 			reg->addComponent(e, comps["CText"].get<ecs::CText>());
 	}

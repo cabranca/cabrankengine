@@ -14,8 +14,7 @@ namespace cbk::scene {
 		reg.registerComponent<CDirectionalLight>();
 		reg.registerComponent<CPointLight>();
 		reg.registerComponent<CSprite>();
-		reg.registerComponent<CPhongModel>();
-		reg.registerComponent<CPBRModel>();
+		reg.registerComponent<CModel>();
 		reg.registerComponent<CText>();
 	}
 

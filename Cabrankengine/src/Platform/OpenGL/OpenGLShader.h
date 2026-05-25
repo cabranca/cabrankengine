@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Cabrankengine/Math/Mat4.h>
+#include <Common/Math/Mat4.h>
 #include <Cabrankengine/Renderer/Shader.h>
 
 // TODO: Remove!!
@@ -24,7 +24,7 @@ namespace cbk::platform::opengl {
 			void setInt(const std::string& name, int value) override;
 
 			// Sets a int array in the shader program.
-			void setIntArray(const std::string& name, uint32_t count, int* values);
+			void setIntArray(const std::string& name, uint32_t count, int* values) override;
 
 			// Sets a float value in the shader program.
 			void setFloat(const std::string& name, float value) override;

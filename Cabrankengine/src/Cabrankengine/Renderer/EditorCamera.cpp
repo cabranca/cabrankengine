@@ -2,8 +2,8 @@
 #include "EditorCamera.h"
 
 #include <Cabrankengine/Core/Input.h>
-#include <Cabrankengine/Math/Common.h>
-#include <Cabrankengine/Math/MatrixFactory.h>
+#include <Common/Math/Common.h>
+#include <Common/Math/MatrixFactory.h>
 
 namespace cbk::rendering {
 

@@ -15,7 +15,12 @@ namespace cbk::ac {
 		static void packMetalRough(std::string_view metalPath, std::string_view roughPath,
 		                           std::string_view outputPath);
 
+		// Largest allowed width/height for converted textures; larger images are
+		// box-downscaled (aspect ratio preserved). 0 (default) disables the cap.
+		static void setMaxDimension(uint32_t maxDim);
+
 	  private:
 		using TextureHeader = cbk::common::TextureHeader;
+		static uint32_t s_MaxDimension;
 	};
 } // namespace cbk::ac
