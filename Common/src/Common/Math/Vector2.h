@@ -3,7 +3,7 @@
 #include <cmath>
 #include <algorithm>
 
-#include <Cabrankengine/Core/Logger.h>
+#include <Common/Assertion.h>
 
 #include "Common.h"
 
@@ -132,12 +132,12 @@ namespace cbk::math {
 	}
 
 	inline constexpr float& Vector2::operator[](int index) noexcept {
-		CBK_ASSERT(index == 0 || index == 1, "Trying to acces a Vector with invalid index!")
+		CBK_CORE_ASSERT(index == 0 || index == 1, "Trying to acces a Vector with invalid index!")
 		return coords[index];
 	}
 
     inline constexpr const float& Vector2::operator[](int index) const noexcept {
-		CBK_ASSERT(index == 0 || index == 1, "Trying to acces a Vector with invalid index!")
+		CBK_CORE_ASSERT(index == 0 || index == 1, "Trying to acces a Vector with invalid index!")
 		return coords[index];
 	}
 

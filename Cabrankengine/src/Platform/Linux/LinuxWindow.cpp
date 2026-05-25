@@ -14,8 +14,8 @@ namespace cbk {
 		CBK_CORE_ERROR("GLFW Error ({0}): {1}", error, description);
 	}
 
-    Window* Window::create(const WindowProps& props) {
-        return new LinuxWindow(props);
+    Scope<Window> Window::create(const WindowProps& props) {
+        return createScope<LinuxWindow>(props);
     }
 
     LinuxWindow::LinuxWindow(const WindowProps& props) {
@@ -32,7 +32,7 @@ namespace cbk {
     }
 
     void LinuxWindow::setVSync(bool enabled) {
-#ifndef __EMSCRIPTEN__
+#if !defined(__EMSCRIPTEN__) || defined(CBK_RENDERER_OPENGL)
         // The browser drives presentation through requestAnimationFrame, so swap
         // intervals are meaningless on web. Worse, GLFW's emscripten compat layer
         // routes glfwSwapInterval through emscripten_set_main_loop_timing, which
@@ -43,6 +43,7 @@ namespace cbk {
         else
             glfwSwapInterval(0);
 #endif
+        // Vulkan: vsync is the swapchain present mode (FIFO_KHR), not a GLFW knob.
         m_Data.VSync = enabled;
     }
 
@@ -51,8 +52,8 @@ namespace cbk {
     }
 
 	rendering::GraphicsContext* LinuxWindow::getContext() const {
-		return m_Context;
-	}
+        return m_Context.get();
+    }
 
 	void LinuxWindow::init(const WindowProps& props) {
 		m_Data.Title = props.Title;
@@ -68,9 +69,14 @@ namespace cbk {
             s_GLFWInitialized = true;
         }
 
+#ifdef CBK_RENDERER_VULKAN
+        // Vulkan owns the surface, so GLFW must not create an OpenGL context.
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+#endif
+
         m_Window = glfwCreateWindow(props.Width, props.Height, m_Data.Title.c_str(), nullptr, nullptr);
         
-        m_Context = new platform::opengl::OpenGLContext(m_Window);
+        m_Context = rendering::GraphicsContext::create(m_Window);
 		m_Context->init();
 
         glfwSetWindowUserPointer(m_Window, &m_Data);
@@ -150,6 +156,10 @@ namespace cbk {
 	}
 
 	void LinuxWindow::shutdown() {
+        // Tear down the graphics backend (Vulkan device/allocator/instance, or no-op
+        // for OpenGL) before the surface/window goes away.
+        if (m_Context)
+            m_Context->shutdown();
         glfwDestroyWindow(m_Window);
     }
 

@@ -44,13 +44,15 @@ namespace cbk::platform::opengl {
 		m_DataFormat = utils::cbkImageFormatToGLDataFormat(m_Specification.Format);
 		m_InternalFormat = utils::cbkImageFormatToGLInternalFormat(m_Specification.Format);
 
+		// Spec-constructed textures (1x1 white fallback etc.) don't carry a mip
+		// chain; allocate a single level and use plain linear filtering.
 #ifdef CBK_OPENGL_ES
 		glGenTextures(1, &m_RendererID);
 		glBindTexture(GL_TEXTURE_2D, m_RendererID);
 		glTexStorage2D(GL_TEXTURE_2D, 1, m_InternalFormat, m_Width, m_Height);
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -59,7 +61,7 @@ namespace cbk::platform::opengl {
 		glTextureStorage2D(m_RendererID, 1, m_InternalFormat, m_Width, m_Height);
 
 		glTextureParameteri(m_RendererID, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTextureParameteri(m_RendererID, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTextureParameteri(m_RendererID, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 		glTextureParameteri(m_RendererID, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTextureParameteri(m_RendererID, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -92,8 +94,12 @@ namespace cbk::platform::opengl {
 			CBK_CORE_ERROR("Cannot read the file {0}", path);
 			return;
 		}
-		if (header.magic != 0x43424B54){ // "CBKT"
+		if (header.magic != 0x43424B54) { // "CBKT"
 			CBK_CORE_ERROR("Wrong extension of file {0} - .cbkt expected!", path);
+			return;
+		}
+		if (header.version != 2) {
+			CBK_CORE_ERROR("Unsupported .cbkt version {0} in {1} - re-run CBKAssetConverter", header.version, path);
 			return;
 		}
 
@@ -127,30 +133,63 @@ namespace cbk::platform::opengl {
 
 			CBK_CORE_ASSERT(internalFormat & dataFormat, "Format not supported!");
 
+			const uint32_t mipLevels = std::max(1u, header.mipLevels);
+
 #ifdef CBK_OPENGL_ES
 			glGenTextures(1, &m_RendererID);
 			glBindTexture(GL_TEXTURE_2D, m_RendererID);
-			glTexStorage2D(GL_TEXTURE_2D, 1, internalFormat, m_Width, m_Height);
+			glTexStorage2D(GL_TEXTURE_2D, mipLevels, internalFormat, m_Width, m_Height);
 
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_Width, m_Height, dataFormat, GL_UNSIGNED_BYTE, uncompressedBuffer.data());
 #else
 			glCreateTextures(GL_TEXTURE_2D, 1, &m_RendererID);
-			glTextureStorage2D(m_RendererID, 1, internalFormat, m_Width, m_Height);
+			glTextureStorage2D(m_RendererID, mipLevels, internalFormat, m_Width, m_Height);
 
-			glTextureParameteri(m_RendererID, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			glTextureParameteri(m_RendererID, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+			// Trilinear sampling + anisotropic filtering eliminate the shimmer/
+			// "crispy" minification aliasing visible in Sponza. GL_TEXTURE_MAX_ANISOTROPY
+			// is core in 4.6 and ubiquitously available via EXT_texture_filter_anisotropic
+			// on 4.5; the enum value is identical.
+			glTextureParameteri(m_RendererID, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+			glTextureParameteri(m_RendererID, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+			GLfloat maxAniso = 1.0f;
+			glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &maxAniso);
+			glTextureParameterf(m_RendererID, GL_TEXTURE_MAX_ANISOTROPY, std::min(16.0f, maxAniso));
 
 			glTextureParameteri(m_RendererID, GL_TEXTURE_WRAP_S, GL_REPEAT);
 			glTextureParameteri(m_RendererID, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-			glTextureSubImage2D(m_RendererID, 0, 0, 0, m_Width, m_Height, dataFormat, GL_UNSIGNED_BYTE, uncompressedBuffer.data());
 #endif
+
+			// Our mip chain is tightly packed with no per-row padding. GL_UNPACK_ALIGNMENT
+			// defaults to 4, which would corrupt the upload for the smallest RGB mips
+			// where a row's byte count is not 4-aligned (e.g. W=2 RGB = 6 bytes).
+			GLint prevAlignment = 4;
+			glGetIntegerv(GL_UNPACK_ALIGNMENT, &prevAlignment);
+			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+			// Upload each mip level. Offsets are recomputed in the same way the
+			// converter laid them out (tight packing, dimensions clamped to >= 1).
+			uint32_t mipW = m_Width;
+			uint32_t mipH = m_Height;
+			size_t offset = 0;
+			for (uint32_t level = 0; level < mipLevels; level++) {
+#ifdef CBK_OPENGL_ES
+				glTexSubImage2D(GL_TEXTURE_2D, static_cast<GLint>(level), 0, 0, mipW, mipH,
+				                dataFormat, GL_UNSIGNED_BYTE, uncompressedBuffer.data() + offset);
+#else
+				glTextureSubImage2D(m_RendererID, static_cast<GLint>(level), 0, 0, mipW, mipH,
+				                    dataFormat, GL_UNSIGNED_BYTE, uncompressedBuffer.data() + offset);
+#endif
+				offset += static_cast<size_t>(mipW) * mipH * header.channels;
+				mipW = std::max(1u, mipW / 2);
+				mipH = std::max(1u, mipH / 2);
+			}
+
+			glPixelStorei(GL_UNPACK_ALIGNMENT, prevAlignment);
 
 			m_IsLoaded = true;
 		}

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Cabrankengine/Events/ApplicationEvent.h>
-#include <Cabrankengine/Math/Mat4.h>
+#include <Common/Math/Mat4.h>
 
 #include "Registry.hpp"
 #include "SystemManager.hpp"
@@ -44,12 +44,7 @@ namespace cbk::ecs {
 		void update(Registry& reg, float dt) override;
 	};
 
-	class PhongRenderSystem : public ISystem {
-	  public:
-		void update(Registry& reg, float dt) override;
-	};
-
-	class PBRRenderSystem : public ISystem {
+	class ModelRenderSystem : public ISystem {
 	  public:
 		void update(Registry& reg, float dt) override;
 	};

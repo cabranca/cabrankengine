@@ -1,13 +1,13 @@
 #pragma once
 
 #include <Cabrankengine/ECS/Registry.hpp>
-#include <Cabrankengine/Math/Vector4.h>
+#include <Common/Math/Vector4.h>
 
 namespace cbk::scene {
 
 	struct SceneMetadata {
 		std::string Name = "DefaultScene";
-		math::Vector4 BackgroundColor{ 0.2f, 0.2f, 0.2f, 1.f };
+		math::Vector4 BackgroundColor{ 0.0f, 0.0f, 0.0f, 1.f };
 		math::Vector4 AmbientColor{ 1.f };
 	};
 

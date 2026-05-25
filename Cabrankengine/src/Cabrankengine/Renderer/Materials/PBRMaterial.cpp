@@ -1,9 +1,30 @@
 #include <pch.h>
 #include "PBRMaterial.h"
 
+#include <Cabrankengine/Renderer/RendererAPI.h>
+
+#ifdef CBK_RENDERER_OPENGL
+	#include <Platform/OpenGL/OpenGLPBRMaterial.h>
+#endif
+
+#ifdef CBK_RENDERER_VULKAN
+	#include <Platform/Vulkan/VulkanPBRMaterial.h>
+#endif
+
 namespace cbk::rendering {
 
     using namespace scene;
+
+	Ref<PBRMaterial> PBRMaterial::create() {
+#ifdef CBK_RENDERER_OPENGL
+		return createRef<platform::opengl::OpenGLPBRMaterial>();
+#elif defined(CBK_RENDERER_VULKAN)
+		return createRef<platform::vk::VulkanPBRMaterial>();
+#else
+		CBK_CORE_ASSERT(false, "No renderer API defined!");
+		return nullptr;
+#endif
+	}
 
 	PBRMaterial::PBRMaterial() : Material(ShaderLibrary::get("PBR")), m_AlbedoColor(1.f), m_Metalness(0.f), m_Roughness(0.5f) {
         m_AlbedoMap = DefaultLibrary::getWhiteTexture();
@@ -52,28 +73,28 @@ namespace cbk::rendering {
 		m_Roughness = value;
 	}
 
-	void PBRMaterial::bind() const {
-        m_Shader->bind();
-
-		m_Shader->setFloat3("u_AlbedoColor", m_AlbedoColor);
-		m_Shader->setFloat("u_Metalness", m_Metalness);
-		m_Shader->setFloat("u_Roughness", m_Roughness);
-
-		// PBR Slots convention
-		// Slot 0: Albedo
-		m_AlbedoMap->bind(0);
-		m_Shader->setInt("u_AlbedoMap", 0);
-
-		// Slot 1: Normal
-		m_NormalMap->bind(1);
-		m_Shader->setInt("u_NormalMap", 1);
-
-		// Slot 2: Metal/Roughness
-		m_MetalRoughMap->bind(2);
-		m_Shader->setInt("u_MetalRoughMap", 2);
-
-		// Slot 3: AO
-		m_AOMap->bind(3);
-		m_Shader->setInt("u_AOMap", 3);
+	void PBRMaterial::applyTexture(common::TextureType type, const Ref<Texture2D>& texture) {
+		switch (type) {
+			case common::TextureType::Diffuse:        setAlbedoMap(texture);     break;
+			case common::TextureType::Normal:         setNormalMap(texture);     break;
+			case common::TextureType::MetalRoughness: setMetalRoughMap(texture); break;
+			case common::TextureType::AO:             setAOMap(texture);         break;
+			default: break;
+		}
 	}
+
+	void PBRMaterial::applyProperty(uint32_t key, float value) {
+		// Property keys defined in Common/BinaryFormats.h:
+		//   2 = Metalness, 3 = Roughness, 4 = BaseColorR, 5 = BaseColorG, 6 = BaseColorB
+		// BaseColor arrives one channel at a time; commit on the B channel.
+		switch (key) {
+			case 2: setMetalness(value); break;
+			case 3: setRoughness(value); break;
+			case 4: m_PendingBaseColorR = value; break;
+			case 5: m_PendingBaseColorG = value; break;
+			case 6: setAlbedoColor({ m_PendingBaseColorR, m_PendingBaseColorG, value }); break;
+			default: break;
+		}
+	}
+
 } // namespace cbk::rendering

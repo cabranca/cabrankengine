@@ -2,11 +2,11 @@
 
 #include <cstdint>
 
-#include <Cabrankengine/Math/VecTraits.h>
-#include <Cabrankengine/Renderer/Materials/PBRMaterial.h>
-#include <Cabrankengine/Renderer/Materials/PhongMaterial.h>
+#include <Common/Math/VecTraits.h>
 #include <Cabrankengine/Renderer/Texture.h>
 #include <Cabrankengine/Scene/Model.h>
+
+#include <Common/BinaryFormats.h>
 
 namespace cbk::ecs {
 
@@ -39,6 +39,9 @@ namespace cbk::ecs {
 		float LastMouseX = 0.f;
 		float LastMouseY = 0.f;
 		bool MouseCaptured = false;
+		// false: FPS-style — WASD stays on the horizontal plane.
+		// true:  free-fly — WASD follows the full look direction (pitch included).
+		bool FreeFlight = false;
 	};
 
 	struct CSprite {
@@ -48,14 +51,10 @@ namespace cbk::ecs {
 		float TilingFactor{ 1.f };
 	};
 
-	struct CPhongModel {
+	struct CModel {
 		std::string Path;
-		Ref<scene::Model<rendering::PhongMaterial>> Res;
-	};
-
-	struct CPBRModel {
-		std::string Path;
-		Ref<scene::Model<rendering::PBRMaterial>> Res;
+		common::MaterialKind Kind = common::MaterialKind::PBR;
+		Ref<scene::Model> Res;
 	};
 
 	struct CText {

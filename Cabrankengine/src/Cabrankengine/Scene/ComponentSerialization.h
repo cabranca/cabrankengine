@@ -3,6 +3,8 @@
 #include <nlohmann/json.hpp>
 
 #include <Cabrankengine/ECS/Components.h>
+#include <Cabrankengine/Renderer/Materials/PBRMaterial.h>
+#include <Cabrankengine/Renderer/Materials/PhongMaterial.h>
 
 // nlohmann ADL serialization — functions live in the same namespace as their types.
 
@@ -110,28 +112,34 @@ inline void from_json(const nlohmann::json& j, CSprite& c) {
     c.Texture = rendering::Texture2D::create(c.Path);
 }
 
-inline void to_json(nlohmann::json& j, const CPhongModel& c) {
-    j = { { "path", c.Path } };
-    // Model Ref is omitted — recreated from Path on load
+NLOHMANN_JSON_SERIALIZE_ENUM(common::MaterialKind, {
+    { common::MaterialKind::PBR,   "pbr"   },
+    { common::MaterialKind::Phong, "phong" },
+})
+
+inline void to_json(nlohmann::json& j, const CModel& c) {
+    j = {
+        { "path", c.Path },
+        { "kind", c.Kind },
+    };
+    // Model Ref is omitted — rebuilt from Path + Kind on load.
 }
 
-inline void from_json(const nlohmann::json& j, CPhongModel& c) {
+inline void from_json(const nlohmann::json& j, CModel& c) {
     j.at("path").get_to(c.Path);
+    j.at("kind").get_to(c.Kind);
 
-    c.Res = scene::Model<rendering::PhongMaterial>::create(c.Path);
-}
-
-inline void to_json(nlohmann::json& j, const CPBRModel& c) {
-    j = { { "path", c.Path } };
-    // Model Ref is omitted — recreated from Path on load
-}
-
-inline void from_json(const nlohmann::json& j, CPBRModel& c) {
-    j.at("path").get_to(c.Path);
-
-#ifndef CBK_OPENGL_ES
-    // PBR uses SSBOs which are unavailable in WebGL 2; path is recorded but the model is not loaded.
-    c.Res = scene::Model<rendering::PBRMaterial>::create(c.Path);
+#ifndef CBK_WASM
+    Ref<rendering::Material> material;
+    switch (c.Kind) {
+        case common::MaterialKind::Phong: material = rendering::PhongMaterial::create(); break;
+        case common::MaterialKind::PBR:   material = rendering::PBRMaterial::create();   break;
+        default:
+            CBK_CORE_ASSERT(false, "Unknown Material Kind! Valid kinds are Phong and PBR"); 
+            break;
+    }
+    if (material)
+        c.Res = scene::Model::create(c.Path, material);
 #endif
 }
 

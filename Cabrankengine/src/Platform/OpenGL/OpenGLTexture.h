@@ -23,7 +23,7 @@ namespace cbk::platform::opengl {
 			virtual uint32_t getHeight() const override { return m_Height; }
 		
 			// Returns the texture's renderer ID, which is used by the graphics API to identify the texture.
-			virtual uint32_t getRendererID() const override { return m_RendererID; }
+			virtual uint64_t getRendererID() const override { return m_RendererID; }
 
 			// Returns the path to the texture file.
 			virtual const std::string& getPath() const override { return m_Path; }

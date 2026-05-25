@@ -3,8 +3,9 @@
 
 #include <glad/glad.h>
 
-#include <Cabrankengine/Renderer/VertexArray.h>
-#include <Cabrankengine/Renderer/Buffer.h>
+#include <Cabrankengine/Renderer/Materials/Material.h>
+
+#include "OpenGLVertexArray.h"
 
 #include "OpenGLContext.h"
 
@@ -23,6 +24,8 @@ namespace cbk::platform::opengl {
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	}
 
+	void OpenGLRendererAPI::shutdown() {}
+
 	void OpenGLRendererAPI::setClearColor(const math::Vector4& color) {
 		glClearColor(color.x, color.y, color.z, color.w);
 	}
@@ -31,16 +34,24 @@ namespace cbk::platform::opengl {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	}
 
-	void OpenGLRendererAPI::draw(const Ref<VertexArray>& vertexArray)
+	void OpenGLRendererAPI::beginFrame() {}
+
+	void OpenGLRendererAPI::draw(const Ref<GeometryDescriptor>& desc)
 	{
-		vertexArray->bind();
+		auto vao = static_cast<OpenGLVertexArray*>(desc.get());
+		vao->bind();
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 	}
 
-	void OpenGLRendererAPI::drawIndexed(const Ref<VertexArray>& vertexArray, uint32_t indexCount) {
-		vertexArray->bind();
-		uint32_t count = indexCount == 0 ? vertexArray->getIndexBuffer()->getCount() : indexCount;
-		glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, nullptr);
+	void OpenGLRendererAPI::drawIndexed(const Ref<Material>& material, const Ref<GeometryDescriptor>& desc, const math::Mat4& transform,
+	                                    uint32_t indexCount) {
+		if (indexCount == 0)
+			return;
+		material->bind();
+		material->getShader()->setMat4("u_Model", transform);
+		auto vao = static_cast<OpenGLVertexArray*>(desc.get());
+		vao->bind();
+		glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, nullptr);
 	}
 
 	void OpenGLRendererAPI::endFrame() {

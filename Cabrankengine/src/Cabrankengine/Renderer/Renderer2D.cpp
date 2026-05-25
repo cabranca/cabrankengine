@@ -1,12 +1,12 @@
 #include <pch.h>
 #include "Renderer2D.h"
 
-#include <Cabrankengine/Math/MatrixFactory.h>
+#include <Common/Math/MatrixFactory.h>
 
-#include "Buffer.h"
+#include "GeometryDescriptor.h"
+#include "Materials/Texture2DMaterial.h"
 #include "RenderCommand.h"
 #include "Shader.h"
-#include "VertexArray.h"
 
 namespace cbk::rendering {
 
@@ -26,10 +26,9 @@ namespace cbk::rendering {
 		static const uint32_t MaxIndices = MaxQuads * 6;
 		static const uint32_t MaxTextureSlots = 32;
 
-		Ref<VertexArray> QuadVertexArray;
-		Ref<VertexBuffer> QuadVertexBuffer;
-		Ref<Shader> TextureShader;
+		Ref<GeometryDescriptor> QuadDesc;
 		Ref<Texture2D> WhiteTexture;
+		Ref<Texture2DMaterial> QuadMaterial;
 
 		uint32_t QuadIndexCount = 0;
 		QuadVertex* QuadVertexBufferBase = nullptr;
@@ -48,18 +47,6 @@ namespace cbk::rendering {
 	void Renderer2D::init() {
 		CBK_PROFILE_FUNCTION();
 
-		s_Data.QuadVertexArray = VertexArray::create();
-
-		s_Data.QuadVertexBuffer = VertexBuffer::create(s_Data.MaxVertices * sizeof(QuadVertex));
-		s_Data.QuadVertexBuffer->setLayout({ 
-			{ ShaderDataType::Float3, "pos" }, 
-			{ ShaderDataType::Float4, "col" }, 
-			{ ShaderDataType::Float2, "tex" },
-			{ ShaderDataType::Float, "texIndex"},
-			{ ShaderDataType::Float, "tilingFactor"}
-		});
-		s_Data.QuadVertexArray->addVertexBuffer(s_Data.QuadVertexBuffer);
-
 		s_Data.QuadVertexBufferBase = new QuadVertex[s_Data.MaxVertices];
 
 		uint32_t* quadIndices = new uint32_t[s_Data.MaxIndices];
@@ -76,23 +63,24 @@ namespace cbk::rendering {
 			offset += 4;
 		}
 
-		Ref<IndexBuffer> quadIB = IndexBuffer::create(quadIndices, s_Data.MaxIndices);
-		s_Data.QuadVertexArray->setIndexBuffer(quadIB);
+		s_Data.QuadDesc = GeometryDescriptor::create(s_Data.MaxVertices * sizeof(QuadVertex), quadIndices, s_Data.MaxIndices * sizeof(uint32_t), { 
+			{ ShaderDataType::Float3, "pos" }, 
+			{ ShaderDataType::Float4, "col" }, 
+			{ ShaderDataType::Float2, "tex" },
+			{ ShaderDataType::Float, "texIndex"},
+			{ ShaderDataType::Float, "tilingFactor"}
+		});
 		delete[] quadIndices;
 
 		s_Data.WhiteTexture = Texture2D::create(TextureSpecification());
 		uint32_t whiteTextureData = 0xffffffff;
 		s_Data.WhiteTexture->setData(&whiteTextureData, sizeof(uint32_t));
 
-		int32_t samplers[s_Data.MaxTextureSlots];
-		for (uint32_t i = 0; i < s_Data.MaxTextureSlots; i++)
-			samplers[i] = i;
-
-		s_Data.TextureShader = Shader::create("assets/shaders/Texture");
-		s_Data.TextureShader->bind();
-		s_Data.TextureShader->setIntArray("u_Textures", s_Data.MaxTextureSlots, samplers);
-
 		s_Data.TextureSlots[0] = s_Data.WhiteTexture;
+
+		// Material owns the batch's 32 texture slots and view-projection; the
+		// batcher repopulates the slots before each flush via setTextureSlot.
+		s_Data.QuadMaterial = Texture2DMaterial::create();
 
 		s_Data.QuadVertexPositions[0] = { -0.5f, -0.5f, 0.0f };
 		s_Data.QuadVertexPositions[1] = {  0.5f, -0.5f, 0.0f };
@@ -102,13 +90,24 @@ namespace cbk::rendering {
 
 	void Renderer2D::shutdown() {
 		CBK_PROFILE_FUNCTION();
+
+		delete[] s_Data.QuadVertexBufferBase;
+		s_Data.QuadVertexBufferBase = nullptr;
+
+		// s_Data is a program-scope static; its Ref<>s would otherwise destruct
+		// after the Vulkan device/allocator are gone. Release the GPU-backed
+		// resources here, while shutdown() still runs with a live device.
+		for (auto& slot : s_Data.TextureSlots)
+			slot.reset();
+		s_Data.QuadMaterial.reset();
+		s_Data.WhiteTexture.reset();
+		s_Data.QuadDesc.reset();
 	}
 
 	void Renderer2D::beginScene(const math::Mat4& viewProjection) {
 		CBK_PROFILE_FUNCTION();
 
-		s_Data.TextureShader->bind();
-		s_Data.TextureShader->setMat4("u_ViewProjection", viewProjection);
+		s_Data.QuadMaterial->setViewProjection(viewProjection);
 
 		s_Data.QuadIndexCount = 0;
 		s_Data.QuadVertexBufferPtr = s_Data.QuadVertexBufferBase;
@@ -119,8 +118,11 @@ namespace cbk::rendering {
 	void Renderer2D::endScene() {
 		CBK_PROFILE_FUNCTION();
 
+		if (s_Data.QuadIndexCount == 0)
+			return;
+
 		uint32_t dataSize = static_cast<uint32_t>(reinterpret_cast<uint8_t*>(s_Data.QuadVertexBufferPtr) - reinterpret_cast<uint8_t*>(s_Data.QuadVertexBufferBase));
-		s_Data.QuadVertexBuffer->setData(s_Data.QuadVertexBufferBase, dataSize);
+		s_Data.QuadDesc->setData(s_Data.QuadVertexBufferBase, dataSize);
 
 		flush();
 	}
@@ -128,11 +130,11 @@ namespace cbk::rendering {
 	void Renderer2D::flush() {
 		CBK_PROFILE_FUNCTION();
 
-		for (uint32_t i = 0; i < s_Data.TextureSlotIndex; i++) {
-			s_Data.TextureSlots[i]->bind(i);
-		}
+		for (uint32_t i = 0; i < s_Data.TextureSlotIndex; i++)
+			s_Data.QuadMaterial->setTextureSlot(i, s_Data.TextureSlots[i]);
 
-		RenderCommand::drawIndexed(s_Data.QuadVertexArray, s_Data.QuadIndexCount);
+		RenderCommand::drawIndexed(s_Data.QuadMaterial, s_Data.QuadDesc, math::identityMat(), s_Data.QuadIndexCount);
+
 		s_Data.Stats.DrawCalls++;
 	}
 
