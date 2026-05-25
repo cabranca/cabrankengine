@@ -51,15 +51,13 @@ struct PointLight {
     float  _pad2;
 };
 
-// GLSL-style buffer block: layout matches the SSBO produced by
-// Renderer::uploadLightEnvironment — 16-byte LightBufferHeader (count + pad)
-// followed by an unbounded array of PointLight.
-[[vk::binding(0, 2)]]
-buffer LightBuffer {
-    int        u_PointLightCount;
-    int3       _pad;
-    PointLight pointLights[];
-} u_Lights;
+// Raw byte view of the SSBO produced by Renderer::uploadLightEnvironment:
+// 16-byte LightBufferHeader (int count + int3 pad) followed by PointLight[].
+// Slang doesn't accept GLSL-style buffer blocks with unbounded arrays, so we
+// load the header and each light by byte offset.
+[[vk::binding(0, 2)]] ByteAddressBuffer u_Lights;
+
+static const uint k_PointLightStride = 48; // sizeof(PointLight) in std430
 
 struct PushConstants {
     float4x4 model;
@@ -210,8 +208,9 @@ float4 main(VSOutput input) : SV_TARGET {
     }
 
     // B. Point lights (SSBO).
-    for (int i = 0; i < u_Lights.u_PointLightCount; ++i) {
-        PointLight light = u_Lights.pointLights[i];
+    int pointLightCount = u_Lights.Load<int>(0);
+    for (int i = 0; i < pointLightCount; ++i) {
+        PointLight light = u_Lights.Load<PointLight>(16 + i * k_PointLightStride);
         float3     L     = normalize(light.position - input.worldPos);
         float3     H     = normalize(V + L);
 
