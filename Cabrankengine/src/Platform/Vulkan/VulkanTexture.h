@@ -45,10 +45,22 @@ namespace cbk::platform::vk {
 		[[nodiscard]] const VkDescriptorImageInfo* getDescriptor() const;
 
 	  private:
-		// Creates the GPU image + view + sampler sized m_Width x m_Height, uploads
-		// `data` via a one-shot staging buffer, transitions to shader-read layout, and
-		// populates m_TexDescriptorInfo. Shared by all three constructors / setData.
-		void uploadPixels(VkFormat format, const void* data, VkDeviceSize dataSize);
+		// One entry per mip level in the staging buffer. Single-level callers
+		// (font glyphs, 1x1 fallbacks, runtime setData) pass a 1-element vector;
+		// the .cbkt loader passes the full chain.
+		struct MipLevel {
+			uint32_t width;
+			uint32_t height;
+			VkDeviceSize byteOffset;
+			VkDeviceSize byteSize;
+		};
+
+		// Creates the GPU image + view + sampler sized m_Width x m_Height with
+		// `mips.size()` levels, uploads each level via a single staging buffer,
+		// transitions all levels to shader-read layout, and populates
+		// m_TexDescriptorInfo. Shared by all three constructors / setData.
+		void uploadPixels(VkFormat format, const void* data, VkDeviceSize dataSize,
+		                  const std::vector<MipLevel>& mips);
 
 		struct TextureData {
 			VmaAllocation allocation{ VK_NULL_HANDLE };

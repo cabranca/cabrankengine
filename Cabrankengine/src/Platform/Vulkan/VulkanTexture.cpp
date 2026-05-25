@@ -47,48 +47,86 @@ namespace cbk::platform::vk {
 			CBK_CORE_ERROR("Cannot read the file {0}", path);
 		if (header.magic != 0x43424B54) // "CBKT"
 			CBK_CORE_ERROR("Wrong extension of file {0} - .cbk expected!", path);
+		if (header.version != 2) {
+			CBK_CORE_ERROR("Unsupported .cbkt version {0} in {1} - re-run CBKAssetConverter", header.version, path);
+			return;
+		}
 
 		std::vector<uint8_t> compressedBuffer(header.compressedSize);
-		if (!file.read(reinterpret_cast<char*>(compressedBuffer.data()), compressedBuffer.size()))
+		if (!file.read(reinterpret_cast<char*>(compressedBuffer.data()), compressedBuffer.size())) {
 			CBK_CORE_ERROR("Cannot read the file {0}", path);
-		else {
-			std::vector<uint8_t> uncompressedBuffer(header.uncompressedSize);
-			int result =
-			    LZ4_decompress_safe(reinterpret_cast<const char*>(compressedBuffer.data()),
-			                        reinterpret_cast<char*>(uncompressedBuffer.data()), header.compressedSize, header.uncompressedSize);
-			if (result < 0) {
-				CBK_CORE_ERROR("LZ4 decompression failed for {0}", path);
-				return;
+			return;
+		}
+
+		std::vector<uint8_t> uncompressedBuffer(header.uncompressedSize);
+		int result =
+		    LZ4_decompress_safe(reinterpret_cast<const char*>(compressedBuffer.data()),
+		                        reinterpret_cast<char*>(uncompressedBuffer.data()), header.compressedSize, header.uncompressedSize);
+		if (result < 0) {
+			CBK_CORE_ERROR("LZ4 decompression failed for {0}", path);
+			return;
+		}
+
+		m_Width = header.width;
+		m_Height = header.height;
+		const uint32_t mipLevels = std::max(1u, header.mipLevels);
+
+		// Build per-level offsets matching the converter's layout (tight packing,
+		// dimensions clamped to >= 1).
+		auto buildMipLevels = [&](uint32_t bytesPerPixel) {
+			std::vector<MipLevel> mips;
+			mips.reserve(mipLevels);
+			uint32_t w = m_Width, h = m_Height;
+			VkDeviceSize offset = 0;
+			for (uint32_t i = 0; i < mipLevels; i++) {
+				const VkDeviceSize size = static_cast<VkDeviceSize>(w) * h * bytesPerPixel;
+				mips.push_back({ w, h, offset, size });
+				offset += size;
+				w = std::max(1u, w / 2);
+				h = std::max(1u, h / 2);
 			}
+			return mips;
+		};
 
-			m_Width = header.width;
-			m_Height = header.height;
+		if (header.channels == 3) {
+			// 24-bit RGB (VK_FORMAT_R8G8B8_UNORM) is not a required format for
+			// optimal-tiled sampled images and is unsupported on most GPUs.
+			// Expand each mip to RGBA8, which the Vulkan spec guarantees.
+			auto srcMips = buildMipLevels(3);
+			VkDeviceSize totalRgba = 0;
+			for (const auto& m : srcMips) totalRgba += (m.byteSize / 3) * 4;
+			std::vector<uint8_t> rgba(totalRgba);
 
-			if (header.channels == 3) {
-				// 24-bit RGB (VK_FORMAT_R8G8B8_UNORM) is not a required format for
-				// optimal-tiled sampled images and is unsupported on most GPUs.
-				// Expand to RGBA8, which the Vulkan spec guarantees.
-				const size_t pixelCount = static_cast<size_t>(m_Width) * m_Height;
-				std::vector<uint8_t> rgba(pixelCount * 4);
+			std::vector<MipLevel> dstMips;
+			dstMips.reserve(mipLevels);
+			VkDeviceSize dstOffset = 0;
+			for (const auto& src : srcMips) {
+				const size_t pixelCount = src.byteSize / 3;
+				const uint8_t* srcPtr = uncompressedBuffer.data() + src.byteOffset;
+				uint8_t* dstPtr = rgba.data() + dstOffset;
 				for (size_t p = 0; p < pixelCount; p++) {
-					rgba[p * 4 + 0] = uncompressedBuffer[p * 3 + 0];
-					rgba[p * 4 + 1] = uncompressedBuffer[p * 3 + 1];
-					rgba[p * 4 + 2] = uncompressedBuffer[p * 3 + 2];
-					rgba[p * 4 + 3] = 255;
+					dstPtr[p * 4 + 0] = srcPtr[p * 3 + 0];
+					dstPtr[p * 4 + 1] = srcPtr[p * 3 + 1];
+					dstPtr[p * 4 + 2] = srcPtr[p * 3 + 2];
+					dstPtr[p * 4 + 3] = 255;
 				}
-				uploadPixels(VK_FORMAT_R8G8B8A8_UNORM, rgba.data(), rgba.size());
-			} else {
-				VkFormat format;
-				switch (header.channels) {
-					case 1: format = VK_FORMAT_R8_UNORM; break;
-					case 2: format = VK_FORMAT_R8G8_UNORM; break;
-					case 4: format = VK_FORMAT_R8G8B8A8_UNORM; break;
-					default:
-						CBK_CORE_ERROR("VulkanTexture(): unsupported channel count {0} in {1}", header.channels, path);
-						return;
-				}
-				uploadPixels(format, uncompressedBuffer.data(), uncompressedBuffer.size());
+				dstMips.push_back({ src.width, src.height, dstOffset, pixelCount * 4 });
+				dstOffset += pixelCount * 4;
 			}
+			uploadPixels(VK_FORMAT_R8G8B8A8_UNORM, rgba.data(), totalRgba, dstMips);
+		} else {
+			VkFormat format;
+			uint32_t bpp;
+			switch (header.channels) {
+				case 1: format = VK_FORMAT_R8_UNORM;       bpp = 1; break;
+				case 2: format = VK_FORMAT_R8G8_UNORM;     bpp = 2; break;
+				case 4: format = VK_FORMAT_R8G8B8A8_UNORM; bpp = 4; break;
+				default:
+					CBK_CORE_ERROR("VulkanTexture(): unsupported channel count {0} in {1}", header.channels, path);
+					return;
+			}
+			auto mips = buildMipLevels(bpp);
+			uploadPixels(format, uncompressedBuffer.data(), uncompressedBuffer.size(), mips);
 		}
 	}
 
@@ -102,22 +140,27 @@ namespace cbk::platform::vk {
 		m_Height = glyphH > 0 ? glyphH : 1;
 
 		if (glyphW > 0 && glyphH > 0) {
-			uploadPixels(VK_FORMAT_R8_UNORM, face->glyph->bitmap.buffer,
-			             static_cast<VkDeviceSize>(glyphW) * glyphH);
+			const VkDeviceSize size = static_cast<VkDeviceSize>(glyphW) * glyphH;
+			std::vector<MipLevel> mips{ { glyphW, glyphH, 0, size } };
+			uploadPixels(VK_FORMAT_R8_UNORM, face->glyph->bitmap.buffer, size, mips);
 		} else {
 			const uint8_t empty = 0;
-			uploadPixels(VK_FORMAT_R8_UNORM, &empty, 1);
+			std::vector<MipLevel> mips{ { 1, 1, 0, 1 } };
+			uploadPixels(VK_FORMAT_R8_UNORM, &empty, 1, mips);
 		}
 	}
 
-	void VulkanTexture::uploadPixels(VkFormat format, const void* data, VkDeviceSize dataSize) {
+	void VulkanTexture::uploadPixels(VkFormat format, const void* data, VkDeviceSize dataSize,
+	                                  const std::vector<MipLevel>& mips) {
+		CBK_CORE_ASSERT(!mips.empty(), "VulkanTexture::uploadPixels(): mip list must not be empty");
 		auto ctx = static_cast<VulkanDeviceContext*>(Application::get().getWindow().getContext());
+		const uint32_t mipLevels = static_cast<uint32_t>(mips.size());
 
 		VkImageCreateInfo texImgCI{ .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
 			                        .imageType = VK_IMAGE_TYPE_2D,
 			                        .format = format,
 			                        .extent = { .width = m_Width, .height = m_Height, .depth = 1 },
-			                        .mipLevels = 1,
+			                        .mipLevels = mipLevels,
 			                        .arrayLayers = 1,
 			                        .samples = VK_SAMPLE_COUNT_1_BIT,
 			                        .tiling = VK_IMAGE_TILING_OPTIMAL,
@@ -134,7 +177,7 @@ namespace cbk::platform::vk {
 			.image = m_Texture.image,
 			.viewType = VK_IMAGE_VIEW_TYPE_2D,
 			.format = texImgCI.format,
-			.subresourceRange = { .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .levelCount = 1, .layerCount = 1 }
+			.subresourceRange = { .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .levelCount = mipLevels, .layerCount = 1 }
 		};
 		vkResult = vkCreateImageView(ctx->getLogicalDevice(), &texVewCI, nullptr, &m_Texture.view);
 		if (vkResult != VK_SUCCESS) {
@@ -198,15 +241,23 @@ namespace cbk::platform::vk {
 			                                   .newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 			                                   .image = m_Texture.image,
 			                                   .subresourceRange = {
-			                                       .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .levelCount = 1, .layerCount = 1 } };
+			                                       .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .levelCount = mipLevels, .layerCount = 1 } };
 		VkDependencyInfo barrierTexInfo{ .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
 			                             .imageMemoryBarrierCount = 1,
 			                             .pImageMemoryBarriers = &barrierTexImage };
 		vkCmdPipelineBarrier2(cbOneTime, &barrierTexInfo);
-		VkBufferImageCopy copyRegion{ .bufferOffset = 0,
-			                          .imageSubresource{ .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .mipLevel = 0, .layerCount = 1 },
-			                          .imageExtent{ .width = m_Width, .height = m_Height, .depth = 1 } };
-		vkCmdCopyBufferToImage(cbOneTime, imgSrcBuffer, m_Texture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
+
+		std::vector<VkBufferImageCopy> copyRegions;
+		copyRegions.reserve(mipLevels);
+		for (uint32_t level = 0; level < mipLevels; level++) {
+			copyRegions.push_back(VkBufferImageCopy{
+			    .bufferOffset = mips[level].byteOffset,
+			    .imageSubresource{ .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .mipLevel = level, .layerCount = 1 },
+			    .imageExtent{ .width = mips[level].width, .height = mips[level].height, .depth = 1 } });
+		}
+		vkCmdCopyBufferToImage(cbOneTime, imgSrcBuffer, m_Texture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		                       static_cast<uint32_t>(copyRegions.size()), copyRegions.data());
+
 		VkImageMemoryBarrier2 barrierTexRead{ .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
 			                                  .srcStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT,
 			                                  .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
@@ -216,7 +267,7 @@ namespace cbk::platform::vk {
 			                                  .newLayout = VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL,
 			                                  .image = m_Texture.image,
 			                                  .subresourceRange = {
-			                                      .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .levelCount = 1, .layerCount = 1 } };
+			                                      .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .levelCount = mipLevels, .layerCount = 1 } };
 		barrierTexInfo.pImageMemoryBarriers = &barrierTexRead;
 		vkCmdPipelineBarrier2(cbOneTime, &barrierTexInfo);
 		vkResult = vkEndCommandBuffer(cbOneTime);
@@ -239,15 +290,21 @@ namespace cbk::platform::vk {
 		vmaDestroyBuffer(ctx->getAllocator(), imgSrcBuffer, imgSrcAllocation);
 		vkDestroyCommandPool(ctx->getLogicalDevice(), commandPool, nullptr);
 
-		// Sampler
+		// Sampler — trilinear filtering across the full mip chain plus anisotropic
+		// filtering. VK_LOD_CLAMP_NONE lets the implementation pick any mip in the
+		// chain, which is what we want now that we ship the full pyramid.
+		// Anisotropy must be clamped to the physical device's limit or
+		// vkCreateSampler returns VK_ERROR_VALIDATION_FAILED_EXT.
+		VkPhysicalDeviceProperties devProps{};
+		vkGetPhysicalDeviceProperties(ctx->getPhysicalDevice(), &devProps);
 		VkSamplerCreateInfo samplerCI{
 			.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
 			.magFilter = VK_FILTER_LINEAR,
 			.minFilter = VK_FILTER_LINEAR,
 			.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR,
 			.anisotropyEnable = VK_TRUE,
-			.maxAnisotropy = 8.0f,
-			.maxLod = 1.f,
+			.maxAnisotropy = std::min(16.0f, devProps.limits.maxSamplerAnisotropy),
+			.maxLod = VK_LOD_CLAMP_NONE,
 		};
 		vkResult = vkCreateSampler(ctx->getLogicalDevice(), &samplerCI, nullptr, &m_Texture.sampler);
 		if (vkResult != VK_SUCCESS) {
@@ -293,7 +350,8 @@ namespace cbk::platform::vk {
 
 	// Uploads raw pixels into a spec-constructed texture (e.g. the 1x1 white fallback).
 	void VulkanTexture::setData(void* data, uint32_t size) {
-		uploadPixels(toVkFormat(m_Specification.Format), data, size);
+		std::vector<MipLevel> mips{ { m_Width, m_Height, 0, size } };
+		uploadPixels(toVkFormat(m_Specification.Format), data, size, mips);
 	}
 
 	// Binds the texture to a specific slot in the graphics API, allowing it to be used in rendering.
