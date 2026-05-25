@@ -10,12 +10,17 @@ namespace cbk::common {
 
 	// --- Texture binary format (.cbkt) ---
 
+	// CBKT v2 layout:
+	//   TextureHeader
+	//   LZ4-compressed mip chain: mip 0 (width x height), mip 1 (w/2 x h/2),
+	//   ..., mip N (1 x 1), each interleaved with `channels` bytes per pixel.
 	struct TextureHeader {
 		uint32_t magic = 0x43424B54; // "CBKT" (Cabrankengine Texture)
-		uint32_t version = 1;
+		uint32_t version = 2;
 		uint32_t width, height, channels;
-		uint32_t compressedSize;
-		uint32_t uncompressedSize;
+		uint32_t mipLevels;        // number of mip levels stored (>=1)
+		uint32_t compressedSize;   // LZ4-compressed size of full mip chain
+		uint32_t uncompressedSize; // sum of all mip sizes in bytes
 	};
 
 	// --- Model binary format (.cbkm) ---

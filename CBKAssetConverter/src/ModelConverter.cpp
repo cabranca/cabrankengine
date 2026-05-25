@@ -36,7 +36,12 @@ namespace cbk::ac {
 		std::vector<PropertyRef> properties;
 	};
 
-	static void collectMeshes(aiNode* node, const aiScene* scene, std::vector<CollectedMesh>& meshes) {
+	static void collectMeshes(aiNode* node, const aiMatrix4x4& parentT,
+	                          const aiScene* scene, std::vector<CollectedMesh>& meshes) {
+		const aiMatrix4x4 t = parentT * node->mTransformation;
+		aiMatrix3x3 nT(t);
+		nT.Inverse().Transpose();
+
 		for (unsigned int i = 0; i < node->mNumMeshes; i++) {
 			aiMesh* aiM = scene->mMeshes[node->mMeshes[i]];
 			CollectedMesh cm;
@@ -44,16 +49,21 @@ namespace cbk::ac {
 
 			for (unsigned int v = 0; v < aiM->mNumVertices; v++) {
 				ModelConverter::Vertex vert{};
-				vert.position = { aiM->mVertices[v].x, aiM->mVertices[v].y, aiM->mVertices[v].z };
+				aiVector3D p = t * aiM->mVertices[v];
+				vert.position = { p.x, p.y, p.z };
 
-				if (aiM->HasNormals())
-					vert.normal = { aiM->mNormals[v].x, aiM->mNormals[v].y, aiM->mNormals[v].z };
+				if (aiM->HasNormals()) {
+					aiVector3D n = (nT * aiM->mNormals[v]).Normalize();
+					vert.normal = { n.x, n.y, n.z };
+				}
 
 				if (aiM->mTextureCoords[0])
 					vert.texCoords = { aiM->mTextureCoords[0][v].x, aiM->mTextureCoords[0][v].y };
 
-				if (aiM->HasTangentsAndBitangents())
-					vert.tangent = { aiM->mTangents[v].x, aiM->mTangents[v].y, aiM->mTangents[v].z };
+				if (aiM->HasTangentsAndBitangents()) {
+					aiVector3D tg = (nT * aiM->mTangents[v]).Normalize();
+					vert.tangent = { tg.x, tg.y, tg.z };
+				}
 
 				cm.vertices.push_back(vert);
 			}
@@ -68,7 +78,7 @@ namespace cbk::ac {
 		}
 
 		for (unsigned int i = 0; i < node->mNumChildren; i++)
-			collectMeshes(node->mChildren[i], scene, meshes);
+			collectMeshes(node->mChildren[i], t, scene, meshes);
 	}
 
 	// Collects the textures of a single material. convertedFiles is a model-wide
@@ -213,14 +223,9 @@ namespace cbk::ac {
 
 	void ModelConverter::convert(std::string_view path) {
 		Assimp::Importer importer;
-		// PreTransformVertices bakes the node hierarchy's transforms into the mesh
-		// vertices and flattens the scene — collectMeshes copies raw vertices and
-		// does not apply aiNode::mTransformation, so without this glTF-style
-		// scene-graph models render with wrong placement, orientation and scale.
 		const aiScene* scene = importer.ReadFile(
 		    path.data(),
-		    aiProcess_Triangulate | aiProcess_GenSmoothNormals |
-		    aiProcess_FlipUVs | aiProcess_CalcTangentSpace | aiProcess_PreTransformVertices);
+		    aiProcess_Triangulate | aiProcess_FlipUVs);
 
 		if (!scene || (scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) || !scene->mRootNode) {
 			CBK_AC_ERROR("Failed to load model: {} - {}", path, importer.GetErrorString());
@@ -230,7 +235,7 @@ namespace cbk::ac {
 		std::string modelDir(path.substr(0, path.find_last_of('/')));
 
 		std::vector<CollectedMesh> meshes;
-		collectMeshes(scene->mRootNode, scene, meshes);
+		collectMeshes(scene->mRootNode, aiMatrix4x4(), scene, meshes);
 
 		// One CollectedMaterial per aiMaterial; meshes index into this table.
 		std::vector<CollectedMaterial> materials(scene->mNumMaterials);
