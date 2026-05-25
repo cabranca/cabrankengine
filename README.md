@@ -80,7 +80,7 @@ public:
 
 class MyApp : public Application {
 public:
-    MyApp() { pushLayer(new MyLayer()); }
+    MyApp() { pushLayer(std::make_unique<MyLayer>()); }
 };
 
 Application* cbk::createApplication() { return new MyApp(); }
@@ -96,9 +96,24 @@ For a step-by-step walkthrough see [docs/getting-started.md](docs/getting-starte
 
 - C++23 compiler (GCC 13+ / Clang 17+ / MSVC 19.38+)
 - [Premake5](https://premake.github.io/)
-- OpenGL 4.5 — Linux / Windows (fully supported)
+- **Vulkan SDK** (Linux default) — or OpenGL 4.5 fallback (see below)
 - Metal — macOS *(WIP: compiles and renders with a hardcoded shader; material system not yet wired up)*
 - GNU Make (Linux) or Visual Studio 2022 (Windows)
+
+### Vulkan SDK (Linux)
+
+The Linux backend defaults to Vulkan. Install the LunarG SDK with the `--set-dep-ld` flag (required by the latest installer to match the engine's linker config) and export `VULKAN_SDK`:
+
+```bash
+./vulkansdk-linux-x86_64-*.run --set-dep-ld
+export VULKAN_SDK=$HOME/VulkanSDK/<version>/x86_64
+```
+
+To skip Vulkan and use OpenGL 4.5 instead, pass `--renderer=opengl` to Premake:
+
+```bash
+premake5 gmake --renderer=opengl
+```
 
 ### Steps
 
@@ -108,8 +123,8 @@ git clone --recurse-submodules https://github.com/cabranca/game-dev.git
 cd game-dev
 
 # Generate build files
-premake5 gmake2      # Linux
-premake5 vs2022      # Windows
+premake5 gmake      # Linux (Vulkan by default)
+premake5 vs2022      # Windows (OpenGL by default)
 
 # Build (debug by default)
 make
