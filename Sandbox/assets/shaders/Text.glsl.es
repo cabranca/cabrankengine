@@ -32,7 +32,7 @@ in vec4 v_Color;
 in vec2 v_TexCoords;
 in float v_TexIndex;
 
-uniform sampler2D u_Textures[32];
+uniform sampler2D u_Textures[16];
 
 // ESSL 3.00 forbids dynamic indexing of sampler arrays in fragment shaders, so unroll.
 // Glyph atlases are single-channel (R8) — sample only the red channel.
@@ -54,23 +54,7 @@ float sampleAlphaByIndex(int idx, vec2 uv)
         case 12: return texture(u_Textures[12], uv).r;
         case 13: return texture(u_Textures[13], uv).r;
         case 14: return texture(u_Textures[14], uv).r;
-        case 15: return texture(u_Textures[15], uv).r;
-        case 16: return texture(u_Textures[16], uv).r;
-        case 17: return texture(u_Textures[17], uv).r;
-        case 18: return texture(u_Textures[18], uv).r;
-        case 19: return texture(u_Textures[19], uv).r;
-        case 20: return texture(u_Textures[20], uv).r;
-        case 21: return texture(u_Textures[21], uv).r;
-        case 22: return texture(u_Textures[22], uv).r;
-        case 23: return texture(u_Textures[23], uv).r;
-        case 24: return texture(u_Textures[24], uv).r;
-        case 25: return texture(u_Textures[25], uv).r;
-        case 26: return texture(u_Textures[26], uv).r;
-        case 27: return texture(u_Textures[27], uv).r;
-        case 28: return texture(u_Textures[28], uv).r;
-        case 29: return texture(u_Textures[29], uv).r;
-        case 30: return texture(u_Textures[30], uv).r;
-        default: return texture(u_Textures[31], uv).r;
+        default: return texture(u_Textures[15], uv).r;
     }
 }
 

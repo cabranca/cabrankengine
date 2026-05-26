@@ -35,7 +35,7 @@ in vec2 v_TexCoord;
 in float v_TexIndex;
 in float v_TilingFactor;
 
-uniform sampler2D u_Textures[32];
+uniform sampler2D u_Textures[16];
 
 // ESSL 3.00 forbids dynamic indexing of sampler arrays in fragment shaders, so unroll
 // the lookup. Index range mirrors Renderer2DData::MaxTextureSlots.
@@ -57,23 +57,7 @@ vec4 sampleByIndex(int idx, vec2 uv)
 		case 12: return texture(u_Textures[12], uv);
 		case 13: return texture(u_Textures[13], uv);
 		case 14: return texture(u_Textures[14], uv);
-		case 15: return texture(u_Textures[15], uv);
-		case 16: return texture(u_Textures[16], uv);
-		case 17: return texture(u_Textures[17], uv);
-		case 18: return texture(u_Textures[18], uv);
-		case 19: return texture(u_Textures[19], uv);
-		case 20: return texture(u_Textures[20], uv);
-		case 21: return texture(u_Textures[21], uv);
-		case 22: return texture(u_Textures[22], uv);
-		case 23: return texture(u_Textures[23], uv);
-		case 24: return texture(u_Textures[24], uv);
-		case 25: return texture(u_Textures[25], uv);
-		case 26: return texture(u_Textures[26], uv);
-		case 27: return texture(u_Textures[27], uv);
-		case 28: return texture(u_Textures[28], uv);
-		case 29: return texture(u_Textures[29], uv);
-		case 30: return texture(u_Textures[30], uv);
-		default: return texture(u_Textures[31], uv);
+		default: return texture(u_Textures[15], uv);
 	}
 }
 
