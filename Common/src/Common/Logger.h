@@ -13,6 +13,10 @@ namespace cbk::common {
 		// Sets the loggers and the patterns
 		static void init();
 
+		// Sets the level on all engine loggers. Accepts "trace", "debug", "info", "warn", "error", "critical", "off".
+		// Unknown values fall back to "info" and emit a warning.
+		static void setLevel(std::string_view level);
+
 		// Returns the logger for the engine app
 		static std::shared_ptr<spdlog::logger>& getCoreLogger() { return m_CoreLogger; }
 
