@@ -25,17 +25,24 @@ namespace cbk::ecs {
 		public:
 			// Associates the given component and entity
 			void insert(Entity e, T component) {
-				CBK_CORE_ASSERT(!m_EntityToIndex.contains(e), "The component has already been added!");
+				if (m_EntityToIndex.contains(e)) {
+					CBK_CORE_ERROR("ComponentArray<{0}>::insert: component already added to entity {1}", typeid(T).name(), e);
+					return;
+				}
 				size_t index = m_Size;
 				m_EntityToIndex[e] = index;
 				m_IndexToEntity[index] = e;
 				m_Components[index] = component;
 				m_Size++;
+				CBK_CORE_TRACE("Component {0} added to entity {1}", typeid(T).name(), e);
 			}
 
 			// Removes the component related to the given entity and any record of it
 			void remove(Entity e) {
-				CBK_CORE_ASSERT(m_EntityToIndex.contains(e), "The component to remove does not exist!");
+				if (!m_EntityToIndex.contains(e)) {
+					CBK_CORE_ERROR("ComponentArray<{0}>::remove: component does not exist on entity {1}", typeid(T).name(), e);
+					return;
+				}
 				size_t index = m_EntityToIndex[e];
 				size_t lastIndex = m_Size - 1;
 				m_Components[index] = m_Components[lastIndex];
@@ -45,6 +52,7 @@ namespace cbk::ecs {
 				m_EntityToIndex.erase(e);
 				m_IndexToEntity.erase(lastIndex);
 				m_Size--;
+				CBK_CORE_TRACE("Component {0} removed from entity {1}", typeid(T).name(), e);
 			}
 
 			// Returns the component for the given entity
@@ -86,40 +94,52 @@ namespace cbk::ecs {
 					CBK_CORE_ERROR("Component {} added twice!", typeName);
 					return;
 				}
-					
+
 				m_ComponentTypes[typeName] = m_NextComponentType++;
 				m_ComponentArrays[typeName] = std::make_shared<ComponentArray<T>>();
+				CBK_CORE_TRACE("Component registered: {0}", typeName);
 			}
 
 			// Returns the unique ID assigned to the component type T
 			template<typename T>
 			uint8_t getComponentType() {
 				const char* typeName = typeid(T).name();
-				CBK_CORE_ASSERT(m_ComponentTypes.contains(typeName), "Component not registered!");
+				if (!m_ComponentTypes.contains(typeName)) {
+					CBK_CORE_ERROR("getComponentType: component {0} not registered", typeName);
+					return 0;
+				}
 				return m_ComponentTypes[typeName];
 			}
 
 			// Adds a component of type T to the given entity
 			template<typename T>
 			void addComponent(Entity e, T component) {
-				getComponentArray<T>()->insert(e, component);
+				auto array = getComponentArray<T>();
+				if (!array) return;
+				array->insert(e, component);
 			}
-			
+
 			// Removes the component of type T from the given entity
 			template<typename T>
 			void removeComponent(Entity e) {
-				getComponentArray<T>()->remove(e);
+				auto array = getComponentArray<T>();
+				if (!array) return;
+				array->remove(e);
 			}
 
 			// Returns the component of type T associated with the given entity, if present
 			template<typename T>
 			std::optional<T*> getComponent(Entity e) {
-				return getComponentArray<T>()->get(e);
+				auto array = getComponentArray<T>();
+				if (!array) return std::nullopt;
+				return array->get(e);
 			}
 
 			template<typename T>
 			std::optional<const T*> getComponent(Entity e) const {
-				return getComponentArray<T>()->get(e);
+				auto array = getComponentArray<T>();
+				if (!array) return std::nullopt;
+				return array->get(e);
 			}
 
 			// This must be called after a call to EntityManager::destroyEntity()
@@ -137,14 +157,20 @@ namespace cbk::ecs {
 			template<typename T>
 			std::shared_ptr<ComponentArray<T>> getComponentArray() {
 				const char* typeName = typeid(T).name();
-				CBK_CORE_ASSERT(m_ComponentTypes.contains(typeName), "Component not registered!");
+				if (!m_ComponentTypes.contains(typeName)) {
+					CBK_CORE_ERROR("getComponentArray: component {0} not registered", typeName);
+					return nullptr;
+				}
 				return std::static_pointer_cast<ComponentArray<T>>(m_ComponentArrays[typeName]);
 			}
 
 			template<typename T>
 			std::shared_ptr<const ComponentArray<T>> getComponentArray() const {
 				const char* typeName = typeid(T).name();
-				CBK_CORE_ASSERT(m_ComponentTypes.contains(typeName), "Component not registered!");
+				if (!m_ComponentTypes.contains(typeName)) {
+					CBK_CORE_ERROR("getComponentArray: component {0} not registered", typeName);
+					return nullptr;
+				}
 				return std::static_pointer_cast<ComponentArray<T>>(m_ComponentArrays.at(typeName));
 			}
 	};
