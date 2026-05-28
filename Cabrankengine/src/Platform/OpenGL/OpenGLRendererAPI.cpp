@@ -5,9 +5,8 @@
 
 #include <Cabrankengine/Renderer/Materials/Material.h>
 
-#include "OpenGLVertexArray.h"
-
 #include "OpenGLContext.h"
+#include "OpenGLVertexArray.h"
 
 namespace cbk::platform::opengl {
 
