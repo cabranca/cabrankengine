@@ -45,7 +45,6 @@ namespace cbk {
 		RenderLayer::setScene(&m_Scene); // Check this static logic.
 		pushLayer(std::move(renderLayer));
 
-<<<<<<< HEAD
 #ifndef __EMSCRIPTEN__
 		auto imGuiLayer = createScope<ImGuiLayer>();
 		m_ImGuiLayer = imGuiLayer.get();
@@ -53,11 +52,6 @@ namespace cbk {
 #else
 		m_ImGuiLayer = nullptr;
 #endif
-=======
-		auto imGuiLayer = createScope<ImGuiLayer>();
-		m_ImGuiLayer = imGuiLayer.get();
-		pushOverlay(std::move(imGuiLayer));
->>>>>>> origin/main
 	}
 
 	Application::~Application() {
