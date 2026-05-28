@@ -48,7 +48,6 @@ namespace cbk::platform::opengl {
 		if (indexCount == 0)
 			return;
 		material->bind();
-		material->getShader()->setMat4("u_Model", transform);
 		auto vao = static_cast<OpenGLVertexArray*>(desc.get());
 		vao->bind();
 		glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, nullptr);
