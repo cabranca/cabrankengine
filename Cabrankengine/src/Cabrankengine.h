@@ -12,6 +12,8 @@
 #include <Cabrankengine/Core/KeyCodes.h>
 #include <Cabrankengine/Core/MouseCodes.h>
 
+#include <Cabrankengine/Core/Window.h>
+
 #include <Cabrankengine/Debug/Instrumentator.h>
 
 #include <Cabrankengine/ECS/ECS.h>
