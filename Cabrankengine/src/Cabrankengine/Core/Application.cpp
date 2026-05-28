@@ -83,6 +83,7 @@ namespace cbk {
 
 		if (!app->m_Minimized) {
 			CBK_PROFILE_SCOPE("LayerStack OnUpdate");
+			RenderCommand::beginFrame();
 
 			for (auto& layer : app->m_LayerStack)
 				layer->onUpdate(timestep);
