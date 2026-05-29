@@ -16,7 +16,7 @@ namespace cbk::common {
 		m_CoreLogger->set_level(spdlog::level::info);
 
 		m_ClientLogger = spdlog::stdout_color_mt("APP");
-		m_ClientLogger->set_level(spdlog::level::info);
+		m_ClientLogger->set_level(spdlog::level::debug);
 
 		m_AssetConverterLogger = spdlog::stdout_color_mt("ASSET CONVERTER");
 		m_AssetConverterLogger->set_level(spdlog::level::info);
