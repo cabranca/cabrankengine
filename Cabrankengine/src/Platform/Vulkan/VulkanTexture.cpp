@@ -8,6 +8,7 @@
 #include <Cabrankengine/Core/Application.h>
 #include <Cabrankengine/Core/Window.h>
 
+#include "VkCheck.h"
 #include "VulkanDeviceContext.h"
 
 namespace cbk::platform::vk {
@@ -167,11 +168,7 @@ namespace cbk::platform::vk {
 			                        .usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
 			                        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED };
 		VmaAllocationCreateInfo texImageAllocCI{ .usage = VMA_MEMORY_USAGE_AUTO };
-		auto vkResult = vmaCreateImage(ctx->getAllocator(), &texImgCI, &texImageAllocCI, &m_Texture.image, &m_Texture.allocation, nullptr);
-		if (vkResult != VK_SUCCESS) {
-			CBK_CORE_ERROR("VulkanTexture(): error creating image (VkResult {0})", static_cast<int>(vkResult));
-			return;
-		}
+		VK_CHECK(vmaCreateImage(ctx->getAllocator(), &texImgCI, &texImageAllocCI, &m_Texture.image, &m_Texture.allocation, nullptr));
 		VkImageViewCreateInfo texVewCI{
 			.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
 			.image = m_Texture.image,
@@ -179,11 +176,7 @@ namespace cbk::platform::vk {
 			.format = texImgCI.format,
 			.subresourceRange = { .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .levelCount = mipLevels, .layerCount = 1 }
 		};
-		vkResult = vkCreateImageView(ctx->getLogicalDevice(), &texVewCI, nullptr, &m_Texture.view);
-		if (vkResult != VK_SUCCESS) {
-			CBK_CORE_ERROR("VulkanTexture(): error creating image view", static_cast<int>(vkResult));
-			return;
-		}
+		VK_CHECK(vkCreateImageView(ctx->getLogicalDevice(), &texVewCI, nullptr, &m_Texture.view));
 
 		// Upload
 		VkBuffer imgSrcBuffer{};
@@ -195,43 +188,22 @@ namespace cbk::platform::vk {
 			                                            VMA_ALLOCATION_CREATE_MAPPED_BIT,
 			                                   .usage = VMA_MEMORY_USAGE_AUTO };
 		VmaAllocationInfo imgSrcAllocInfo{};
-		vkResult =
-		    vmaCreateBuffer(ctx->getAllocator(), &imgSrcBufferCI, &imgSrcAllocCI, &imgSrcBuffer, &imgSrcAllocation, &imgSrcAllocInfo);
-		if (vkResult != VK_SUCCESS) {
-			CBK_CORE_ERROR("VulkanTexture(): error creating texture buffer", static_cast<int>(vkResult));
-			return;
-		}
+		VK_CHECK(vmaCreateBuffer(ctx->getAllocator(), &imgSrcBufferCI, &imgSrcAllocCI, &imgSrcBuffer, &imgSrcAllocation, &imgSrcAllocInfo));
 		memcpy(imgSrcAllocInfo.pMappedData, data, dataSize);
 		VkFenceCreateInfo fenceOneTimeCI{ .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
 		VkFence fenceOneTime{};
-		vkResult = vkCreateFence(ctx->getLogicalDevice(), &fenceOneTimeCI, nullptr, &fenceOneTime);
-		if (vkResult != VK_SUCCESS) {
-			CBK_CORE_ERROR("VulkanTexture(): error creating fence", static_cast<int>(vkResult));
-			return;
-		}
+		VK_CHECK(vkCreateFence(ctx->getLogicalDevice(), &fenceOneTimeCI, nullptr, &fenceOneTime));
 		VkCommandPool commandPool{ VK_NULL_HANDLE };
 		VkCommandPoolCreateInfo commandPoolCI{ .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO, .flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT, .queueFamilyIndex = ctx->getQueueFamily() };
-		vkResult = vkCreateCommandPool(ctx->getLogicalDevice(), &commandPoolCI, nullptr, &commandPool);
-		if (vkResult != VK_SUCCESS) {
-			CBK_CORE_ERROR("VulkanTexture(): error creating command pool", static_cast<int>(vkResult));
-			return;
-		}
+		VK_CHECK(vkCreateCommandPool(ctx->getLogicalDevice(), &commandPoolCI, nullptr, &commandPool));
 		VkCommandBuffer cbOneTime{};
 		VkCommandBufferAllocateInfo cbOneTimeAI{ .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
 			                                     .commandPool = commandPool,
 			                                     .commandBufferCount = 1 };
-		vkResult = vkAllocateCommandBuffers(ctx->getLogicalDevice(), &cbOneTimeAI, &cbOneTime);
-		if (vkResult != VK_SUCCESS) {
-			CBK_CORE_ERROR("VulkanTexture(): error allocating command buffer", static_cast<int>(vkResult));
-			return;
-		}
+		VK_CHECK(vkAllocateCommandBuffers(ctx->getLogicalDevice(), &cbOneTimeAI, &cbOneTime));
 		VkCommandBufferBeginInfo cbOneTimeBI{ .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
 			                                  .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT };
-		vkResult = vkBeginCommandBuffer(cbOneTime, &cbOneTimeBI);
-		if (vkResult != VK_SUCCESS) {
-			CBK_CORE_ERROR("VulkanTexture(): error beginning command buffer", static_cast<int>(vkResult));
-			return;
-		}
+		VK_CHECK(vkBeginCommandBuffer(cbOneTime, &cbOneTimeBI));
 		VkImageMemoryBarrier2 barrierTexImage{ .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
 			                                   .srcStageMask = VK_PIPELINE_STAGE_2_NONE,
 			                                   .srcAccessMask = VK_ACCESS_2_NONE,
@@ -270,22 +242,10 @@ namespace cbk::platform::vk {
 			                                      .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .levelCount = mipLevels, .layerCount = 1 } };
 		barrierTexInfo.pImageMemoryBarriers = &barrierTexRead;
 		vkCmdPipelineBarrier2(cbOneTime, &barrierTexInfo);
-		vkResult = vkEndCommandBuffer(cbOneTime);
-		if (vkResult != VK_SUCCESS) {
-			CBK_CORE_ERROR("VulkanTexture(): error ending command buffer", static_cast<int>(vkResult));
-			return;
-		}
+		VK_CHECK(vkEndCommandBuffer(cbOneTime));
 		VkSubmitInfo oneTimeSI{ .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO, .commandBufferCount = 1, .pCommandBuffers = &cbOneTime };
-		vkResult = vkQueueSubmit(ctx->getDeviceQueue(), 1, &oneTimeSI, fenceOneTime);
-		if (vkResult != VK_SUCCESS) {
-			CBK_CORE_ERROR("VulkanTexture(): error submitting queue", static_cast<int>(vkResult));
-			return;
-		}
-		vkResult = vkWaitForFences(ctx->getLogicalDevice(), 1, &fenceOneTime, VK_TRUE, UINT64_MAX);
-		if (vkResult != VK_SUCCESS) {
-			CBK_CORE_ERROR("VulkanTexture(): error waiting for fence", static_cast<int>(vkResult));
-			return;
-		}
+		VK_CHECK(vkQueueSubmit(ctx->getDeviceQueue(), 1, &oneTimeSI, fenceOneTime));
+		VK_CHECK(vkWaitForFences(ctx->getLogicalDevice(), 1, &fenceOneTime, VK_TRUE, UINT64_MAX));
 		vkDestroyFence(ctx->getLogicalDevice(), fenceOneTime, nullptr);
 		vmaDestroyBuffer(ctx->getAllocator(), imgSrcBuffer, imgSrcAllocation);
 		vkDestroyCommandPool(ctx->getLogicalDevice(), commandPool, nullptr);
@@ -306,11 +266,7 @@ namespace cbk::platform::vk {
 			.maxAnisotropy = std::min(16.0f, devProps.limits.maxSamplerAnisotropy),
 			.maxLod = VK_LOD_CLAMP_NONE,
 		};
-		vkResult = vkCreateSampler(ctx->getLogicalDevice(), &samplerCI, nullptr, &m_Texture.sampler);
-		if (vkResult != VK_SUCCESS) {
-			CBK_CORE_ERROR("VulkanTexture(): error creating sampler", static_cast<int>(vkResult));
-			return;
-		}
+		VK_CHECK(vkCreateSampler(ctx->getLogicalDevice(), &samplerCI, nullptr, &m_Texture.sampler));
 		m_TexDescriptorInfo = VkDescriptorImageInfo{ .sampler = m_Texture.sampler,
 			                                         .imageView = m_Texture.view,
 			                                         .imageLayout = VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL };

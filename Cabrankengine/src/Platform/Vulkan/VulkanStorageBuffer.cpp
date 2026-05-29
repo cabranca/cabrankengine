@@ -6,6 +6,7 @@
 #include <Cabrankengine/Core/Application.h>
 #include <Cabrankengine/Core/Window.h>
 
+#include "VkCheck.h"
 #include "VulkanDeviceContext.h"
 
 namespace cbk::platform::vk {
@@ -27,13 +28,8 @@ namespace cbk::platform::vk {
 			         VMA_ALLOCATION_CREATE_MAPPED_BIT,
 			.usage = VMA_MEMORY_USAGE_AUTO,
 		};
-		for (uint32_t i = 0; i < k_MaxFramesInFlight; ++i) {
-			auto vkResult = vmaCreateBuffer(ctx->getAllocator(), &bufferCI, &allocCI, &m_Buffers[i], &m_Allocations[i], &m_AllocationInfos[i]);
-			if (vkResult != VK_SUCCESS) {
-				CBK_CORE_ERROR("VulkanStorageBuffer: vmaCreateBuffer slot {} failed ({})", i, static_cast<int>(vkResult));
-				return;
-			}
-		}
+		for (uint32_t i = 0; i < k_MaxFramesInFlight; ++i)
+			VK_CHECK(vmaCreateBuffer(ctx->getAllocator(), &bufferCI, &allocCI, &m_Buffers[i], &m_Allocations[i], &m_AllocationInfos[i]));
 
 		// 2) One-binding descriptor set layout. Only the fragment stage reads point
 		// lights today (PBR shading happens there); widen the stage mask if a future
@@ -49,11 +45,7 @@ namespace cbk::platform::vk {
 			.bindingCount = 1,
 			.pBindings    = &layoutBinding,
 		};
-		auto vkResult = vkCreateDescriptorSetLayout(device, &layoutCI, nullptr, &m_DescriptorSetLayout);
-		if (vkResult != VK_SUCCESS) {
-			CBK_CORE_ERROR("VulkanStorageBuffer: vkCreateDescriptorSetLayout failed ({})", static_cast<int>(vkResult));
-			return;
-		}
+		VK_CHECK(vkCreateDescriptorSetLayout(device, &layoutCI, nullptr, &m_DescriptorSetLayout));
 
 		// 3) Pool with k_MaxFramesInFlight descriptor sets, one per buffer.
 		VkDescriptorPoolSize poolSize{
@@ -66,11 +58,7 @@ namespace cbk::platform::vk {
 			.poolSizeCount = 1,
 			.pPoolSizes    = &poolSize,
 		};
-		vkResult = vkCreateDescriptorPool(device, &poolCI, nullptr, &m_DescriptorPool);
-		if (vkResult != VK_SUCCESS) {
-			CBK_CORE_ERROR("VulkanStorageBuffer: vkCreateDescriptorPool failed ({})", static_cast<int>(vkResult));
-			return;
-		}
+		VK_CHECK(vkCreateDescriptorPool(device, &poolCI, nullptr, &m_DescriptorPool));
 
 		std::array<VkDescriptorSetLayout, k_MaxFramesInFlight> setLayouts;
 		setLayouts.fill(m_DescriptorSetLayout);
@@ -80,11 +68,7 @@ namespace cbk::platform::vk {
 			.descriptorSetCount = k_MaxFramesInFlight,
 			.pSetLayouts        = setLayouts.data(),
 		};
-		vkResult = vkAllocateDescriptorSets(device, &dsAllocCI, m_DescriptorSets.data());
-		if (vkResult != VK_SUCCESS) {
-			CBK_CORE_ERROR("VulkanStorageBuffer: vkAllocateDescriptorSets failed ({})", static_cast<int>(vkResult));
-			return;
-		}
+		VK_CHECK(vkAllocateDescriptorSets(device, &dsAllocCI, m_DescriptorSets.data()));
 
 		// Point each descriptor set at its own buffer.
 		std::array<VkDescriptorBufferInfo, k_MaxFramesInFlight> bufferInfos{};

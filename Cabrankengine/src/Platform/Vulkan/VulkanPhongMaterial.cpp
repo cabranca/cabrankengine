@@ -9,6 +9,7 @@
 #include <Cabrankengine/Renderer/Renderer.h>
 #include <Cabrankengine/Renderer/Shader.h>
 
+#include "VkCheck.h"
 #include "VulkanDeviceContext.h"
 #include "VulkanShader.h"
 #include "VulkanTexture.h"
@@ -36,10 +37,7 @@ namespace cbk::platform::vk {
 			.descriptorSetCount = 1,
 			.pSetLayouts        = &s_DescriptorSetLayout,
 		};
-		auto vkResult = vkAllocateDescriptorSets(ctx->getLogicalDevice(), &dsAllocInfo, &m_DescriptorSet);
-		if (vkResult != VK_SUCCESS) {
-			CBK_CORE_ERROR("VulkanPhongMaterial: vkAllocateDescriptorSets failed ({})", static_cast<int>(vkResult));
-		}
+		VK_CHECK(vkAllocateDescriptorSets(ctx->getLogicalDevice(), &dsAllocInfo, &m_DescriptorSet));
 	}
 
 	VulkanPhongMaterial::~VulkanPhongMaterial() {
@@ -110,7 +108,7 @@ namespace cbk::platform::vk {
 			.bindingCount = static_cast<uint32_t>(bindings.size()),
 			.pBindings    = bindings.data(),
 		};
-		vkCreateDescriptorSetLayout(device, &dslCI, nullptr, &s_DescriptorSetLayout);
+		VK_CHECK(vkCreateDescriptorSetLayout(device, &dslCI, nullptr, &s_DescriptorSetLayout));
 
 		// 2) Pool.
 		VkDescriptorPoolSize poolSize{
@@ -123,7 +121,7 @@ namespace cbk::platform::vk {
 			.poolSizeCount = 1,
 			.pPoolSizes    = &poolSize,
 		};
-		vkCreateDescriptorPool(device, &poolCI, nullptr, &s_DescriptorPool);
+		VK_CHECK(vkCreateDescriptorPool(device, &poolCI, nullptr, &s_DescriptorPool));
 
 		// 3) Pipeline layout.
 		auto sceneUbo    = static_cast<VulkanUniformBuffer*>(Renderer::getSceneUBO().get());
@@ -147,7 +145,7 @@ namespace cbk::platform::vk {
 			.pushConstantRangeCount = static_cast<uint32_t>(pushRanges.size()),
 			.pPushConstantRanges    = pushRanges.data(),
 		};
-		vkCreatePipelineLayout(device, &plCI, nullptr, &s_PipelineLayout);
+		VK_CHECK(vkCreatePipelineLayout(device, &plCI, nullptr, &s_PipelineLayout));
 
 		// 4) Graphics pipeline.
 		auto shader       = static_cast<VulkanShader*>(ShaderLibrary::get("Phong").get());
@@ -241,10 +239,7 @@ namespace cbk::platform::vk {
 			.pDynamicState       = &dynamicState,
 			.layout              = s_PipelineLayout,
 		};
-		auto vkResult = vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineCI, nullptr, &s_Pipeline);
-		if (vkResult != VK_SUCCESS) {
-			CBK_CORE_ERROR("VulkanPhongMaterial: vkCreateGraphicsPipelines failed ({})", static_cast<int>(vkResult));
-		}
+		VK_CHECK(vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineCI, nullptr, &s_Pipeline));
 	}
 
 	void VulkanPhongMaterial::destroySharedResources() {

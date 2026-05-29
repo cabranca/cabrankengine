@@ -4,6 +4,7 @@
 #include <Cabrankengine/Core/Application.h>
 #include <Cabrankengine/Core/Window.h>
 
+#include "VkCheck.h"
 #include "VulkanDeviceContext.h"
 
 namespace cbk::platform::vk {
@@ -20,11 +21,7 @@ namespace cbk::platform::vk {
 			                                             VMA_ALLOCATION_CREATE_HOST_ACCESS_ALLOW_TRANSFER_INSTEAD_BIT |
 			                                             VMA_ALLOCATION_CREATE_MAPPED_BIT,
 			                                    .usage = VMA_MEMORY_USAGE_AUTO };
-		auto vkResult = vmaCreateBuffer(allocator, &bufferCI, &vBufferAllocCI, &m_VBuffer, &m_VBufferAllocation, &m_VBufferAllocInfo);
-		if (vkResult != VK_SUCCESS) {
-			CBK_CORE_ASSERT("VulkanGeometryDescriptor(): error creating Vertex Buffer", static_cast<int>(vkResult));
-			return;
-		}
+		VK_CHECK(vmaCreateBuffer(allocator, &bufferCI, &vBufferAllocCI, &m_VBuffer, &m_VBufferAllocation, &m_VBufferAllocInfo));
 		memcpy(m_VBufferAllocInfo.pMappedData, vertexData, vertexDataSize);
 		memcpy(((char*)m_VBufferAllocInfo.pMappedData) + vertexDataSize, indexData, indexDataSize);
 	}
@@ -40,11 +37,7 @@ namespace cbk::platform::vk {
 			                                             VMA_ALLOCATION_CREATE_HOST_ACCESS_ALLOW_TRANSFER_INSTEAD_BIT |
 			                                             VMA_ALLOCATION_CREATE_MAPPED_BIT,
 			                                    .usage = VMA_MEMORY_USAGE_AUTO };
-		auto vkResult = vmaCreateBuffer(allocator, &bufferCI, &vBufferAllocCI, &m_VBuffer, &m_VBufferAllocation, &m_VBufferAllocInfo);
-		if (vkResult != VK_SUCCESS) {
-			CBK_CORE_ASSERT("VulkanGeometryDescriptor(): error creating Vertex Buffer", static_cast<int>(vkResult));
-			return;
-		}
+		VK_CHECK(vmaCreateBuffer(allocator, &bufferCI, &vBufferAllocCI, &m_VBuffer, &m_VBufferAllocation, &m_VBufferAllocInfo));
 		memcpy(((char*)m_VBufferAllocInfo.pMappedData) + vertexDataSize, indexData, indexDataSize);
 	}
 

@@ -8,6 +8,7 @@
 #include <Cabrankengine/Core/Application.h>
 #include <Cabrankengine/Core/Window.h>
 
+#include "VkCheck.h"
 #include "VulkanDeviceContext.h"
 
 namespace cbk::platform::vk {
@@ -107,11 +108,7 @@ namespace cbk::platform::vk {
 			.codeSize = spirv->getBufferSize(),
 			.pCode    = reinterpret_cast<const uint32_t*>(spirv->getBufferPointer()),
 		};
-		auto vkResult = vkCreateShaderModule(ctx->getLogicalDevice(), &shaderModuleCI, nullptr, &m_ShaderModule);
-		if (vkResult != VK_SUCCESS) {
-			CBK_CORE_ERROR("VulkanShader: vkCreateShaderModule failed ({})", static_cast<int>(vkResult));
-			return;
-		}
+		VK_CHECK(vkCreateShaderModule(ctx->getLogicalDevice(), &shaderModuleCI, nullptr, &m_ShaderModule));
 	}
 
 	VulkanShader::VulkanShader(std::string_view name, std::string_view /*vertexSrc*/, std::string_view /*fragmentSrc*/) : m_Name(name) {

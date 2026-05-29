@@ -78,18 +78,10 @@ namespace cbk::platform::vk {
 		lightSSBO->setCurrentFrame(m_FrameIndex);
 
 		auto cb = m_CommandBuffers[m_FrameIndex];
-		auto vkResult = vkResetCommandBuffer(cb, 0);
-		if (vkResult != VK_SUCCESS) {
-			CBK_CORE_ERROR("VulkanRendererAPI::beginFrame(): error resetting command buffer ({})", static_cast<int>(vkResult));
-			return;
-		}
+		VK_CHECK(vkResetCommandBuffer(cb, 0));
 		VkCommandBufferBeginInfo cbBI{ .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
 			                           .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT };
-		vkResult = vkBeginCommandBuffer(cb, &cbBI);
-		if (vkResult != VK_SUCCESS) {
-			CBK_CORE_ERROR("VulkanRendererAPI::beginFrame(): error beginning command buffer ({})", static_cast<int>(vkResult));
-			return;
-		}
+		VK_CHECK(vkBeginCommandBuffer(cb, &cbBI));
 		std::array<VkImageMemoryBarrier2, 2> outputBarriers{
 			VkImageMemoryBarrier2{ .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
 			                       .srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
@@ -177,11 +169,7 @@ namespace cbk::platform::vk {
 			                                           .imageMemoryBarrierCount = 1,
 			                                           .pImageMemoryBarriers = &barrierPresent };
 		vkCmdPipelineBarrier2(cb, &barrierPresentDependencyInfo);
-		auto vkResult = vkEndCommandBuffer(cb);
-		if (vkResult != VK_SUCCESS) {
-			CBK_CORE_ERROR("VulkanRendererAPI::endFrame(): error ending command buffer ({})", static_cast<int>(vkResult));
-			return;
-		}
+		VK_CHECK(vkEndCommandBuffer(cb));
 
 		if (!submitQueue())
 			return;
@@ -229,18 +217,10 @@ namespace cbk::platform::vk {
 
 	bool VulkanRendererAPI::syncAndAcquire() {
 		auto ctx = static_cast<VulkanDeviceContext*>(Application::get().getWindow().getContext());
-		auto vkResult = vkWaitForFences(ctx->getLogicalDevice(), 1, &m_Fences[m_FrameIndex], true, UINT64_MAX);
-		if (vkResult != VK_SUCCESS) {
-			CBK_CORE_ERROR("VulkanRendererAPI::syncAndAcquire(): error waiting for fences ({})", static_cast<int>(vkResult));
-			return false;
-		}
-		vkResult = vkResetFences(ctx->getLogicalDevice(), 1, &m_Fences[m_FrameIndex]);
-		if (vkResult != VK_SUCCESS) {
-			CBK_CORE_ERROR("VulkanRendererAPI::syncAndAcquire(): error reseting fences ({})", static_cast<int>(vkResult));
-			return false;
-		}
+		VK_CHECK(vkWaitForFences(ctx->getLogicalDevice(), 1, &m_Fences[m_FrameIndex], true, UINT64_MAX));
+		VK_CHECK(vkResetFences(ctx->getLogicalDevice(), 1, &m_Fences[m_FrameIndex]));
 
-		vkResult = vkAcquireNextImageKHR(ctx->getLogicalDevice(), *m_SwapchainManager.getSwapchain(), UINT64_MAX,
+		auto vkResult = vkAcquireNextImageKHR(ctx->getLogicalDevice(), *m_SwapchainManager.getSwapchain(), UINT64_MAX,
 		                                 m_ImageAcquiredSemaphores[m_FrameIndex], VK_NULL_HANDLE, &m_ImageIndex);
 		if (vkResult < VK_SUCCESS) {
 			if (vkResult == VK_ERROR_OUT_OF_DATE_KHR) {
@@ -311,11 +291,7 @@ namespace cbk::platform::vk {
 			.signalSemaphoreCount = 1,
 			.pSignalSemaphores = &m_RenderCompleteSemaphores[m_ImageIndex],
 		};
-		auto vkResult = vkQueueSubmit(ctx->getDeviceQueue(), 1, &submitInfo, m_Fences[m_FrameIndex]);
-		if (vkResult != VK_SUCCESS) {
-			CBK_CORE_ERROR("VulkanRendererAPI::draw(): error submitting queue ({})", static_cast<int>(vkResult));
-			return false;
-		}
+		VK_CHECK(vkQueueSubmit(ctx->getDeviceQueue(), 1, &submitInfo, m_Fences[m_FrameIndex]));
 		m_FrameIndex = (m_FrameIndex + 1) % k_MaxFramesInFlight;
 		VkPresentInfoKHR presentInfo{ .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
 			                          .waitSemaphoreCount = 1,
@@ -323,7 +299,7 @@ namespace cbk::platform::vk {
 			                          .swapchainCount = 1,
 			                          .pSwapchains = m_SwapchainManager.getSwapchain(),
 			                          .pImageIndices = &m_ImageIndex };
-		vkResult = vkQueuePresentKHR(ctx->getDeviceQueue(), &presentInfo);
+		VkResult vkResult = vkQueuePresentKHR(ctx->getDeviceQueue(), &presentInfo);
 		// SUBOPTIMAL still presented the frame; OUT_OF_DATE did not. Both mean the
 		// swapchain no longer matches the surface — flag it for recreation and let
 		// endFrame() run the update block (returning false would skip it).

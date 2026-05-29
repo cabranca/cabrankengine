@@ -9,6 +9,7 @@
 #include <Cabrankengine/Renderer/Renderer.h>
 #include <Cabrankengine/Renderer/Shader.h>
 
+#include "VkCheck.h"
 #include "VulkanDeviceContext.h"
 #include "VulkanShader.h"
 #include "VulkanStorageBuffer.h"
@@ -37,10 +38,7 @@ namespace cbk::platform::vk {
 			.descriptorSetCount = 1,
 			.pSetLayouts        = &s_DescriptorSetLayout,
 		};
-		auto vkResult = vkAllocateDescriptorSets(ctx->getLogicalDevice(), &dsAllocInfo, &m_DescriptorSet);
-		if (vkResult != VK_SUCCESS) {
-			CBK_CORE_ERROR("VulkanPBRMaterial: vkAllocateDescriptorSets failed ({})", static_cast<int>(vkResult));
-		}
+		VK_CHECK(vkAllocateDescriptorSets(ctx->getLogicalDevice(), &dsAllocInfo, &m_DescriptorSet));
 	}
 
 	VulkanPBRMaterial::~VulkanPBRMaterial() {
@@ -110,7 +108,7 @@ namespace cbk::platform::vk {
 			.bindingCount = static_cast<uint32_t>(bindings.size()),
 			.pBindings    = bindings.data(),
 		};
-		vkCreateDescriptorSetLayout(device, &dslCI, nullptr, &s_DescriptorSetLayout);
+		VK_CHECK(vkCreateDescriptorSetLayout(device, &dslCI, nullptr, &s_DescriptorSetLayout));
 
 		// 2) Pool sized for k_MaxInstances materials, each with 4 samplers.
 		VkDescriptorPoolSize poolSize{
@@ -123,7 +121,7 @@ namespace cbk::platform::vk {
 			.poolSizeCount = 1,
 			.pPoolSizes    = &poolSize,
 		};
-		vkCreateDescriptorPool(device, &poolCI, nullptr, &s_DescriptorPool);
+		VK_CHECK(vkCreateDescriptorPool(device, &poolCI, nullptr, &s_DescriptorPool));
 
 		// 3) Pipeline layout — set 0 = scene globals UBO, set 1 = material textures,
 		//    set 2 = point-light SSBO (owned by Renderer, see Renderer::getLightSSBO).
@@ -151,7 +149,7 @@ namespace cbk::platform::vk {
 			.pushConstantRangeCount = static_cast<uint32_t>(pushRanges.size()),
 			.pPushConstantRanges    = pushRanges.data(),
 		};
-		vkCreatePipelineLayout(device, &plCI, nullptr, &s_PipelineLayout);
+		VK_CHECK(vkCreatePipelineLayout(device, &plCI, nullptr, &s_PipelineLayout));
 
 		// 4) Graphics pipeline.
 		auto shader       = static_cast<VulkanShader*>(ShaderLibrary::get("PBR").get());
@@ -245,10 +243,7 @@ namespace cbk::platform::vk {
 			.pDynamicState       = &dynamicState,
 			.layout              = s_PipelineLayout,
 		};
-		auto vkResult = vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineCI, nullptr, &s_Pipeline);
-		if (vkResult != VK_SUCCESS) {
-			CBK_CORE_ERROR("VulkanPBRMaterial: vkCreateGraphicsPipelines failed ({})", static_cast<int>(vkResult));
-		}
+		VK_CHECK(vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineCI, nullptr, &s_Pipeline));
 	}
 
 	void VulkanPBRMaterial::destroySharedResources() {
