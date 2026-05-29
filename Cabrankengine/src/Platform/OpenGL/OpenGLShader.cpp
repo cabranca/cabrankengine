@@ -19,13 +19,25 @@ namespace cbk::platform::opengl {
 		return 0;
 	}
 
+	static const char* ShaderStageName(GLenum type) {
+		switch (type) {
+			case GL_VERTEX_SHADER:   return "vertex";
+			case GL_FRAGMENT_SHADER: return "fragment";
+			default:                 return "unknown";
+		}
+	}
+
 	OpenGLShader::OpenGLShader(const std::string& filepath) : m_RendererId(0) {
 		CBK_PROFILE_FUNCTION();
 
 		std::filesystem::path path(filepath);
 		m_Name = path.stem().string();
 
+#ifdef CBK_OPENGL_ES
+		std::string shaderSource = readFile(filepath + ".glsl.es");
+#else
 		std::string shaderSource = readFile(filepath + ".glsl");
+#endif
 		auto shaderSources = preProcess(shaderSource);
 		compile(shaderSources);
 	}
@@ -235,7 +247,7 @@ namespace cbk::platform::opengl {
 				std::vector<char> infoLog(maxLength);
 				glGetShaderInfoLog(shaderId, maxLength, &maxLength, infoLog.data());
 				glDeleteShader(shaderId);
-				CBK_CORE_ERROR("Shader compilation error: {0}", infoLog.data());
+				CBK_CORE_ERROR("Shader '{0}' [{1}] compile error: {2}", m_Name, ShaderStageName(type), infoLog.data());
 				return;
 			}
 			shaderIds[shaderIndex++] = shaderId;
@@ -245,11 +257,36 @@ namespace cbk::platform::opengl {
 			glAttachShader(program, shaderId);
 		}
 		glLinkProgram(program);
+
+		GLint isLinked = 0;
+		glGetProgramiv(program, GL_LINK_STATUS, &isLinked);
+		if (isLinked == GL_FALSE) {
+			GLint maxLength = 0;
+			glGetProgramiv(program, GL_INFO_LOG_LENGTH, &maxLength);
+			std::vector<char> infoLog(maxLength);
+			glGetProgramInfoLog(program, maxLength, &maxLength, infoLog.data());
+			CBK_CORE_ERROR("Shader '{0}' link error: {1}", m_Name, infoLog.data());
+			for (uint32_t shaderId : shaderIds) {
+				glDetachShader(program, shaderId);
+				glDeleteShader(shaderId);
+			}
+			glDeleteProgram(program);
+			return;
+		}
+
 		for (uint32_t shaderId : shaderIds) {
 			glDetachShader(program, shaderId);
 			glDeleteShader(shaderId);
 		}
 
 		m_RendererId = program;
+
+#ifdef CBK_OPENGL_ES
+		// GLES 3.0 / WebGL 2 forbids `layout(binding = N)` on uniform blocks; bind explicitly.
+		// Convention: SceneData → 0. Silently no-op for shaders that don't use it.
+		GLuint sceneIdx = glGetUniformBlockIndex(m_RendererId, "SceneData");
+		if (sceneIdx != GL_INVALID_INDEX)
+			glUniformBlockBinding(m_RendererId, sceneIdx, 0);
+#endif
 	}
 }

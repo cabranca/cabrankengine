@@ -46,6 +46,17 @@ namespace cbk::platform::opengl {
 
 		// Spec-constructed textures (1x1 white fallback etc.) don't carry a mip
 		// chain; allocate a single level and use plain linear filtering.
+#ifdef CBK_OPENGL_ES
+		glGenTextures(1, &m_RendererID);
+		glBindTexture(GL_TEXTURE_2D, m_RendererID);
+		glTexStorage2D(GL_TEXTURE_2D, 1, m_InternalFormat, m_Width, m_Height);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+#else
 		glCreateTextures(GL_TEXTURE_2D, 1, &m_RendererID);
 		glTextureStorage2D(m_RendererID, 1, m_InternalFormat, m_Width, m_Height);
 
@@ -54,30 +65,43 @@ namespace cbk::platform::opengl {
 
 		glTextureParameteri(m_RendererID, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTextureParameteri(m_RendererID, GL_TEXTURE_WRAP_T, GL_REPEAT);
+#endif
 	}
 
 	OpenGLTexture2D::OpenGLTexture2D(const std::string& path) : m_Path(path) {
 		CBK_PROFILE_FUNCTION();
 
 		std::error_code errorCode;
-		if (!std::filesystem::exists(path, errorCode))
+		if (!std::filesystem::exists(path, errorCode)) {
 			CBK_CORE_ERROR("Cannot find the path {0} - Error: {1}", path, errorCode.message());
+			return;
+		}
 
 		const auto size = std::filesystem::file_size(path, errorCode);
-		if (errorCode)
+		if (errorCode) {
 			CBK_CORE_ERROR("Size check failure for file {0} - Error: {1}", path, errorCode.message());
+			return;
+		}
 
 		std::ifstream file(path, std::ios::binary);
-		if (!file)
+		if (!file) {
 			CBK_CORE_ERROR("Cannot open file {0}", path);
+			return;
+		}
 
 		TextureHeader header;
-		if (!file.read(reinterpret_cast<char*>(&header), sizeof(TextureHeader)))
+		if (!file.read(reinterpret_cast<char*>(&header), sizeof(TextureHeader))) {
 			CBK_CORE_ERROR("Cannot read the file {0}", path);
-		if (header.magic != 0x43424B54) // "CBKT"
-			CBK_CORE_ERROR("Wrong extension of file {0} - .cbk expected!", path);
-		if (header.version != 2)
+			return;
+		}
+		if (header.magic != 0x43424B54) { // "CBKT"
+			CBK_CORE_ERROR("Wrong extension of file {0} - .cbkt expected!", path);
+			return;
+		}
+		if (header.version != 2) {
 			CBK_CORE_ERROR("Unsupported .cbkt version {0} in {1} - re-run CBKAssetConverter", header.version, path);
+			return;
+		}
 
 		std::vector<uint8_t> compressedBuffer(header.compressedSize);
 		if (!file.read(reinterpret_cast<char*>(compressedBuffer.data()), compressedBuffer.size()))
@@ -111,6 +135,17 @@ namespace cbk::platform::opengl {
 
 			const uint32_t mipLevels = std::max(1u, header.mipLevels);
 
+#ifdef CBK_OPENGL_ES
+			glGenTextures(1, &m_RendererID);
+			glBindTexture(GL_TEXTURE_2D, m_RendererID);
+			glTexStorage2D(GL_TEXTURE_2D, mipLevels, internalFormat, m_Width, m_Height);
+
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+#else
 			glCreateTextures(GL_TEXTURE_2D, 1, &m_RendererID);
 			glTextureStorage2D(m_RendererID, mipLevels, internalFormat, m_Width, m_Height);
 
@@ -127,6 +162,7 @@ namespace cbk::platform::opengl {
 
 			glTextureParameteri(m_RendererID, GL_TEXTURE_WRAP_S, GL_REPEAT);
 			glTextureParameteri(m_RendererID, GL_TEXTURE_WRAP_T, GL_REPEAT);
+#endif
 
 			// Our mip chain is tightly packed with no per-row padding. GL_UNPACK_ALIGNMENT
 			// defaults to 4, which would corrupt the upload for the smallest RGB mips
@@ -141,8 +177,13 @@ namespace cbk::platform::opengl {
 			uint32_t mipH = m_Height;
 			size_t offset = 0;
 			for (uint32_t level = 0; level < mipLevels; level++) {
+#ifdef CBK_OPENGL_ES
+				glTexSubImage2D(GL_TEXTURE_2D, static_cast<GLint>(level), 0, 0, mipW, mipH,
+				                dataFormat, GL_UNSIGNED_BYTE, uncompressedBuffer.data() + offset);
+#else
 				glTextureSubImage2D(m_RendererID, static_cast<GLint>(level), 0, 0, mipW, mipH,
 				                    dataFormat, GL_UNSIGNED_BYTE, uncompressedBuffer.data() + offset);
+#endif
 				offset += static_cast<size_t>(mipW) * mipH * header.channels;
 				mipW = std::max(1u, mipW / 2);
 				mipH = std::max(1u, mipH / 2);
@@ -155,17 +196,37 @@ namespace cbk::platform::opengl {
 	}
 
 	OpenGLTexture2D::OpenGLTexture2D(const FT_Face& face) {
+		// Whitespace and several control glyphs have a 0x0 bitmap. glTexStorage2D rejects
+		// zero dimensions (WebGL spams a warning per glyph), so use a 1x1 placeholder —
+		// metrics like advance/bearing are still meaningful for layout.
+		const uint32_t width  = std::max<uint32_t>(face->glyph->bitmap.width, 1);
+		const uint32_t height = std::max<uint32_t>(face->glyph->bitmap.rows,  1);
+		const bool hasPixels  = face->glyph->bitmap.width > 0 && face->glyph->bitmap.rows > 0;
+
+#ifdef CBK_OPENGL_ES
+		glGenTextures(1, &m_RendererID);
+		glBindTexture(GL_TEXTURE_2D, m_RendererID);
+		glTexStorage2D(GL_TEXTURE_2D, 1, GL_R8, width, height);
+		if (hasPixels)
+			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RED, GL_UNSIGNED_BYTE, face->glyph->bitmap.buffer);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+#else
 		// generate texture
 		glCreateTextures(GL_TEXTURE_2D, 1, &m_RendererID);
-		glTextureStorage2D(m_RendererID, 1, GL_R8, face->glyph->bitmap.width, face->glyph->bitmap.rows);
-		glTextureSubImage2D(m_RendererID, 0, 0, 0, face->glyph->bitmap.width, face->glyph->bitmap.rows, GL_RED, GL_UNSIGNED_BYTE,
-		                    face->glyph->bitmap.buffer);
+		glTextureStorage2D(m_RendererID, 1, GL_R8, width, height);
+		if (hasPixels)
+			glTextureSubImage2D(m_RendererID, 0, 0, 0, width, height, GL_RED, GL_UNSIGNED_BYTE, face->glyph->bitmap.buffer);
 
 		// set texture options
 		glTextureParameteri(m_RendererID, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTextureParameteri(m_RendererID, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		glTextureParameteri(m_RendererID, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTextureParameteri(m_RendererID, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+#endif
 	}
 
 	OpenGLTexture2D::~OpenGLTexture2D() {
@@ -179,12 +240,22 @@ namespace cbk::platform::opengl {
 
 		uint32_t bpp = m_DataFormat == GL_RGBA ? 4 : 3;
 		CBK_CORE_ASSERT(size == m_Width * m_Height * bpp, "Data must be entire texture!");
+#ifdef CBK_OPENGL_ES
+		glBindTexture(GL_TEXTURE_2D, m_RendererID);
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_Width, m_Height, m_DataFormat, GL_UNSIGNED_BYTE, data);
+#else
 		glTextureSubImage2D(m_RendererID, 0, 0, 0, m_Width, m_Height, m_DataFormat, GL_UNSIGNED_BYTE, data);
+#endif
 	}
 
 	void OpenGLTexture2D::bind(uint32_t slot) const {
 		CBK_PROFILE_FUNCTION();
 
+#ifdef CBK_OPENGL_ES
+		glActiveTexture(GL_TEXTURE0 + slot);
+		glBindTexture(GL_TEXTURE_2D, m_RendererID);
+#else
 		glBindTextureUnit(slot, m_RendererID);
+#endif
 	}
 } // namespace cbk::platform::opengl

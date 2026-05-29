@@ -9,6 +9,16 @@ extern cbk::Application* cbk::createApplication();
 
 int main(int argc, char** argv) {
 	cbk::Logger::init();
+
+	for (int i = 1; i < argc; ++i) {
+		std::string_view arg = argv[i];
+		if (arg == "--log-level" && i + 1 < argc) {
+			cbk::Logger::setLevel(argv[++i]);
+		} else if (arg.starts_with("--log-level=")) {
+			cbk::Logger::setLevel(arg.substr(12));
+		}
+	}
+
 	CBK_CORE_INFO("Initialized logger!");
 	CBK_PROFILE_BEGIN_SESSION("Startup", "CabrankengineProfile-Startup.json");
 

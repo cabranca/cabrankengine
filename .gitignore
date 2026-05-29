@@ -33,3 +33,4 @@ premake5.exe
 
 # Tools
 tools/
+CBKBindings/test/

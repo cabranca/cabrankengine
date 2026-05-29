@@ -34,6 +34,7 @@ namespace cbk::scene {
 		nlohmann::json entities = nlohmann::json::array();
 		for (ecs::Entity e: scene.getAllEntities()) {
 			nlohmann::json node;
+			node["id"] = static_cast<uint32_t>(e);
 			node["name"] = scene.getEntityName(e);
 			node["components"] = serializeComponents(scene, e);
 			entities.push_back(std::move(node));

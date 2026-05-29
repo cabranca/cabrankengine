@@ -41,19 +41,25 @@ namespace cbk::ecs {
 			std::shared_ptr<T> RegisterSystem() {
 				const char* typeName = typeid(T).name();
 
-				CBK_CORE_ASSERT(!m_Systems.contains(typeName), "System already registered!");
+				if (m_Systems.contains(typeName)) {
+					CBK_CORE_ERROR("RegisterSystem: system {0} already registered", typeName);
+					return std::static_pointer_cast<T>(m_Systems.at(typeName));
+				}
 
 				auto system = std::make_shared<T>();
 				m_Systems.emplace(typeName, system);
+				CBK_CORE_TRACE("System registered: {0}", typeName);
 				return system;
 			}
 
 			template<typename T>
 			std::shared_ptr<T> getSystem() {
 				const char* typeName = typeid(T).name();
-				auto it = m_Systems.find(typeName);
 
-				CBK_CORE_ASSERT(m_Systems.contains(typeName), "The system is not registered!");
+				if (!m_Systems.contains(typeName)) {
+					CBK_CORE_ERROR("getSystem: system {0} not registered", typeName);
+					return nullptr;
+				}
 
 				return std::static_pointer_cast<T>(m_Systems.at(typeName));
 			}
@@ -63,9 +69,13 @@ namespace cbk::ecs {
 			void SetSignature(Signature signature) {
 				const char* typeName = typeid(T).name();
 
-				CBK_CORE_ASSERT(m_Systems.contains(typeName), "System not registered!");
+				if (!m_Systems.contains(typeName)) {
+					CBK_CORE_ERROR("SetSignature: system {0} not registered", typeName);
+					return;
+				}
 
 				m_Signatures.emplace(typeName, signature);
+				CBK_CORE_TRACE("System signature set: {0}", typeName);
 			}
 
 			// This must be called after a call to EntityManager::destroyEntity()

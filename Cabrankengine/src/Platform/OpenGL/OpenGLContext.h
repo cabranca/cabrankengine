@@ -7,6 +7,11 @@ struct GLFWwindow;
 
 namespace cbk::platform::opengl {
 
+	// Drains glGetError() and routes any pending errors to the logger, prefixed with `where`.
+	// Use as a checkpoint after suspect calls. On desktop this is redundant with the debug
+	// callback installed in OpenGLContext::init(); on WebGL 2 it is the only option.
+	void checkGLError(const char* where);
+
 	class OpenGLContext : public rendering::GraphicsContext {
 	public:
 		OpenGLContext(GLFWwindow* windowHandle);

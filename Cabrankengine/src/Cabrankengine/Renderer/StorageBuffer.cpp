@@ -5,7 +5,7 @@
 	#include <Platform/Metal/MetalStorageBuffer.h>
 #endif
 
-#ifdef CBK_RENDERER_OPENGL
+#if defined(CBK_RENDERER_OPENGL) && !defined(CBK_OPENGL_ES)
 	#include <Platform/OpenGL/OpenGLStorageBuffer.h>
 #endif
 
@@ -16,7 +16,7 @@
 namespace cbk::rendering {
 
 	Ref<StorageBuffer> StorageBuffer::create(uint32_t size) {
-#ifdef CBK_RENDERER_OPENGL
+#if defined(CBK_RENDERER_OPENGL) && !defined(CBK_OPENGL_ES)
 		return createRef<platform::opengl::OpenGLStorageBuffer>(size);
 #elif defined(CBK_RENDERER_METAL)
 		return createRef<platform::metal::MetalStorageBuffer>(size);
@@ -24,7 +24,7 @@ namespace cbk::rendering {
 		// Point lights live in set=2 binding=0 of the PBR pipeline (see PBR.slang).
 		return createRef<platform::vk::VulkanStorageBuffer>(size, /*binding=*/0);
 #else
-		CBK_CORE_ASSERT(false, "No renderer API defined!");
+		// SSBOs are not available on WebGL 2 / GLES 3.0 — caller must handle null.
 		return nullptr;
 #endif
 	}

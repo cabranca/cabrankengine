@@ -5,6 +5,7 @@
 
 #include <Cabrankengine/Renderer/Materials/Material.h>
 
+#include "OpenGLContext.h"
 #include "OpenGLVertexArray.h"
 
 namespace cbk::platform::opengl {
@@ -51,7 +52,12 @@ namespace cbk::platform::opengl {
 		glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, nullptr);
 	}
 
-	void OpenGLRendererAPI::endFrame() {}
+	void OpenGLRendererAPI::endFrame() {
+		// Once-per-frame GL error drain. On desktop this is redundant with the debug callback,
+		// but keeping it here surfaces WebGL 2 errors (which has no debug callback) at a fixed
+		// cadence so they show up close to the frame that produced them.
+		checkGLError("endFrame");
+	}
 
 	void OpenGLRendererAPI::setViewport(uint32_t x, uint32_t y, uint32_t width, uint32_t height) {
 		glViewport(x, y, width, height);

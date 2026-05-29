@@ -54,6 +54,9 @@ namespace cbk {
 			static Application& get() { return *s_Instance; }
 
 		private:
+			// Per-frame tick. Static so it can be passed to emscripten_set_main_loop_arg.
+			static void tick(void* arg);
+
 			// Callback for the WindowClose Event
 			bool onWindowClose(WindowCloseEvent& e);
 

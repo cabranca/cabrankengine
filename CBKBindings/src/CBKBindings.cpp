@@ -1,9 +1,14 @@
+#include <pch.h>
+
 #include <string>
 
 #include <emscripten/bind.h>
 
 #include <nlohmann/json.hpp>
 
+#include <Cabrankengine/Core/Application.h>
+#include <Cabrankengine/Core/EntryPoint.h>
+#include <Cabrankengine/Renderer/RenderLayer.h>
 #include <Cabrankengine/Scene/Scene.h>
 #include <Cabrankengine/Scene/SceneSerializer.h>
 #include <Cabrankengine/Scene/ComponentSerialization.h>
@@ -12,37 +17,50 @@
 using namespace cbk;
 using namespace emscripten;
 
-static scene::Scene g_Scene;
+// EntryPoint.h provides main(); this supplies the Application factory it expects.
+// JS clients drive the live scene via the bindings below.
+namespace cbk {
+    Application* createApplication() {
+        return new Application();
+    }
+}
 
 // ---------------------------------------------------------------------------
 // Scene
 // ---------------------------------------------------------------------------
 
-static void sceneNew(const std::string& name) {
+static void newScene(const std::string& name) {
     scene::SceneMetadata meta;
     meta.Name = name;
-    g_Scene = scene::Scene(meta); // This isn't propagated to the Application
+    Application::get().loadScene(scene::Scene(meta));
 }
 
-static std::string serializeScene() {
-    return scene::SceneSerializer::serializeToString(g_Scene);
+static std::string saveScene() {
+    return scene::SceneSerializer::serializeToString(Application::get().getScene());
 }
 
-static void deserializeScene(const std::string& json) {
-    g_Scene = scene::SceneSerializer::deserializeFromString(json); // This isn't propagated to the Application
+static void loadScene(const std::string& json) {
+    Application::get().loadScene(scene::SceneSerializer::deserializeFromString(json));
 }
+
+// ---------------------------------------------------------------------------
+// Mode
+// ---------------------------------------------------------------------------
+
+static void setGameMode()   { rendering::RenderLayer::setEditorMode(false); }
+static void setEditorMode() { rendering::RenderLayer::setEditorMode(true); }
 
 // ---------------------------------------------------------------------------
 // Entities
 // ---------------------------------------------------------------------------
 
-static int entityCreate(const std::string& name) {
-    ecs::Entity e = g_Scene.createEntity(name);
+static int createEntity(const std::string& name) {
+    ecs::Entity e = Application::get().getScene().createEntity(name);
     return static_cast<int>(e);
 }
 
-static void entityDestroy(int e) {
-    g_Scene.destroyEntity(e);
+static void destroyEntity(int e) {
+    Application::get().getScene().destroyEntity(e);
 }
 
 // ---------------------------------------------------------------------------
@@ -51,7 +69,7 @@ static void entityDestroy(int e) {
 
 template<typename C>
 static std::string getComponent(int entityId) {
-    auto opt = g_Scene.getRegistry()->getComponent<C>(static_cast<ecs::Entity>(entityId));
+    auto opt = Application::get().getScene().getRegistry()->getComponent<C>(static_cast<ecs::Entity>(entityId));
     if (!opt) return "";
     nlohmann::json j = **opt;
     return j.dump();
@@ -65,49 +83,52 @@ static std::string getPointLight(int e)        { return getComponent<ecs::CPoint
 static std::string getText(int e)              { return getComponent<ecs::CText>(e); }
 
 // ---------------------------------------------------------------------------
-// Component add — accepts JSON string, returns false on bad JSON
+// Component add — accepts JSON string; logs and returns silently on bad JSON
 // ---------------------------------------------------------------------------
 
 template<typename C>
-static bool addComponent(int entityId, const std::string& json) {
-    try {
-        g_Scene.getRegistry()->addComponent(static_cast<ecs::Entity>(entityId),
-                                            nlohmann::json::parse(json).get<C>());
-        return true;
-    } catch (...) {
-        return false;
+static void addComponent(int entityId, const std::string& json) {
+    auto j = nlohmann::json::parse(json, nullptr, /*allow_exceptions=*/false);
+    if (j.is_discarded()) {
+        CBK_CORE_ERROR("addComponent: invalid JSON for entity {0}", entityId);
+        return;
     }
+    Application::get().getScene().getRegistry()->addComponent(static_cast<ecs::Entity>(entityId), j.get<C>());
 }
 
-static bool addTransform(int e, const std::string& json)        { return addComponent<ecs::CTransform>(e, json); }
-static bool addCamera(int e, const std::string& json)           { return addComponent<ecs::CCamera>(e, json); }
-static bool addCameraController(int e, const std::string& json) { return addComponent<ecs::CCameraController>(e, json); }
-static bool addDirectionalLight(int e, const std::string& json) { return addComponent<ecs::CDirectionalLight>(e, json); }
-static bool addPointLight(int e, const std::string& json)       { return addComponent<ecs::CPointLight>(e, json); }
-static bool addText(int e, const std::string& json)             { return addComponent<ecs::CText>(e, json); }
+static void addTransform(int e, const std::string& json)        { addComponent<ecs::CTransform>(e, json); }
+static void addCamera(int e, const std::string& json)           { addComponent<ecs::CCamera>(e, json); }
+static void addCameraController(int e, const std::string& json) { addComponent<ecs::CCameraController>(e, json); }
+static void addDirectionalLight(int e, const std::string& json) { addComponent<ecs::CDirectionalLight>(e, json); }
+static void addPointLight(int e, const std::string& json)       { addComponent<ecs::CPointLight>(e, json); }
+static void addText(int e, const std::string& json)             { addComponent<ecs::CText>(e, json); }
+static void addModel(int e, const std::string& json)            { addComponent<ecs::CModel>(e, json); }
 
 // ---------------------------------------------------------------------------
-// Component setters — overwrites existing component, returns false if absent
+// Component setters — overwrites existing component; logs and returns silently on bad JSON or missing component
 // ---------------------------------------------------------------------------
 
 template<typename C>
-static bool setComponent(int entityId, const std::string& json) {
-    auto opt = g_Scene.getRegistry()->getComponent<C>(static_cast<ecs::Entity>(entityId));
-    if (!opt) return false;
-    try {
-        **opt = nlohmann::json::parse(json).get<C>();
-        return true;
-    } catch (...) {
-        return false;
+static void setComponent(int entityId, const std::string& json) {
+    auto opt = Application::get().getScene().getRegistry()->getComponent<C>(static_cast<ecs::Entity>(entityId));
+    if (!opt) {
+        CBK_CORE_ERROR("setComponent: entity {0} has no component of this type", entityId);
+        return;
     }
+    auto j = nlohmann::json::parse(json, nullptr, /*allow_exceptions=*/false);
+    if (j.is_discarded()) {
+        CBK_CORE_ERROR("setComponent: invalid JSON for entity {0}", entityId);
+        return;
+    }
+    **opt = j.get<C>();
 }
 
-static bool setTransform(int e, const std::string& json)        { return setComponent<ecs::CTransform>(e, json); }
-static bool setCamera(int e, const std::string& json)           { return setComponent<ecs::CCamera>(e, json); }
-static bool setCameraController(int e, const std::string& json) { return setComponent<ecs::CCameraController>(e, json); }
-static bool setDirectionalLight(int e, const std::string& json) { return setComponent<ecs::CDirectionalLight>(e, json); }
-static bool setPointLight(int e, const std::string& json)       { return setComponent<ecs::CPointLight>(e, json); }
-static bool setText(int e, const std::string& json)             { return setComponent<ecs::CText>(e, json); }
+static void setTransform(int e, const std::string& json)        { setComponent<ecs::CTransform>(e, json); }
+static void setCamera(int e, const std::string& json)           { setComponent<ecs::CCamera>(e, json); }
+static void setCameraController(int e, const std::string& json) { setComponent<ecs::CCameraController>(e, json); }
+static void setDirectionalLight(int e, const std::string& json) { setComponent<ecs::CDirectionalLight>(e, json); }
+static void setPointLight(int e, const std::string& json)       { setComponent<ecs::CPointLight>(e, json); }
+static void setText(int e, const std::string& json)             { setComponent<ecs::CText>(e, json); }
 
 // ---------------------------------------------------------------------------
 // Component remove
@@ -115,7 +136,7 @@ static bool setText(int e, const std::string& json)             { return setComp
 
 template<typename C>
 static void removeComponent(int entityId) {
-    g_Scene.getRegistry()->removeComponent<C>(static_cast<ecs::Entity>(entityId));
+    Application::get().getScene().getRegistry()->removeComponent<C>(static_cast<ecs::Entity>(entityId));
 }
 
 static void removeTransform(int e)        { removeComponent<ecs::CTransform>(e); }
@@ -130,11 +151,13 @@ static void removeText(int e)             { removeComponent<ecs::CText>(e); }
 // ---------------------------------------------------------------------------
 
 EMSCRIPTEN_BINDINGS(cbk) {
-    function("sceneNew",              &sceneNew);
-    function("serializeScene",        &serializeScene);
-    function("deserializeScene",      &deserializeScene);
-    function("entityCreate",          &entityCreate);
-    function("entityDestroy",          &entityDestroy);
+    function("newScene",               &newScene);
+    function("saveScene",              &saveScene);
+    function("loadScene",              &loadScene);
+    function("setGameMode",            &setGameMode);
+    function("setEditorMode",          &setEditorMode);
+    function("createEntity",           &createEntity);
+    function("destroyEntity",          &destroyEntity);
     function("getTransform",           &getTransform);
     function("getCamera",              &getCamera);
     function("getCameraController",    &getCameraController);
@@ -153,6 +176,7 @@ EMSCRIPTEN_BINDINGS(cbk) {
     function("addDirectionalLight",    &addDirectionalLight);
     function("addPointLight",          &addPointLight);
     function("addText",                &addText);
+    function("addModel",               &addModel);
     function("removeTransform",        &removeTransform);
     function("removeCamera",           &removeCamera);
     function("removeCameraController", &removeCameraController);
