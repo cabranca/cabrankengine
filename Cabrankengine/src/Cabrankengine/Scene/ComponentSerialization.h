@@ -129,7 +129,6 @@ inline void from_json(const nlohmann::json& j, CModel& c) {
     j.at("path").get_to(c.Path);
     j.at("kind").get_to(c.Kind);
 
-#ifndef CBK_WASM
     Ref<rendering::Material> material;
     switch (c.Kind) {
         case common::MaterialKind::Phong: material = rendering::PhongMaterial::create(); break;
@@ -140,7 +139,6 @@ inline void from_json(const nlohmann::json& j, CModel& c) {
     }
     if (material)
         c.Res = scene::Model::create(c.Path, material);
-#endif
 }
 
 inline void to_json(nlohmann::json& j, const CText& c) {

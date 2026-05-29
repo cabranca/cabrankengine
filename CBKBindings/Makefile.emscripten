@@ -22,11 +22,11 @@ SOURCES = \
     ../Cabrankengine/src/Cabrankengine/Core/Application.cpp \
     ../Cabrankengine/src/Cabrankengine/Core/Layer.cpp \
     ../Cabrankengine/src/Cabrankengine/Core/LayerStack.cpp \
-    ../Cabrankengine/src/Cabrankengine/ECS/EntityManager.cpp \
     ../Cabrankengine/src/Cabrankengine/ECS/BuiltInSystems.cpp \
-    ../Cabrankengine/src/Cabrankengine/Math/Coords.cpp \
+    ../Cabrankengine/src/Cabrankengine/ECS/EntityManager.cpp \
     ../Cabrankengine/src/Cabrankengine/Scene/DefaultLibrary.cpp \
     ../Cabrankengine/src/Cabrankengine/Scene/Mesh.cpp \
+    ../Cabrankengine/src/Cabrankengine/Scene/Model.cpp \
     ../Cabrankengine/src/Cabrankengine/Scene/Scene.cpp \
     ../Cabrankengine/src/Cabrankengine/Scene/SceneSerializer.cpp \
     ../Cabrankengine/src/Cabrankengine/Scene/Archetypes/CameraArch.cpp \
@@ -37,31 +37,37 @@ SOURCES = \
     ../Cabrankengine/src/Cabrankengine/Scene/Archetypes/PointLightArch.cpp \
     ../Cabrankengine/src/Cabrankengine/Scene/Archetypes/SpriteArch.cpp \
     ../Cabrankengine/src/Cabrankengine/Scene/Archetypes/TextArch.cpp \
-    ../Cabrankengine/src/Cabrankengine/Renderer/Buffer.cpp \
     ../Cabrankengine/src/Cabrankengine/Renderer/EditorCamera.cpp \
     ../Cabrankengine/src/Cabrankengine/Renderer/FrameBuffer.cpp \
+    ../Cabrankengine/src/Cabrankengine/Renderer/GeometryDescriptor.cpp \
+    ../Cabrankengine/src/Cabrankengine/Renderer/GraphicsContext.cpp \
     ../Cabrankengine/src/Cabrankengine/Renderer/RenderCommand.cpp \
-    ../Cabrankengine/src/Cabrankengine/Renderer/RenderLayer.cpp \
     ../Cabrankengine/src/Cabrankengine/Renderer/Renderer.cpp \
     ../Cabrankengine/src/Cabrankengine/Renderer/Renderer2D.cpp \
     ../Cabrankengine/src/Cabrankengine/Renderer/RendererAPI.cpp \
+    ../Cabrankengine/src/Cabrankengine/Renderer/RenderLayer.cpp \
     ../Cabrankengine/src/Cabrankengine/Renderer/Shader.cpp \
     ../Cabrankengine/src/Cabrankengine/Renderer/StorageBuffer.cpp \
     ../Cabrankengine/src/Cabrankengine/Renderer/TextRenderer.cpp \
     ../Cabrankengine/src/Cabrankengine/Renderer/Texture.cpp \
     ../Cabrankengine/src/Cabrankengine/Renderer/UniformBuffer.cpp \
-    ../Cabrankengine/src/Cabrankengine/Renderer/VertexArray.cpp \
     ../Cabrankengine/src/Cabrankengine/Renderer/Materials/PBRMaterial.cpp \
     ../Cabrankengine/src/Cabrankengine/Renderer/Materials/PhongMaterial.cpp \
+    ../Cabrankengine/src/Cabrankengine/Renderer/Materials/TextMaterial.cpp \
+    ../Cabrankengine/src/Cabrankengine/Renderer/Materials/Texture2DMaterial.cpp \
     ../Cabrankengine/src/Platform/Linux/LinuxInput.cpp \
     ../Cabrankengine/src/Platform/Linux/LinuxWindow.cpp \
     ../Cabrankengine/src/Platform/OpenGL/OpenGLBuffer.cpp \
     ../Cabrankengine/src/Platform/OpenGL/OpenGLContext.cpp \
     ../Cabrankengine/src/Platform/OpenGL/OpenGLFrameBuffer.cpp \
+    ../Cabrankengine/src/Platform/OpenGL/OpenGLPBRMaterial.cpp \
+    ../Cabrankengine/src/Platform/OpenGL/OpenGLPhongMaterial.cpp \
     ../Cabrankengine/src/Platform/OpenGL/OpenGLRendererAPI.cpp \
     ../Cabrankengine/src/Platform/OpenGL/OpenGLShader.cpp \
     ../Cabrankengine/src/Platform/OpenGL/OpenGLStorageBuffer.cpp \
+    ../Cabrankengine/src/Platform/OpenGL/OpenGLTextMaterial.cpp \
     ../Cabrankengine/src/Platform/OpenGL/OpenGLTexture.cpp \
+    ../Cabrankengine/src/Platform/OpenGL/OpenGLTexture2DMaterial.cpp \
     ../Cabrankengine/src/Platform/OpenGL/OpenGLUniformBuffer.cpp \
     ../Cabrankengine/src/Platform/OpenGL/OpenGLVertexArray.cpp
 

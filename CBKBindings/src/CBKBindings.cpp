@@ -35,11 +35,11 @@ static void newScene(const std::string& name) {
     Application::get().loadScene(scene::Scene(meta));
 }
 
-static std::string serializeScene() {
+static std::string saveScene() {
     return scene::SceneSerializer::serializeToString(Application::get().getScene());
 }
 
-static void deserializeScene(const std::string& json) {
+static void loadScene(const std::string& json) {
     Application::get().loadScene(scene::SceneSerializer::deserializeFromString(json));
 }
 
@@ -102,7 +102,7 @@ static void addCameraController(int e, const std::string& json) { addComponent<e
 static void addDirectionalLight(int e, const std::string& json) { addComponent<ecs::CDirectionalLight>(e, json); }
 static void addPointLight(int e, const std::string& json)       { addComponent<ecs::CPointLight>(e, json); }
 static void addText(int e, const std::string& json)             { addComponent<ecs::CText>(e, json); }
-static void addPhongModel(int e, const std::string& json)       { addComponent<ecs::CPhongModel>(e, json); }
+static void addModel(int e, const std::string& json)            { addComponent<ecs::CModel>(e, json); }
 
 // ---------------------------------------------------------------------------
 // Component setters — overwrites existing component; logs and returns silently on bad JSON or missing component
@@ -152,8 +152,8 @@ static void removeText(int e)             { removeComponent<ecs::CText>(e); }
 
 EMSCRIPTEN_BINDINGS(cbk) {
     function("newScene",               &newScene);
-    function("serializeScene",         &serializeScene);
-    function("deserializeScene",       &deserializeScene);
+    function("saveScene",              &saveScene);
+    function("loadScene",              &loadScene);
     function("setGameMode",            &setGameMode);
     function("setEditorMode",          &setEditorMode);
     function("createEntity",           &createEntity);
@@ -176,7 +176,7 @@ EMSCRIPTEN_BINDINGS(cbk) {
     function("addDirectionalLight",    &addDirectionalLight);
     function("addPointLight",          &addPointLight);
     function("addText",                &addText);
-    function("addPhongModel",          &addPhongModel);
+    function("addModel",               &addModel);
     function("removeTransform",        &removeTransform);
     function("removeCamera",           &removeCamera);
     function("removeCameraController", &removeCameraController);

@@ -69,7 +69,14 @@ namespace cbk::platform::opengl {
 	void OpenGLVertexBuffer::setData(const void* data, uint32_t size) {
 		CBK_PROFILE_FUNCTION();
 
+#ifdef CBK_OPENGL_ES
+		// glBufferSubData takes a target, not a buffer name — bind first (no DSA on GLES/WebGL).
+		// GL_ARRAY_BUFFER is global (not VAO) state, so this does not disturb any bound VAO.
+		glBindBuffer(GL_ARRAY_BUFFER, m_RendererId);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, size, data);
+#else
 		glNamedBufferSubData(m_RendererId, 0, size, data);
+#endif
 	}
 
 	// --------------------- INDEX BUFFER --------------------- //

@@ -65,6 +65,16 @@ namespace cbk::platform::opengl {
 
 		m_VertexBuffers.push_back(std::move(vbo));
 		m_IndexBuffer.bind();
+
+#ifdef CBK_OPENGL_ES
+		// On GLES/WebGL (no DSA) the index-buffer constructor binds GL_ELEMENT_ARRAY_BUFFER
+		// as a side effect. Leaving this VAO bound would let the *next* VAO's index-buffer
+		// construction (which runs in its member-initializer list, before its own
+		// glBindVertexArray) overwrite our element binding — so every mesh but the last
+		// would reference the wrong index buffer, producing out-of-range draws
+		// (GL_INVALID_OPERATION on WebGL 2) and dropped meshes. Unbind to isolate each VAO.
+		glBindVertexArray(0);
+#endif
 	}
 	
 	OpenGLVertexArray::OpenGLVertexArray(size_t vertexDataSize, const void* indexData, size_t indexDataSize, const VertexLayout& layout)
@@ -94,6 +104,16 @@ namespace cbk::platform::opengl {
 
 		m_VertexBuffers.push_back(std::move(vbo));
 		m_IndexBuffer.bind();
+
+#ifdef CBK_OPENGL_ES
+		// On GLES/WebGL (no DSA) the index-buffer constructor binds GL_ELEMENT_ARRAY_BUFFER
+		// as a side effect. Leaving this VAO bound would let the *next* VAO's index-buffer
+		// construction (which runs in its member-initializer list, before its own
+		// glBindVertexArray) overwrite our element binding — so every mesh but the last
+		// would reference the wrong index buffer, producing out-of-range draws
+		// (GL_INVALID_OPERATION on WebGL 2) and dropped meshes. Unbind to isolate each VAO.
+		glBindVertexArray(0);
+#endif
 	}
 
 	OpenGLVertexArray::~OpenGLVertexArray() {
