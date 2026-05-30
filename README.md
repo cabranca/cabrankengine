@@ -1,6 +1,6 @@
 # Cabrankengine
 
-A 2D/3D game engine written in C++23 with OpenGL 4.5, built from scratch as a learning project and portfolio piece. The engine covers the full stack: ECS architecture, a batch renderer, Phong and PBR material pipelines, scene serialization, a custom binary asset format, and a WebAssembly compilation target.
+A 2D/3D game engine written in C++23, built from scratch as a learning project and portfolio piece. It runs on a Vulkan backend (with an OpenGL 4.5 fallback) and covers the full stack: ECS architecture, a batch renderer, Phong and PBR material pipelines, scene serialization, a custom binary asset format, and a WebAssembly compilation target.
 
 ---
 
@@ -31,13 +31,15 @@ A 2D/3D game engine written in C++23 with OpenGL 4.5, built from scratch as a le
 ## Features
 
 - **Entity Component System** — Registry-based ECS with typed component arrays, signature-filtered systems, and up to 10 000 concurrent entities
+- **Vulkan renderer** — dynamic-rendering backend (no render passes), per-material pipelines and self-recording materials; default on Linux
+- **OpenGL 4.5 backend** — fallback renderer, default on Windows
 - **2D batch renderer** — sprites, tiling, tint; all quads submitted in a single draw call
 - **3D rendering** — Phong and PBR material pipelines (roughness/metalness, normal maps, HDR)
 - **Lighting** — directional and point lights with attenuation
 - **Camera system** — perspective and orthographic projections, first-person controller
 - **Scene serialization** — save/load scenes from JSON; entities, components, and assets round-trip cleanly
 - **Custom asset pipeline** — `CBKAssetConverter` converts `.obj/.fbx/.gltf` → `.cbkm` and images → `.cbkt`; PBR metal/roughness packing included
-- **WebAssembly target** — engine compiles to WASM via Emscripten for browser deployment
+- **WebAssembly target** — the engine compiles to WASM via Emscripten and runs in the browser
 - **ImGui integration** — real-time parameter editing and debug overlays
 - **Collision shapes** — AABB, sphere, OBB, capsule, plane, cylinder (2D/3D)
 - **Unit tests** — ECS, math, and collision solver covered with Catch2
@@ -80,7 +82,7 @@ public:
 
 class MyApp : public Application {
 public:
-    MyApp() { pushLayer(std::make_unique<MyLayer>()); }
+    MyApp() { pushLayer(createScope<MyLayer>()); }
 };
 
 Application* cbk::createApplication() { return new MyApp(); }
@@ -159,7 +161,9 @@ make config=debug CBKAssetConverter
 | Library | Purpose |
 |---------|---------|
 | [GLFW](https://www.glfw.org/) | Window and input |
-| [glad](https://glad.dav1d.de/) | OpenGL loader |
+| [volk](https://github.com/zeux/volk) | Vulkan meta-loader |
+| [VMA](https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator) | Vulkan memory allocation |
+| [glad](https://glad.dav1d.de/) | OpenGL loader (OpenGL backend) |
 | [ImGui](https://github.com/ocornut/imgui) | Immediate-mode debug UI |
 | [stb_image](https://github.com/nothings/stb) | Image loading |
 | [spdlog](https://github.com/gabime/spdlog) | Logging |
@@ -172,13 +176,20 @@ make config=debug CBKAssetConverter
 
 ## Roadmap
 
-- [ ] Web editor (in progress — Cabrankeditor via WebAssembly)
-- [ ] Vulkan renderer backend
+Done:
+
+- [x] Vulkan renderer backend
+- [x] WebAssembly target (compiles and runs in the browser via Emscripten)
+
+Planned:
+
 - [ ] Finish Metal integration (macOS)
 - [ ] WebGPU target
 - [ ] SIMD math library
 - [ ] Audio backend
 - [ ] Scripting layer
+
+> **Note:** a browser-based editor (Cabrankeditor) was the original motivation for the WebAssembly target. The WASM groundwork is in place, but building the editor itself is **not** part of this project's planned scope — it's left as a possible future direction for anyone who wants to take it on.
 
 ---
 

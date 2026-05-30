@@ -169,7 +169,8 @@ void MyLayer::onEvent(Event& e) {}
 
 ### 3. Register the layer in your Application
 
-`pushLayer` takes a `Scope<Layer>` (`std::unique_ptr<Layer>`). The `LayerStack` owns the layer for its lifetime.
+`pushLayer` takes a `Scope<Layer>` (`std::unique_ptr<Layer>`). Build it with the
+engine's `createScope<T>()` helper. The `LayerStack` owns the layer for its lifetime.
 
 ```cpp
 // MyApp.cpp
@@ -181,7 +182,7 @@ class MyApp : public cbk::Application {
 public:
     MyApp() {
         // Simple case: stack takes full ownership
-        pushLayer(std::make_unique<MyLayer>());
+        pushLayer(cbk::createScope<MyLayer>());
     }
 };
 
@@ -192,7 +193,7 @@ If you need to call methods on the layer after pushing it, keep a raw pointer â€
 
 ```cpp
 MyApp() {
-    auto layer = std::make_unique<MyLayer>();
+    auto layer = cbk::createScope<MyLayer>();
     MyLayer* raw = layer.get(); // borrow for later use
     pushLayer(std::move(layer));
     // raw remains valid while the layer is on the stack

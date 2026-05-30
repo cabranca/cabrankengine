@@ -1,6 +1,6 @@
 # Architecture
 
-Cabrankengine is a C++23 game engine built around an Entity-Component-System (ECS) core, a layered application loop, and an abstract renderer that compiles to OpenGL 4.5 or Metal depending on platform.
+Cabrankengine is a C++23 game engine built around an Entity-Component-System (ECS) core, a layered application loop, and an abstract renderer with Vulkan, OpenGL 4.5, and Metal backends selected at compile time. It also compiles to WebAssembly via Emscripten to run in the browser.
 
 ---
 
@@ -28,6 +28,7 @@ Platform/           OS-specific and backend-specific implementations
 ├── Linux/          LinuxWindow, LinuxInput
 ├── Windows/        WindowsWindow, WindowsInput
 ├── MacOS/          MacOSWindow
+├── Vulkan/         VulkanRendererAPI, VulkanShader, Vulkan*Material, ...
 ├── OpenGL/         OpenGLRendererAPI, OpenGLShader, OpenGLTexture, ...
 └── Metal/          MetalRendererAPI, MetalShader, ...
 ```
@@ -167,14 +168,18 @@ Renderer2D / Renderer3D   high-level submission API (batch quads, submit meshes)
      │
 RendererAPI               abstract interface (draw calls, clear, state)
      │
-OpenGLRendererAPI         or MetalRendererAPI — selected at compile time
+VulkanRendererAPI         or OpenGLRendererAPI or MetalRendererAPI — selected at compile time
 ```
 
 **Renderer2D** batches all sprite quads in a single vertex buffer and flushes once per frame (or when the batch is full). Submit calls are cheap.
 
 **Renderer3D** dispatches to `PhongRenderSystem` or `PBRRenderSystem` depending on the component present on the entity.
 
-The backend (OpenGL 4.5 vs Metal) is selected in `premake5.lua` via platform filters. OpenGL targets Linux and Windows; Metal targets macOS.
+The backend is selected via Premake. On Linux the default is **Vulkan** (pass `--renderer=opengl` for the OpenGL 4.5 fallback); on Windows the default is **OpenGL** (pass `--renderer=vulkan` to opt in). Metal targets macOS. See [getting-started.md](getting-started.md) for the build flags.
+
+### Vulkan backend: self-recording materials
+
+The Vulkan backend uses dynamic rendering (no `VkRenderPass`/framebuffer objects). Each concrete material owns its pipeline, descriptor-set layout and pool as shared per-class state, and implements `IVulkanRecordable::record(cb, transform)` to bind everything it needs for a draw: its pipeline, the scene-globals descriptor set (set 0), its own material set (set 1), the point-light SSBO (set 2, lit materials only) and any push constants. `VulkanRendererAPI` only owns the frame lifecycle (acquire, command-buffer begin/end, barriers, submit, present) and delegates per-draw recording to the material. The descriptor-set index convention lives in one place — `Platform/Vulkan/VulkanDescriptorBinding.h` — so it is not duplicated across materials.
 
 ---
 
