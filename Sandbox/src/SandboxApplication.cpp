@@ -147,9 +147,6 @@ class Sandbox : public Application {
 		//pushLayer(createScope<Sandbox2D>());
 	}
 	~Sandbox() {}
-
-	private:
-	ExampleLayer* m_Layer; // The stack owns this
 };
 
 Application* cbk::createApplication() {

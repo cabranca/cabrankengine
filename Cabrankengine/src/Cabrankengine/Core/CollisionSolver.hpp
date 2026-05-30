@@ -6,8 +6,8 @@
 #include <array>
 #include <utility>
 
-#include <Cabrankengine/Math/Common.h>
-#include <Cabrankengine/Math/VecTraits.h>
+#include <Common/Math/Common.h>
+#include <Common/Math/VecTraits.h>
 
 namespace cbk {
 
