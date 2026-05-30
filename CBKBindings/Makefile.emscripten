@@ -135,6 +135,12 @@ EMCC_LINK_FLAGS = \
 OBJ_DIR = bin/wasm/obj
 OUT     = bin/wasm/CBKBindings.js
 
+# config.json is created at runtime by cbk::Config::load when missing (and is
+# gitignored), so a clean checkout has none. The link step embeds it into the
+# WASM bundle, so generate the default here if it is absent. Mirrors the
+# defaults in Cabrankengine/src/Cabrankengine/Config/Config.h.
+CONFIG_JSON = ../config.json
+
 # Mirror the source tree under OBJ_DIR. Replace `..` with `_` so all objects
 # stay inside OBJ_DIR (and basename collisions across source roots are avoided).
 cxx_obj = $(OBJ_DIR)/$(subst ../,_/,$(1:.cpp=.o))
@@ -159,10 +165,23 @@ endif
 .PHONY: all clean
 all: $(OUT)
 
-$(OUT): $(ALL_OBJS) Makefile.emscripten
+$(OUT): $(ALL_OBJS) Makefile.emscripten | $(CONFIG_JSON)
 	@mkdir -p $(dir $@)
 	@echo "  LINK $@"
 	$(Q)em++ $(EMCC_LINK_FLAGS) $(ALL_OBJS) -o $@
+
+# Order-only target: only generated when the file does not already exist, so a
+# user's existing config.json is never overwritten and does not force a relink.
+$(CONFIG_JSON):
+	@echo "  GEN  $@"
+	@printf '%s\n' \
+		'{' \
+		'    "window": {' \
+		'        "title": "Cabrankengine",' \
+		'        "width": 1600,' \
+		'        "height": 900' \
+		'    }' \
+		'}' > $@
 
 # Per-source compile rules generated via eval. Each rule has the source as an
 # explicit prerequisite, plus the Makefile so flag changes trigger a rebuild.
