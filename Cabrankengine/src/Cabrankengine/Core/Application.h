@@ -63,15 +63,19 @@ namespace cbk {
 			// Callback for the WindowResize Event
 			bool onWindowResize(WindowResizeEvent& e);
 
-			// Be careful when changing the order of declaration (or destruction)
+			// Be careful when changing the order of declaration (or destruction).
+			// Members are destroyed in reverse declaration order. m_Window and m_Scene
+			// must be declared BEFORE m_LayerStack so they outlive it: when the stack is
+			// destroyed it calls each layer's onDetach(), which can touch the window
+			// (ImGui shutdown) and the scene's registry (entity cleanup).
 			Scope<Window> m_Window; // Ptr to the app window
+			scene::Scene m_Scene; // Scene with the game world and registry
 			ImGuiLayer* m_ImGuiLayer; // ImGui layer for rendering the UI. The Stack owns this.
 			rendering::RenderLayer* m_RenderLayer; // The Stack owns this.
 			LayerStack m_LayerStack; // Stack of layers to forward the events to
 			bool m_Running; // Whether the app must stop or not
 			float m_LastFrameTime; // Time of the last frame
 			bool m_Minimized = false; // Whether the window is minimized or not
-			scene::Scene m_Scene; // Scene with the game world and registry
 			
 			inline static Application* s_Instance = nullptr; // Static instance of the app (Singleton-ish pattern)
 	};
