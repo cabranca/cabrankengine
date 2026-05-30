@@ -32,16 +32,7 @@ namespace cbk::platform::vk {
 		void setViewProjection(const math::Mat4& /*viewProjection*/) override {}
 
 		// IVulkanRecordable
-		[[nodiscard]] VkPipeline getPipeline() const override {
-			return s_Pipeline;
-		}
-		[[nodiscard]] VkPipelineLayout getPipelineLayout() const override {
-			return s_PipelineLayout;
-		}
-		[[nodiscard]] const VkDescriptorSet* getDescriptorSet() const override {
-			return &m_DescriptorSet;
-		}
-		void recordCommandBuffer(VkCommandBuffer cb) const override;
+		void record(VkCommandBuffer cb, const math::Mat4& transform) const override;
 
 		// Per-class pipeline state cleanup. Called by VulkanRendererAPI::shutdown().
 		static void destroySharedResources();

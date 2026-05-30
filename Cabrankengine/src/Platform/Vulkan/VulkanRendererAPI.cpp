@@ -65,102 +65,16 @@ namespace cbk::platform::vk {
 	void VulkanRendererAPI::clear() {}
 
 	void VulkanRendererAPI::beginFrame() {
-		// 1. CPU waits for GPU to finish reading so I can start writing.
-		// I also ask the swapchain for the next image.
 		if (!syncAndAcquire())
 			return;
 
-		// Point the scene UBO at this frame's slot before any setData call from
-		// Renderer::beginScene — prevents the CPU from trampling a UBO the GPU is
-		// still reading from for the prior in-flight frame. Same rationale for the
-		// point-light SSBO, which Renderer::beginScene rewrites every frame.
-		auto sceneUbo = static_cast<VulkanUniformBuffer*>(rendering::Renderer::getSceneUBO().get());
-		sceneUbo->setCurrentFrame(m_FrameIndex);
-		auto lightSSBO = static_cast<VulkanStorageBuffer*>(rendering::Renderer::getLightSSBO().get());
-		lightSSBO->setCurrentFrame(m_FrameIndex);
-
-		// 2. Reset command this frame command buffer. This sets all previous commands as invalid
-		// and also moves the write ptr to the start of the buffer.
-		auto cb = m_CommandBuffers[m_FrameIndex];
-		VK_CHECK(vkResetCommandBuffer(cb, 0));
-
-		// 3. Begin command buffer sets its state to "recording". The one time submit
-		// flag is passed so the gpu knows it can throw the data once used.
-		VkCommandBufferBeginInfo cbBI{ .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-			                           .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT };
-		VK_CHECK(vkBeginCommandBuffer(cb, &cbBI));
-
-		// 3. Insertion of barriers to the command. These barriers tell the GPU which conditions must me true to
-		// advance in each stage of the pipeline. In this case the color attachment doesn't need to wait on the previous
-		// write because the semaphore guarantees that the job has finished. For the depth attachment that's not guaranteed.
-		// So the srcAccessMask is set. The important thing is that to go on to the next stage, in both cases
-		// The layout must have been optimized for the vendor.
-		std::array<VkImageMemoryBarrier2, 2> outputBarriers{
-			VkImageMemoryBarrier2{ .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
-			                       .srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
-			                       .srcAccessMask = 0,
-			                       .dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
-			                       .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-			                       .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-			                       .newLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL,
-			                       .image = m_SwapchainManager.getSwapchainImage(m_ImageIndex),
-			                       .subresourceRange{ .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .levelCount = 1, .layerCount = 1 } },
-			VkImageMemoryBarrier2{ .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
-			                       .srcStageMask = VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT,
-			                       .srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-			                       .dstStageMask = VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT,
-			                       .dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-			                       .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-			                       .newLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL,
-			                       .image = m_SwapchainManager.getDepthImage(m_ImageIndex),
-			                       .subresourceRange{ .aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT,
-			                                          .levelCount = 1,
-			                                          .layerCount = 1 } }
-		};
-		VkDependencyInfo barrierDependencyInfo{ .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
-			                                    .imageMemoryBarrierCount = 2,
-			                                    .pImageMemoryBarriers = outputBarriers.data() };
-		vkCmdPipelineBarrier2(cb, &barrierDependencyInfo);
-
-
-
-		// 4. Rendering Info. We set the color and depth image views as attachments, set the clear as loadOp
-		// and we tell the command to store the color attachment for later presenting and that we don't care
-		// about the depth attachment. Then we begin rendering.
-		VkRenderingAttachmentInfo colorAttachmentInfo{ .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
-			                                           .imageView = m_SwapchainManager.getSwapchainImageView(m_ImageIndex),
-			                                           .imageLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL,
-			                                           .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-			                                           .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-			                                           .clearValue{
-			                                               .color{ m_ClearColor.x, m_ClearColor.y, m_ClearColor.z, m_ClearColor.w } } };
-		VkRenderingAttachmentInfo depthAttachmentInfo{ .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
-			                                           .imageView = m_SwapchainManager.getDepthImageView(m_ImageIndex),
-			                                           .imageLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL,
-			                                           .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-			                                           .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-			                                           .clearValue = { .depthStencil = { 1.0f, 0 } } };
-
-		auto&            window = Application::get().getWindow();
-		VkRenderingInfo  renderingInfo{ .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
-			                            .renderArea{ .extent{ .width = static_cast<uint32_t>(window.getWidth()),
-			                                                  .height = static_cast<uint32_t>(window.getHeight()) } },
-			                            .layerCount = 1,
-			                            .colorAttachmentCount = 1,
-			                            .pColorAttachments = &colorAttachmentInfo,
-			                            .pDepthAttachment = &depthAttachmentInfo };
-		vkCmdBeginRendering(cb, &renderingInfo);
-
-		// 5. Set the Viewport and Scissor equeal to the window. We also set the depth transformation
-		// from Normalized Device Coordinates (NDC) to Viewport coordinates.
-		VkViewport vp{ .width = static_cast<float>(window.getWidth()),
-			           .height = static_cast<float>(window.getHeight()),
-			           .minDepth = 0.0f,
-			           .maxDepth = 1.0f };
-		vkCmdSetViewport(cb, 0, 1, &vp);
-		VkRect2D scissor{ .extent{ .width = static_cast<uint32_t>(window.getWidth()),
-			                       .height = static_cast<uint32_t>(window.getHeight()) } };
-		vkCmdSetScissor(cb, 0, 1, &scissor);
+		// Sets the UBO and SSBO current frame for when Renderer::beginFrame() is called.
+		setBufferObjectsCurrentFrame();
+		
+		resetAndBeginCmdBuffer();
+		setupInitialBarriers();
+		beginRecording();
+		setViewportAndScissor();
 	}
 
 	void VulkanRendererAPI::draw(const Ref<GeometryDescriptor>& vertexArray) {}
@@ -249,7 +163,7 @@ namespace cbk::platform::vk {
 		VK_CHECK(vkResetFences(ctx->getLogicalDevice(), 1, &m_Fences[m_FrameIndex]));
 
 		auto vkResult = vkAcquireNextImageKHR(ctx->getLogicalDevice(), *m_SwapchainManager.getSwapchain(), UINT64_MAX,
-		                                 m_ImageAcquiredSemaphores[m_FrameIndex], VK_NULL_HANDLE, &m_ImageIndex);
+		                                      m_ImageAcquiredSemaphores[m_FrameIndex], VK_NULL_HANDLE, &m_ImageIndex);
 		if (vkResult < VK_SUCCESS) {
 			if (vkResult == VK_ERROR_OUT_OF_DATE_KHR) {
 				m_UpdateSwapchain = true;
@@ -261,60 +175,123 @@ namespace cbk::platform::vk {
 		return true;
 	}
 
-	void VulkanRendererAPI::commitRenderCommands(const Ref<Material>& material, const Ref<rendering::GeometryDescriptor>& desc,
-	                                             const math::Mat4& transform) {
-		// Per-draw recording only. The command buffer was reset, begun, transitioned,
-		// and vkCmdBeginRendering'd by beginFrame(); vkCmdEndRendering + endCB + submit + present
-		// happen in endFrame(). Multiple draws within the same frame share that lifecycle.
+	void VulkanRendererAPI::setBufferObjectsCurrentFrame() {
+		auto sceneUbo = static_cast<VulkanUniformBuffer*>(rendering::Renderer::getSceneUBO().get());
+		sceneUbo->setCurrentFrame(m_FrameIndex);
+		auto lightSSBO = static_cast<VulkanStorageBuffer*>(rendering::Renderer::getLightSSBO().get());
+		lightSSBO->setCurrentFrame(m_FrameIndex);
+	}
+
+	void VulkanRendererAPI::resetAndBeginCmdBuffer() {
 		auto cb = m_CommandBuffers[m_FrameIndex];
 
+		VK_CHECK(vkResetCommandBuffer(cb, 0));
 
-		// 1. Bind the material pipeline to the command buffer.
+		VkCommandBufferBeginInfo cbBI{ .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+			                           .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT };
+		VK_CHECK(vkBeginCommandBuffer(cb, &cbBI));
+	}
+
+	void VulkanRendererAPI::setupInitialBarriers() {
+		auto cb = m_CommandBuffers[m_FrameIndex];
+		std::array<VkImageMemoryBarrier2, 2> outputBarriers{
+			VkImageMemoryBarrier2{ .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+			                       .srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+			                       .srcAccessMask = 0,
+			                       .dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+			                       .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+			                       .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+			                       .newLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL,
+			                       .image = m_SwapchainManager.getSwapchainImage(m_ImageIndex),
+			                       .subresourceRange{ .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .levelCount = 1, .layerCount = 1 } },
+			VkImageMemoryBarrier2{ .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+			                       .srcStageMask = VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT,
+			                       .srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+			                       .dstStageMask = VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT,
+			                       .dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+			                       .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+			                       .newLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL,
+			                       .image = m_SwapchainManager.getDepthImage(m_ImageIndex),
+			                       .subresourceRange{ .aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT,
+			                                          .levelCount = 1,
+			                                          .layerCount = 1 } }
+		};
+		VkDependencyInfo barrierDependencyInfo{ .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+			                                    .imageMemoryBarrierCount = 2,
+			                                    .pImageMemoryBarriers = outputBarriers.data() };
+		vkCmdPipelineBarrier2(cb, &barrierDependencyInfo);
+	}
+
+	void VulkanRendererAPI::beginRecording() {
+		auto cb = m_CommandBuffers.at(m_FrameIndex);
+		VkRenderingAttachmentInfo colorAttachmentInfo{ .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+			                                           .imageView = m_SwapchainManager.getSwapchainImageView(m_ImageIndex),
+			                                           .imageLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL,
+			                                           .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+			                                           .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+			                                           .clearValue{
+			                                               .color{ m_ClearColor.x, m_ClearColor.y, m_ClearColor.z, m_ClearColor.w } } };
+		VkRenderingAttachmentInfo depthAttachmentInfo{ .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+			                                           .imageView = m_SwapchainManager.getDepthImageView(m_ImageIndex),
+			                                           .imageLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL,
+			                                           .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+			                                           .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+			                                           .clearValue = { .depthStencil = { 1.0f, 0 } } };
+
+		auto& window = Application::get().getWindow();
+		VkRenderingInfo renderingInfo{ .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
+			                           .renderArea{ .extent{ .width = static_cast<uint32_t>(window.getWidth()),
+			                                                 .height = static_cast<uint32_t>(window.getHeight()) } },
+			                           .layerCount = 1,
+			                           .colorAttachmentCount = 1,
+			                           .pColorAttachments = &colorAttachmentInfo,
+			                           .pDepthAttachment = &depthAttachmentInfo };
+		vkCmdBeginRendering(cb, &renderingInfo);
+	}
+
+	void VulkanRendererAPI::setViewportAndScissor() {
+		auto& window = Application::get().getWindow();
+		auto cb = m_CommandBuffers.at(m_FrameIndex);
+		VkViewport vp{ .width = static_cast<float>(window.getWidth()),
+			           .height = static_cast<float>(window.getHeight()),
+			           .minDepth = 0.0f,
+			           .maxDepth = 1.0f };
+		vkCmdSetViewport(cb, 0, 1, &vp);
+		VkRect2D scissor{ .extent{ .width = static_cast<uint32_t>(window.getWidth()),
+			                       .height = static_cast<uint32_t>(window.getHeight()) } };
+		vkCmdSetScissor(cb, 0, 1, &scissor);
+	}
+
+	void VulkanRendererAPI::commitRenderCommands(const Ref<Material>& material, const Ref<rendering::GeometryDescriptor>& desc,
+	                                             const math::Mat4& transform) {
+		recordMaterial(material, transform);
+		bindAndDraw(desc);
+	}
+
+	void VulkanRendererAPI::recordMaterial(const Ref<rendering::Material>& material, const math::Mat4& transform) {
+		auto cb = m_CommandBuffers[m_FrameIndex];
+
+		// Each concrete material binds its own pipeline, descriptor sets and push
+		// constants. The renderer only supplies the command buffer and the per-draw
+		// model matrix; the set-index convention lives in VulkanDescriptorBinding.h.
 		auto recordable = dynamic_cast<IVulkanRecordable*>(material.get());
 		CBK_CORE_ASSERT(recordable, "VulkanRendererAPI: material does not implement IVulkanRecordable");
 
-		VkPipeline       pipeline = recordable->getPipeline();
-		VkPipelineLayout layout   = recordable->getPipelineLayout();
+		recordable->record(cb, transform);
+	}
 
-		vkCmdBindPipeline(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+	void VulkanRendererAPI::bindAndDraw(const Ref<rendering::GeometryDescriptor>& desc) {
+		auto cb = m_CommandBuffers[m_FrameIndex];
 
-		// 2. Bind descriptor sets.
-		// Set 0: scene globals (view-projection, dir light, camera pos).
-		auto sceneUbo = static_cast<VulkanUniformBuffer*>(rendering::Renderer::getSceneUBO().get());
-		vkCmdBindDescriptorSets(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 0, 1, sceneUbo->getDescriptorSet(), 0, nullptr);
-
-		// Set 1: per-material descriptor (textures).
-		vkCmdBindDescriptorSets(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 1, 1, recordable->getDescriptorSet(), 0, nullptr);
-
-		// Set 2: point-light SSBO. Only bound for pipelines whose layout actually
-		// declares it (currently PBR); other materials would fail descriptor-set-
-		// compatibility validation if we bound a set their layout doesn't expect.
-		if (recordable->wantsLightSSBO()) {
-			auto lightSSBO = static_cast<VulkanStorageBuffer*>(rendering::Renderer::getLightSSBO().get());
-			vkCmdBindDescriptorSets(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 2, 1, lightSSBO->getDescriptorSet(), 0, nullptr);
-		}
-
-		// 3. Push constants. There must be another way of doing this for sure.
-		// Per-draw model matrix at offset 0. stageFlags must cover every stage of the
-		// overlapping range in the pipeline layout (VS|FS, see VulkanPhong/PBRMaterial).
-		vkCmdPushConstants(cb, layout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(math::Mat4), &transform);
-
-		// Material-specific fragment-stage push constants + lazy descriptor refresh.
-		recordable->recordCommandBuffer(cb);
-
-
-		// 5. Bind the buffers of this geometry descriptor.
 		auto vkDesc = static_cast<VulkanGeometryDescriptor*>(desc.get());
 		vkDesc->bindBuffers(cb);
 
-		// 6. Draw.
-		// (indexCount, instanceCount=1, firstIndex=0, vertexOffset=0, firstInstance=0).
 		vkCmdDrawIndexed(cb, vkDesc->getIndexCount(), 1, 0, 0, 0);
 	}
-	
+
 	void VulkanRendererAPI::submitQueue() {
 		auto ctx = static_cast<VulkanDeviceContext*>(Application::get().getWindow().getContext());
-		
+
 		// 1. Submit the command queue. The wait semaphore make the GPU wait until the presentation engine
 		// is done with the previous image. The waitDstStageMask value implies that this waiting is needed
 		// by the color attachment stage. Also a signal semaphore is given to signal when the rendering is done.
@@ -357,7 +334,7 @@ namespace cbk::platform::vk {
 	uint32_t VulkanRendererAPI::getMinImageCount() const {
 		return m_SwapchainManager.getMinImageCount();
 	}
-	
+
 	uint32_t VulkanRendererAPI::getImageCount() const {
 		return m_SwapchainManager.getSwapchainImagesSize();
 	}

@@ -14,7 +14,7 @@ namespace cbk::platform::vk {
 		void setClearColor(const math::Vector4& color) override;
 		void clear() override;
 		void beginFrame() override;
-		void draw(const Ref<rendering::GeometryDescriptor>& dec) override;
+		void draw(const Ref<rendering::GeometryDescriptor>& desc) override;
 		void drawIndexed(const Ref<rendering::Material>& material, const Ref<rendering::GeometryDescriptor>& desc,
 		                 const math::Mat4& transform, uint32_t indexCount = 0) override;
 		void endFrame() override;
@@ -37,13 +37,27 @@ namespace cbk::platform::vk {
 		bool m_UpdateSwapchain{ false };
 		math::Vector4 m_ClearColor{ 0.5, 0.5, 0.5, 1.f };
 
+		// Initialization
 		void createSyncObjects(VulkanDeviceContext* ctx);
 		void createRenderCompleteSemaphores();
 		void createCommandPool(VulkanDeviceContext* ctx);
 
+		// Begin Frame stage
 		bool syncAndAcquire();
-		void commitRenderCommands(const Ref<rendering::Material>& material, const Ref<rendering::GeometryDescriptor>& vertexArray,
+		void setBufferObjectsCurrentFrame();
+		void resetAndBeginCmdBuffer();
+		void setupInitialBarriers();
+		void beginRecording();
+		void setViewportAndScissor();
+
+		// Commands Queueing stage
+		void commitRenderCommands(const Ref<rendering::Material>& material, const Ref<rendering::GeometryDescriptor>& desc,
 		                          const math::Mat4& transform);
+
+		void recordMaterial(const Ref<rendering::Material>& material, const math::Mat4& transform);
+		void bindAndDraw(const Ref<rendering::GeometryDescriptor>& desc);
+
+		// End Frame stage
 		void submitQueue();
 
 		void updateSwapchain(VulkanDeviceContext* ctx);

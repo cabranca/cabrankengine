@@ -9,6 +9,7 @@
 #include <Cabrankengine/Renderer/Renderer.h>
 #include <Cabrankengine/Renderer/Shader.h>
 
+#include "VulkanDescriptorBinding.h"
 #include "VulkanDeviceContext.h"
 #include "VulkanShader.h"
 #include "VulkanTexture.h"
@@ -64,9 +65,17 @@ namespace cbk::platform::vk {
 		m_DescriptorDirty    = true;
 	}
 
-	void VulkanTextMaterial::recordCommandBuffer(VkCommandBuffer /*cb*/) const {
+	void VulkanTextMaterial::record(VkCommandBuffer cb, const math::Mat4& /*transform*/) const {
 		if (m_DescriptorDirty)
 			updateDescriptorSet();
+
+		vkCmdBindPipeline(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, s_Pipeline);
+
+		// Set 0 = scene globals, set 1 = the 32-sampler glyph atlas array. Glyph quads
+		// are already in world space, so there is no model-matrix push constant.
+		bindSceneSet(cb, s_PipelineLayout);
+		vkCmdBindDescriptorSets(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, s_PipelineLayout, set_index::k_Material, 1, &m_DescriptorSet, 0,
+		                        nullptr);
 	}
 
 	void VulkanTextMaterial::updateDescriptorSet() const {
@@ -132,24 +141,16 @@ namespace cbk::platform::vk {
 		vkCreateDescriptorPool(device, &poolCI, nullptr, &s_DescriptorPool);
 
 		// 3) Pipeline layout — set 0 = scene UBO, set 1 = sampler array. Glyph quads
-		// arrive in world space so the model-matrix push constant goes unread — but
-		// VulkanRendererAPI pushes it unconditionally, so the layout must still
-		// declare the range or vkCmdPushConstants is invalid.
+		// arrive in world space, so there are no push constants: the material's record()
+		// never pushes a model matrix.
 		auto sceneUbo                                   = static_cast<VulkanUniformBuffer*>(Renderer::getSceneUBO().get());
 		auto sceneLayout                                = sceneUbo->getDescriptorSetLayout();
 		std::array<VkDescriptorSetLayout, 2> setLayouts = { sceneLayout, s_DescriptorSetLayout };
 
-		VkPushConstantRange pushRange{
-			.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-			.offset     = 0,
-			.size       = static_cast<uint32_t>(sizeof(math::Mat4)),
-		};
 		VkPipelineLayoutCreateInfo plCI{
-			.sType                  = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-			.setLayoutCount         = static_cast<uint32_t>(setLayouts.size()),
-			.pSetLayouts            = setLayouts.data(),
-			.pushConstantRangeCount = 1,
-			.pPushConstantRanges    = &pushRange,
+			.sType          = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+			.setLayoutCount = static_cast<uint32_t>(setLayouts.size()),
+			.pSetLayouts    = setLayouts.data(),
 		};
 		vkCreatePipelineLayout(device, &plCI, nullptr, &s_PipelineLayout);
 

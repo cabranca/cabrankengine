@@ -18,19 +18,7 @@ namespace cbk::platform::vk {
 		void bind() const override {}
 
 		// IVulkanRecordable
-		[[nodiscard]] VkPipeline getPipeline() const override {
-			return s_Pipeline;
-		}
-		[[nodiscard]] VkPipelineLayout getPipelineLayout() const override {
-			return s_PipelineLayout;
-		}
-		[[nodiscard]] const VkDescriptorSet* getDescriptorSet() const override {
-			return &m_DescriptorSet;
-		}
-		[[nodiscard]] bool wantsLightSSBO() const override {
-			return true;
-		}
-		void recordCommandBuffer(VkCommandBuffer cb) const override;
+		void record(VkCommandBuffer cb, const math::Mat4& transform) const override;
 
 		// Per-class pipeline state cleanup. Called by VulkanRendererAPI::shutdown().
 		static void destroySharedResources();

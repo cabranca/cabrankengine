@@ -10,6 +10,7 @@
 #include <Cabrankengine/Renderer/Shader.h>
 
 #include "VkCheck.h"
+#include "VulkanDescriptorBinding.h"
 #include "VulkanDeviceContext.h"
 #include "VulkanShader.h"
 #include "VulkanTexture.h"
@@ -44,10 +45,20 @@ namespace cbk::platform::vk {
 		// Descriptor set is freed when s_DescriptorPool is destroyed.
 	}
 
-	void VulkanPhongMaterial::recordCommandBuffer(VkCommandBuffer cb) const {
+	void VulkanPhongMaterial::record(VkCommandBuffer cb, const math::Mat4& transform) const {
 		if (m_DescriptorDirty)
 			updateDescriptorSet();
 
+		vkCmdBindPipeline(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, s_Pipeline);
+
+		// Set 0 = scene globals, set 1 = this material's textures. No light SSBO set.
+		bindSceneSet(cb, s_PipelineLayout);
+		vkCmdBindDescriptorSets(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, s_PipelineLayout, set_index::k_Material, 1, &m_DescriptorSet, 0,
+		                        nullptr);
+
+		// Push constants: [0..64) model matrix, [64..) material params.
+		vkCmdPushConstants(cb, s_PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(math::Mat4),
+		                   &transform);
 		PushData pushData{ .shininess = m_Shininess };
 		vkCmdPushConstants(cb, s_PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(math::Mat4),
 		                   sizeof(PushData), &pushData);
