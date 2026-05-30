@@ -35,6 +35,15 @@ project "Sandbox"
 
     local renderer = _OPTIONS["renderer"]
     local linuxRenderer = renderer or "vulkan"
+    local windowsRenderer = renderer or "opengl"
+
+    if windowsRenderer == "vulkan" then
+        filter "system:windows"
+            defines({ "CBK_RENDERER_VULKAN" })
+    else
+        filter "system:windows"
+            defines({ "CBK_RENDERER_OPENGL" })
+    end
 
     filter "system:linux"
         systemversion "latest"

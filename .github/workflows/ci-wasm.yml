@@ -46,15 +46,11 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install Emscripten
-        run: |
-          git clone https://github.com/emscripten-core/emsdk.git tools/emsdk
-          tools/emsdk/emsdk install latest
-          tools/emsdk/emsdk activate latest
+      - name: Setup Emscripten
+        uses: mymindstorm/setup-emsdk@v14
 
       - name: Build CBKBindings (WASM)
         run: |
-          source tools/emsdk/emsdk_env.sh
           mkdir -p CBKBindings/bin/wasm
           make -C CBKBindings -f Makefile.emscripten -j$(nproc)
 
@@ -80,17 +76,12 @@ jobs:
       - name: Install make
         run: choco install make --no-progress -y
 
-      - name: Install Emscripten
-        shell: bash
-        run: |
-          git clone https://github.com/emscripten-core/emsdk.git tools/emsdk
-          tools/emsdk/emsdk install latest
-          tools/emsdk/emsdk activate latest
+      - name: Setup Emscripten
+        uses: mymindstorm/setup-emsdk@v14
 
       - name: Build CBKBindings (WASM)
         shell: bash
         run: |
-          source tools/emsdk/emsdk_env.sh
           mkdir -p CBKBindings/bin/wasm
           make -C CBKBindings -f Makefile.emscripten -j$(nproc)
 
