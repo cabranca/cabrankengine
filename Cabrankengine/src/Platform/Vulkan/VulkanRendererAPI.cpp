@@ -65,6 +65,8 @@ namespace cbk::platform::vk {
 	void VulkanRendererAPI::clear() {}
 
 	void VulkanRendererAPI::beginFrame() {
+		// 1. CPU waits for GPU to finish reading so I can start writing.
+		// I also ask the swapchain for the next image.
 		if (!syncAndAcquire())
 			return;
 
@@ -77,11 +79,22 @@ namespace cbk::platform::vk {
 		auto lightSSBO = static_cast<VulkanStorageBuffer*>(rendering::Renderer::getLightSSBO().get());
 		lightSSBO->setCurrentFrame(m_FrameIndex);
 
+		// 2. Reset command this frame command buffer. This sets all previous commands as invalid
+		// and also moves the write ptr to the start of the buffer.
 		auto cb = m_CommandBuffers[m_FrameIndex];
 		VK_CHECK(vkResetCommandBuffer(cb, 0));
+
+		// 3. Begin command buffer sets its state to "recording". The one time submit
+		// flag is passed so the gpu knows it can throw the data once used.
 		VkCommandBufferBeginInfo cbBI{ .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
 			                           .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT };
 		VK_CHECK(vkBeginCommandBuffer(cb, &cbBI));
+
+		// 3. Insertion of barriers to the command. These barriers tell the GPU which conditions must me true to
+		// advance in each stage of the pipeline. In this case the color attachment doesn't need to wait on the previous
+		// write because the semaphore guarantees that the job has finished. For the depth attachment that's not guaranteed.
+		// So the srcAccessMask is set. The important thing is that to go on to the next stage, in both cases
+		// The layout must have been optimized for the vendor.
 		std::array<VkImageMemoryBarrier2, 2> outputBarriers{
 			VkImageMemoryBarrier2{ .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
 			                       .srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
@@ -109,7 +122,11 @@ namespace cbk::platform::vk {
 			                                    .pImageMemoryBarriers = outputBarriers.data() };
 		vkCmdPipelineBarrier2(cb, &barrierDependencyInfo);
 
-		// Clearing happens here via VK_ATTACHMENT_LOAD_OP_CLEAR — m_ClearColor is set by setClearColor().
+
+
+		// 4. Rendering Info. We set the color and depth image views as attachments, set the clear as loadOp
+		// and we tell the command to store the color attachment for later presenting and that we don't care
+		// about the depth attachment. Then we begin rendering.
 		VkRenderingAttachmentInfo colorAttachmentInfo{ .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
 			                                           .imageView = m_SwapchainManager.getSwapchainImageView(m_ImageIndex),
 			                                           .imageLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL,
@@ -133,6 +150,9 @@ namespace cbk::platform::vk {
 			                            .pColorAttachments = &colorAttachmentInfo,
 			                            .pDepthAttachment = &depthAttachmentInfo };
 		vkCmdBeginRendering(cb, &renderingInfo);
+
+		// 5. Set the Viewport and Scissor equeal to the window. We also set the depth transformation
+		// from Normalized Device Coordinates (NDC) to Viewport coordinates.
 		VkViewport vp{ .width = static_cast<float>(window.getWidth()),
 			           .height = static_cast<float>(window.getHeight()),
 			           .minDepth = 0.0f,
@@ -154,7 +174,12 @@ namespace cbk::platform::vk {
 
 	void VulkanRendererAPI::endFrame() {
 		auto cb = m_CommandBuffers[m_FrameIndex];
+
+		// 1. End rendering
 		vkCmdEndRendering(cb);
+
+		// 2. Wait that the color attachment has been finished writing and
+		// prepare it for presentation
 		VkImageMemoryBarrier2 barrierPresent{ .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
 			                                  .srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
 			                                  .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
@@ -169,11 +194,14 @@ namespace cbk::platform::vk {
 			                                           .imageMemoryBarrierCount = 1,
 			                                           .pImageMemoryBarriers = &barrierPresent };
 		vkCmdPipelineBarrier2(cb, &barrierPresentDependencyInfo);
+
+		// 3. End the command buffer.
 		VK_CHECK(vkEndCommandBuffer(cb));
 
-		if (!submitQueue())
-			return;
+		// 4. Submit queue.
+		submitQueue();
 
+		// 5. Recreate the swapchain if it's in an invalid state.
 		if (m_UpdateSwapchain) {
 			m_UpdateSwapchain = false;
 			m_SwapchainManager.updateSwapchain();
@@ -233,13 +261,15 @@ namespace cbk::platform::vk {
 		return true;
 	}
 
-	bool VulkanRendererAPI::commitRenderCommands(const Ref<Material>& material, const Ref<rendering::GeometryDescriptor>& desc,
+	void VulkanRendererAPI::commitRenderCommands(const Ref<Material>& material, const Ref<rendering::GeometryDescriptor>& desc,
 	                                             const math::Mat4& transform) {
 		// Per-draw recording only. The command buffer was reset, begun, transitioned,
 		// and vkCmdBeginRendering'd by beginFrame(); vkCmdEndRendering + endCB + submit + present
 		// happen in endFrame(). Multiple draws within the same frame share that lifecycle.
 		auto cb = m_CommandBuffers[m_FrameIndex];
 
+
+		// 1. Bind the material pipeline to the command buffer.
 		auto recordable = dynamic_cast<IVulkanRecordable*>(material.get());
 		CBK_CORE_ASSERT(recordable, "VulkanRendererAPI: material does not implement IVulkanRecordable");
 
@@ -248,6 +278,7 @@ namespace cbk::platform::vk {
 
 		vkCmdBindPipeline(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
+		// 2. Bind descriptor sets.
 		// Set 0: scene globals (view-projection, dir light, camera pos).
 		auto sceneUbo = static_cast<VulkanUniformBuffer*>(rendering::Renderer::getSceneUBO().get());
 		vkCmdBindDescriptorSets(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 0, 1, sceneUbo->getDescriptorSet(), 0, nullptr);
@@ -263,23 +294,30 @@ namespace cbk::platform::vk {
 			vkCmdBindDescriptorSets(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 2, 1, lightSSBO->getDescriptorSet(), 0, nullptr);
 		}
 
+		// 3. Push constants. There must be another way of doing this for sure.
 		// Per-draw model matrix at offset 0. stageFlags must cover every stage of the
 		// overlapping range in the pipeline layout (VS|FS, see VulkanPhong/PBRMaterial).
 		vkCmdPushConstants(cb, layout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(math::Mat4), &transform);
 
 		// Material-specific fragment-stage push constants + lazy descriptor refresh.
-		recordable->recordCommandBuffer(cb, layout);
+		recordable->recordCommandBuffer(cb);
 
+
+		// 5. Bind the buffers of this geometry descriptor.
 		auto vkDesc = static_cast<VulkanGeometryDescriptor*>(desc.get());
 		vkDesc->bindBuffers(cb);
-		// (indexCount, instanceCount=1, firstIndex=0, vertexOffset=0, firstInstance=0).
-		// instanceCount must be ≥ 1 — passing 0 silently produces zero draws.
-		vkCmdDrawIndexed(cb, vkDesc->getIndexCount(), 1, 0, 0, 0);
 
-		return true;
+		// 6. Draw.
+		// (indexCount, instanceCount=1, firstIndex=0, vertexOffset=0, firstInstance=0).
+		vkCmdDrawIndexed(cb, vkDesc->getIndexCount(), 1, 0, 0, 0);
 	}
-	bool VulkanRendererAPI::submitQueue() {
+	
+	void VulkanRendererAPI::submitQueue() {
 		auto ctx = static_cast<VulkanDeviceContext*>(Application::get().getWindow().getContext());
+		
+		// 1. Submit the command queue. The wait semaphore make the GPU wait until the presentation engine
+		// is done with the previous image. The waitDstStageMask value implies that this waiting is needed
+		// by the color attachment stage. Also a signal semaphore is given to signal when the rendering is done.
 		VkPipelineStageFlags waitStages = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
 		VkSubmitInfo submitInfo{
 			.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
@@ -292,6 +330,8 @@ namespace cbk::platform::vk {
 			.pSignalSemaphores = &m_RenderCompleteSemaphores[m_ImageIndex],
 		};
 		VK_CHECK(vkQueueSubmit(ctx->getDeviceQueue(), 1, &submitInfo, m_Fences[m_FrameIndex]));
+
+		// 2. Update frame index and present. It waits until the render complete semaphore is signaled.
 		m_FrameIndex = (m_FrameIndex + 1) % k_MaxFramesInFlight;
 		VkPresentInfoKHR presentInfo{ .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
 			                          .waitSemaphoreCount = 1,
@@ -301,17 +341,13 @@ namespace cbk::platform::vk {
 			                          .pImageIndices = &m_ImageIndex };
 		VkResult vkResult = vkQueuePresentKHR(ctx->getDeviceQueue(), &presentInfo);
 		// SUBOPTIMAL still presented the frame; OUT_OF_DATE did not. Both mean the
-		// swapchain no longer matches the surface — flag it for recreation and let
-		// endFrame() run the update block (returning false would skip it).
+		// swapchain no longer matches the surface — flag it for recreation.
 		if (vkResult == VK_SUBOPTIMAL_KHR || vkResult == VK_ERROR_OUT_OF_DATE_KHR) {
 			m_UpdateSwapchain = true;
-			return true;
+			return;
 		}
-		if (vkResult != VK_SUCCESS) {
+		if (vkResult != VK_SUCCESS)
 			CBK_CORE_ERROR("VulkanRendererAPI::draw(): error presenting queue ({})", static_cast<int>(vkResult));
-			return false;
-		}
-		return true;
 	}
 
 	RendererAPI::API VulkanRendererAPI::getAPI() {

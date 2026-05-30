@@ -42,9 +42,9 @@ namespace cbk::platform::vk {
 		void createCommandPool(VulkanDeviceContext* ctx);
 
 		bool syncAndAcquire();
-		bool commitRenderCommands(const Ref<rendering::Material>& material, const Ref<rendering::GeometryDescriptor>& vertexArray,
+		void commitRenderCommands(const Ref<rendering::Material>& material, const Ref<rendering::GeometryDescriptor>& vertexArray,
 		                          const math::Mat4& transform);
-		bool submitQueue();
+		void submitQueue();
 
 		void updateSwapchain(VulkanDeviceContext* ctx);
 	};

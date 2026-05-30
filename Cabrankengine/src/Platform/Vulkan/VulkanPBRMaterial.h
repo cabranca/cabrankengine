@@ -30,7 +30,7 @@ namespace cbk::platform::vk {
 		[[nodiscard]] bool wantsLightSSBO() const override {
 			return true;
 		}
-		void recordCommandBuffer(VkCommandBuffer cb, VkPipelineLayout layout) const override;
+		void recordCommandBuffer(VkCommandBuffer cb) const override;
 
 		// Per-class pipeline state cleanup. Called by VulkanRendererAPI::shutdown().
 		static void destroySharedResources();

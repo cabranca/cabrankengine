@@ -22,7 +22,7 @@ namespace cbk::platform::vk {
 
 		// Records material-specific commands (fragment push constants, dirty descriptor writes).
 		// Called by VulkanRendererAPI after pipeline + descriptor set bind, before vkCmdDrawIndexed.
-		virtual void recordCommandBuffer(VkCommandBuffer cb, VkPipelineLayout layout) const = 0;
+		virtual void recordCommandBuffer(VkCommandBuffer cb) const = 0;
 
 		// Override to true on materials whose pipeline layout includes set 2 = point
 		// light SSBO (currently just PBR). VulkanRendererAPI gates the set 2 bind on

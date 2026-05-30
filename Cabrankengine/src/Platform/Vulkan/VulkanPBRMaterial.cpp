@@ -45,13 +45,12 @@ namespace cbk::platform::vk {
 		// Descriptor set is freed when s_DescriptorPool is destroyed.
 	}
 
-	void VulkanPBRMaterial::recordCommandBuffer(VkCommandBuffer cb, VkPipelineLayout layout) const {
+	void VulkanPBRMaterial::recordCommandBuffer(VkCommandBuffer cb) const {
 		if (m_DescriptorDirty)
 			updateDescriptorSet();
 
 		PushData pushData{ .albedoColor = m_AlbedoColor, .metalness = m_Metalness, .roughness = m_Roughness };
-		// stageFlags must cover every stage of the overlapping range in the pipeline layout (VS|FS).
-		vkCmdPushConstants(cb, layout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(math::Mat4),
+		vkCmdPushConstants(cb, s_PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(math::Mat4),
 		                   sizeof(PushData), &pushData);
 	}
 

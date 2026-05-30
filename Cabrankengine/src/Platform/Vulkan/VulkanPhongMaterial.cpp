@@ -44,19 +44,19 @@ namespace cbk::platform::vk {
 		// Descriptor set is freed when s_DescriptorPool is destroyed.
 	}
 
-	void VulkanPhongMaterial::recordCommandBuffer(VkCommandBuffer cb, VkPipelineLayout layout) const {
+	void VulkanPhongMaterial::recordCommandBuffer(VkCommandBuffer cb) const {
 		if (m_DescriptorDirty)
 			updateDescriptorSet();
 
 		PushData pushData{ .shininess = m_Shininess };
-		// stageFlags must cover every stage of the overlapping range in the pipeline layout (VS|FS).
-		vkCmdPushConstants(cb, layout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(math::Mat4),
+		vkCmdPushConstants(cb, s_PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(math::Mat4),
 		                   sizeof(PushData), &pushData);
 	}
 
 	void VulkanPhongMaterial::updateDescriptorSet() const {
 		auto ctx = static_cast<VulkanDeviceContext*>(Application::get().getWindow().getContext());
 
+		// 1. Get the textures' descriptorsImageInfo
 		if (!m_DiffuseMap || !m_SpecularMap) {
 			// Defer descriptor write until both texture slots are populated.
 			return;
@@ -70,6 +70,7 @@ namespace cbk::platform::vk {
 			*specularVk->getDescriptor(),
 		};
 
+		// 2. Update the descriptor sets writing them.
 		std::array<VkWriteDescriptorSet, 2> writes{};
 		for (uint32_t i = 0; i < 2; ++i) {
 			writes[i] = VkWriteDescriptorSet{

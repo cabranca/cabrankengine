@@ -64,7 +64,7 @@ namespace cbk::platform::vk {
 		m_DescriptorDirty    = true;
 	}
 
-	void VulkanTextMaterial::recordCommandBuffer(VkCommandBuffer /*cb*/, VkPipelineLayout /*layout*/) const {
+	void VulkanTextMaterial::recordCommandBuffer(VkCommandBuffer /*cb*/) const {
 		if (m_DescriptorDirty)
 			updateDescriptorSet();
 	}

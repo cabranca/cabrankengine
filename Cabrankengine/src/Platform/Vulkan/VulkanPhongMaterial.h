@@ -25,7 +25,7 @@ namespace cbk::platform::vk {
 		[[nodiscard]] const VkDescriptorSet* getDescriptorSet() const override {
 			return &m_DescriptorSet;
 		}
-		void recordCommandBuffer(VkCommandBuffer cb, VkPipelineLayout layout) const override;
+		void recordCommandBuffer(VkCommandBuffer cb) const override;
 
 		// Per-class pipeline state cleanup. Called by VulkanRendererAPI::shutdown().
 		static void destroySharedResources();
