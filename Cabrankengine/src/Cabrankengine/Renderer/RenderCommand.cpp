@@ -6,7 +6,7 @@
 
 namespace cbk::rendering {
 
-	Scope<RendererAPI> RenderCommand::s_RendererAPI = std::make_unique<platform::opengl::OpenGLRendererAPI>();
+	Scope<RendererAPI> RenderCommand::s_RendererAPI = createScope<platform::opengl::OpenGLRendererAPI>();
 }
 #endif
 
@@ -15,7 +15,7 @@ namespace cbk::rendering {
 
 namespace cbk::rendering {
 
-	Scope<RendererAPI> RenderCommand::s_RendererAPI = std::make_unique<platform::metal::MetalRendererAPI>();
+	Scope<RendererAPI> RenderCommand::s_RendererAPI = createScope<platform::metal::MetalRendererAPI>();
 }
 #endif
 
@@ -24,7 +24,7 @@ namespace cbk::rendering {
 
 namespace cbk::rendering {
 
-	Scope<RendererAPI> RenderCommand::s_RendererAPI = std::make_unique<platform::vk::VulkanRendererAPI>();
+	Scope<RendererAPI> RenderCommand::s_RendererAPI = createScope<platform::vk::VulkanRendererAPI>();
 }
 #endif
 

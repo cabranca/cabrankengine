@@ -18,43 +18,35 @@ using namespace cbk::scene::arch;
 
 class ExampleLayer : public Layer {
   public:
-	ExampleLayer() : Layer("Example"), m_CameraController(PerspectiveCamera(PI / 4.f, 16.f / 9.f, 0.1f, 100.f)) {
-		m_ShaderLibrary.load("assets/shaders/Triangle");
+	ExampleLayer() : Layer("Example") {
+		auto* reg = Application::get().getRegistry();
 
-		// --- Vertex data: position (Float3) + color (Float4) ---
-		float vertices[] = {
-			// x      y      z       r     g     b     a
-			-0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, // bottom-left  (red)
-			0.5f,  -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, // bottom-right (green)
-			0.0f,  0.5f,  0.0f, 0.0f, 0.0f, 1.0f, 1.0f, // top-center   (blue)
-		};
+		// Sponza is authored in centimeters — scale down to meters
+		PBRModelArch sponza{ "assets/models/sponza/Sponza.cbkm" };
+		PBRModelArch curtains{ "assets/models/sponza_curtains/Curtains.cbkm" };
 
-		auto vb = VertexBuffer::create(vertices, sizeof(vertices));
-		vb->setLayout({ { ShaderDataType::Float3, "a_Position" }, { ShaderDataType::Float4, "a_Color" } });
+		// Start camera inside the main hall, looking down the corridor
+		CameraControllerArch camera(ProjectionType::Perspective);
+		camera.transform().Position = { 0.f, 1.8f, 0.f };
+		camera.camera().Far = 200.f;   // Sponza is deep; default 100 clips it
+		camera.controller().FreeFlight = true; // fly freely along the look direction
 
-		uint32_t indices[] = { 0, 1, 2 };
-		auto ib = IndexBuffer::create(indices, 3);
-
-		m_VertexArray = VertexArray::create();
-		m_VertexArray->addVertexBuffer(vb);
-		m_VertexArray->setIndexBuffer(ib);
+		// Key light — created manually so onImGuiRender can edit it
+		m_SunEntity = reg->createEntity();
+		reg->addComponent<CDirectionalLight>(m_SunEntity,
+		                                     CDirectionalLight{ .Direction = { 1.f, -1.2f, 0.f }, .Radiance = { 4.f, 3.7f, 3.1f } });
 	}
 
 	void onUpdate(Timestep delta) override {
-		RenderCommand::setClearColor({ 0.1f, 0.1f, 0.1f, 1.f });
-		RenderCommand::clear();
-
-		auto shader = m_ShaderLibrary.get("Triangle");
-		Renderer::submit(shader, m_VertexArray, identityMat());
-		Renderer::endScene();
 	}
 
 	void onImGuiRender() override {}
 
   private:
-	CameraController m_CameraController;
-	ShaderLibrary m_ShaderLibrary;
-	Ref<VertexArray> m_VertexArray;
+  Entity m_SunEntity = INVALID_ENTITY;
+	Entity m_RimEntity = INVALID_ENTITY;
+	float m_Time = 0.f;
+	bool m_AnimateSun = true;
 };
 #endif
 

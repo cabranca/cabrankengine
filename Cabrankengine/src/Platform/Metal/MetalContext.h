@@ -21,11 +21,12 @@ namespace cbk::platform::metal {
 		~MetalContext();
 
 		// Initializes the graphics context.
-		virtual void init() override;
+		void init() override;
+		void shutdown() override;
 
 		// Buffer swapping is the process of presenting the rendered image to the screen
 		// while also preparing the next frame for rendering.
-		virtual void swapBuffers() override;
+		void swapBuffers() override;
 
 		MTL::Device* getDevice() const { return m_Device; }
         MTL::CommandQueue* getCommandQueue() const { return m_CommandQueue; }

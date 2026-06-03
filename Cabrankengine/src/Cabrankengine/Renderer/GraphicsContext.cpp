@@ -1,12 +1,13 @@
 #include <pch.h>
 #include "GraphicsContext.h"
 
-#ifdef CBK_RENDERER_METAL
-	#include <Platform/Metal/MetalContext.h>
-#endif
 
 #ifdef CBK_RENDERER_OPENGL
-	#include <Platform/OpenGL/OpenGLContext.h>
+#include <Platform/OpenGL/OpenGLContext.h>
+#endif
+
+#ifdef CBK_RENDERER_METAL
+	#include <Platform/Metal/MetalContext.h>
 #endif
 
 #ifdef CBK_RENDERER_VULKAN

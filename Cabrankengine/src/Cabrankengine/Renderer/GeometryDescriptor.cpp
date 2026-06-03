@@ -5,9 +5,14 @@
 #include <Platform/OpenGL/OpenGLVertexArray.h>
 #endif
 
+#ifdef CBK_RENDERER_METAL
+#include <Platform/Metal/MetalGeometryDescriptor.h>
+#endif
+
 #ifdef CBK_RENDERER_VULKAN
 #include <Platform/Vulkan/VulkanGeometryDescriptor.h>
 #endif
+
 
 namespace cbk::rendering {
 
@@ -16,7 +21,7 @@ namespace cbk::rendering {
 #ifdef CBK_RENDERER_OPENGL
 		return createScope<platform::opengl::OpenGLVertexArray>(vertexData, vertexDataSize, indexData, indexDataSize, layout);
 #elif defined(CBK_RENDERER_METAL)
-		return nullptr; // TODO
+		return createScope<platform::metal::MetalGeometryDescriptor>(vertexData, vertexDataSize, indexData, indexDataSize, layout);
 #elif defined(CBK_RENDERER_VULKAN)
 		return createScope<platform::vk::VulkanGeometryDescriptor>(vertexData, vertexDataSize, indexData, indexDataSize, layout);
 #else
@@ -30,7 +35,7 @@ namespace cbk::rendering {
 #ifdef CBK_RENDERER_OPENGL
 		return createScope<platform::opengl::OpenGLVertexArray>(vertexDataSize, indexData, indexDataSize, layout);
 #elif defined(CBK_RENDERER_METAL)
-		return nullptr; // TODO
+		return createScope<platform::metal::MetalGeometryDescriptor>(vertexDataSize, indexData, indexDataSize, layout);
 #elif defined(CBK_RENDERER_VULKAN)
 		return createScope<platform::vk::VulkanGeometryDescriptor>(vertexDataSize, indexData, indexDataSize, layout);
 #else

@@ -19,8 +19,8 @@ namespace cbk {
 		CBK_CORE_ERROR("GLFW Error ({0}): {1}", error, description);
 	}
 
-	Window* Window::create(const WindowProps& props) {
-		return new MacOSWindow(props);
+	Scope<Window> Window::create(const WindowProps& props) {
+		return createScope<MacOSWindow>(props);
 	}
 
 	MacOSWindow::MacOSWindow(const WindowProps& props) {
@@ -49,7 +49,7 @@ namespace cbk {
 	}
 
 	rendering::GraphicsContext* MacOSWindow::getContext() const {
-		return m_Context;
+		return m_Context.get();
 	}
 
 	void MacOSWindow::init(const WindowProps& props) {
@@ -69,7 +69,7 @@ namespace cbk {
 
 		m_Window = glfwCreateWindow(props.Width, props.Height, m_Data.Title.c_str(), nullptr, nullptr);
 
-		m_Context = new platform::metal::MetalContext(m_Window);
+		m_Context = rendering::GraphicsContext::create(m_Window);
 		m_Context->init();
 
 		glfwSetWindowUserPointer(m_Window, &m_Data);

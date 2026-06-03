@@ -136,4 +136,4 @@ project("Cabrankengine")
 		optimize("on")
 
 	filter("files:**.mm")
-	flags({ "NoPCH" })
+		enablepch("off")

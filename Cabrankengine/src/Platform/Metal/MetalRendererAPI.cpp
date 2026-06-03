@@ -8,8 +8,7 @@
 #include <Metal/Metal.hpp>
 #include <QuartzCore/QuartzCore.hpp>
 
-#include <Cabrankengine/Renderer/VertexArray.h>
-#include <Cabrankengine/Renderer/Buffer.h>
+#include <Cabrankengine/Renderer/GeometryDescriptor.h>
 
 #include "MetalVertexArray.h"
 #include "MetalBuffer.h"
@@ -20,6 +19,10 @@ namespace cbk::platform::metal {
 	using namespace rendering;
 
 	void MetalRendererAPI::init() {}
+
+	void MetalRendererAPI::shutdown() {
+
+	}
 
 	void MetalRendererAPI::setClearColor(const math::Vector4& color) {
 		m_ClearColor = color;
@@ -65,48 +68,50 @@ namespace cbk::platform::metal {
 		s_ActiveEncoder->setScissorRect(scissor);
 	}
 
-	void MetalRendererAPI::draw(const Ref<VertexArray>& vertexArray) {}
+	void MetalRendererAPI::beginFrame() {}
 
-	void MetalRendererAPI::drawIndexed(const Ref<VertexArray>& vertexArray, uint32_t indexCount) {
+	void MetalRendererAPI::draw(const Ref<GeometryDescriptor>& desc) {}
+
+	void MetalRendererAPI::drawIndexed(const Ref<Material>& material, const Ref<GeometryDescriptor>& desc, const math::Mat4& transform, uint32_t indexCount) {
 		if (!s_ActiveEncoder || !s_CurrentShader)
 			return;
 
-		auto* metalVA = static_cast<MetalVertexArray*>(vertexArray.get());
+		// auto* metalVA = static_cast<MetalVertexArray*>(desc.get());
 
-		// Ensure PSO exists — creates it lazily with the vertex descriptor from the VertexArray
-		s_CurrentShader->ensurePipelineState(metalVA->getVertexDescriptor());
+		// // Ensure PSO exists — creates it lazily with the vertex descriptor from the GeometryDescriptor
+		// s_CurrentShader->ensurePipelineState(metalVA->getVertexDescriptor());
 
-		MTL::RenderPipelineState* pso = s_CurrentShader->getPipelineState();
-		if (!pso)
-			return;
+		// MTL::RenderPipelineState* pso = s_CurrentShader->getPipelineState();
+		// if (!pso)
+		// 	return;
 
-		s_ActiveEncoder->setRenderPipelineState(pso);
+		// s_ActiveEncoder->setRenderPipelineState(pso);
 
-		// Push pending uniform buffers onto the encoder (setMat4, setFloat4, etc.)
-		for (const auto& [bufferIndex, data] : s_CurrentShader->getPendingVertexBytes()) {
-			s_ActiveEncoder->setVertexBytes(data.data(), data.size(), bufferIndex);
-		}
+		// // Push pending uniform buffers onto the encoder (setMat4, setFloat4, etc.)
+		// for (const auto& [bufferIndex, data] : s_CurrentShader->getPendingVertexBytes()) {
+		// 	s_ActiveEncoder->setVertexBytes(data.data(), data.size(), bufferIndex);
+		// }
 
-		// Set vertex buffers on the encoder
-		const auto& vbs = metalVA->getVertexBuffers();
-		for (uint32_t i = 0; i < vbs.size(); i++) {
-			auto* metalVB = static_cast<MetalVertexBuffer*>(vbs[i].get());
-			s_ActiveEncoder->setVertexBuffer(metalVB->getBuffer(), 0, i);
-		}
+		// // Set vertex buffers on the encoder
+		// const auto& vbs = metalVA->getVertexBuffers();
+		// for (uint32_t i = 0; i < vbs.size(); i++) {
+		// 	auto* metalVB = static_cast<MetalVertexBuffer*>(vbs[i].get());
+		// 	s_ActiveEncoder->setVertexBuffer(metalVB->getBuffer(), 0, i);
+		// }
 
-		// Draw with index buffer
-		auto* metalIB = static_cast<MetalIndexBuffer*>(metalVA->getIndexBuffer().get());
-		uint32_t count = indexCount == 0 ? metalIB->getCount() : indexCount;
+		// // Draw with index buffer
+		// auto* metalIB = static_cast<MetalIndexBuffer*>(metalVA->getIndexBuffer().get());
+		// uint32_t count = indexCount == 0 ? metalIB->getCount() : indexCount;
 
-		s_ActiveEncoder->drawIndexedPrimitives(
-			MTL::PrimitiveTypeTriangle,
-			(NS::UInteger)count,
-			MTL::IndexTypeUInt32,
-			metalIB->getBuffer(),
-			(NS::UInteger)0
-		);
+		// s_ActiveEncoder->drawIndexedPrimitives(
+		// 	MTL::PrimitiveTypeTriangle,
+		// 	(NS::UInteger)count,
+		// 	MTL::IndexTypeUInt32,
+		// 	metalIB->getBuffer(),
+		// 	(NS::UInteger)0
+		// );
 	}
-
+	
 	void MetalRendererAPI::setViewport(uint32_t x, uint32_t y, uint32_t width, uint32_t height) {}
 
 	void MetalRendererAPI::SetCurrentShader(MetalShader* shader) {

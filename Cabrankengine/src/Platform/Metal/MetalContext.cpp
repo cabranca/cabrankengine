@@ -59,6 +59,10 @@ namespace cbk::platform::metal {
 		// ------------------------------------------------------------
 	}
 
+	void MetalContext::shutdown() {
+		
+	}
+
 	void MetalContext::swapBuffers() {
 		
 		// Liberamos el drawable del frame actual para que el próximo frame pida uno nuevo

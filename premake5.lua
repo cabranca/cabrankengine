@@ -1,6 +1,9 @@
 workspace("Cabrankengine")
-	architecture("x64")
 	startproject("Sandbox")
+
+	filter("system:windows or system:linux")
+		architecture("x64")
+	filter({})
 
 	configurations({ "Debug", "Release" })
 
