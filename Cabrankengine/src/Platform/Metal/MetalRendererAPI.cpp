@@ -1,27 +1,56 @@
 #include <pch.h>
 #include "MetalRendererAPI.h"
 
-#include <Cabrankengine/Core/Application.h>
-#include <Cabrankengine/Core/Window.h>
-#include "MetalContext.h"
+#include <objc/runtime.h>
+#define GLFW_EXPOSE_NATIVE_COCOA
+#include <GLFW/glfw3.h>
+#include <GLFW/glfw3native.h>
 
 #include <Metal/Metal.hpp>
 #include <QuartzCore/QuartzCore.hpp>
 
+#include <Cabrankengine/Core/Application.h>
+#include <Cabrankengine/Core/Window.h>
 #include <Cabrankengine/Renderer/GeometryDescriptor.h>
 
-#include "MetalVertexArray.h"
 #include "MetalBuffer.h"
+#include "MetalDeviceContext.h"
 #include "MetalShader.h"
+#include "MetalVertexArray.h"
 
 namespace cbk::platform::metal {
 
 	using namespace rendering;
 
-	void MetalRendererAPI::init() {}
+	void MetalRendererAPI::init() {
+		auto& window = Application::get().getWindow();
+		auto glfwWindow = static_cast<GLFWwindow*>(window.getNativeWindow());
+
+		// Investigate more on the connection between Metal and GLFW
+		// --- MAGIA para conectar GLFW con Metal-cpp sin usar .mm ---
+		// 1. Obtener la NSWindow (void*)
+		void* nswindow = glfwGetCocoaWindow(glfwWindow);
+
+		// 2. Obtener la contentView: [nswindow contentView]
+		// Usamos objc_msgSend para llamar métodos de ObjC desde C++
+		void* contentView = ((void* (*)(id, SEL))objc_msgSend)((id)nswindow, sel_registerName("contentView"));
+
+		// 3. Configurar el Layer
+		m_Swapchain = CA::MetalLayer::layer();
+		m_Swapchain->setDevice(static_cast<MetalDeviceContext*>(window.getContext())->getDevice());
+
+		// This shouldn't be hardcoded. Maybe better to ask capabilities as with Vulkan?
+		m_Swapchain->setPixelFormat(MTL::PixelFormatBGRA8Unorm);
+
+		// 4. Asignar el layer: [view setLayer:layer] y [view setWantsLayer:YES]
+		((void (*)(id, SEL, void*))objc_msgSend)((id)contentView, sel_registerName("setLayer:"), (void*)m_Swapchain);
+		((void (*)(id, SEL, BOOL))objc_msgSend)((id)contentView, sel_registerName("setWantsLayer:"), YES);
+		// ------------------------------------------------------------
+	}
 
 	void MetalRendererAPI::shutdown() {
-
+		if (m_Swapchain)
+			m_Swapchain->release();
 	}
 
 	void MetalRendererAPI::setClearColor(const math::Vector4& color) {
@@ -30,19 +59,14 @@ namespace cbk::platform::metal {
 
 	void MetalRendererAPI::clear() {
 		const auto& window = Application::get().getWindow();
-		MetalContext* context = static_cast<MetalContext*>(window.getContext());
+		MetalDeviceContext* context = static_cast<MetalDeviceContext*>(window.getContext());
 
 		MTL::CommandQueue* queue = context->getCommandQueue();
-		CA::MetalDrawable* drawable = context->getCurrentDrawable();
-
-		if (!drawable)
-			return;
-
 		m_ActiveCommandBuffer = queue->commandBuffer();
 
 		MTL::RenderPassDescriptor* pass = MTL::RenderPassDescriptor::renderPassDescriptor();
 		auto colorAtt = pass->colorAttachments()->object(0);
-		colorAtt->setTexture(drawable->texture());
+		colorAtt->setTexture(m_CurrentDrawable->texture());
 		colorAtt->setLoadAction(MTL::LoadActionClear);
 		colorAtt->setClearColor(MTL::ClearColor::Make(m_ClearColor[0], m_ClearColor[1], m_ClearColor[2], m_ClearColor[3]));
 		colorAtt->setStoreAction(MTL::StoreActionStore);
@@ -54,8 +78,8 @@ namespace cbk::platform::metal {
 		MTL::Viewport viewport;
 		viewport.originX = 0.0;
 		viewport.originY = 0.0;
-		viewport.width = (double)drawable->texture()->width();
-		viewport.height = (double)drawable->texture()->height();
+		viewport.width = (double)m_CurrentDrawable->texture()->width();
+		viewport.height = (double)m_CurrentDrawable->texture()->height();
 		viewport.znear = 0.0;
 		viewport.zfar = 1.0;
 		s_ActiveEncoder->setViewport(viewport);
@@ -63,8 +87,8 @@ namespace cbk::platform::metal {
 		MTL::ScissorRect scissor;
 		scissor.x = 0;
 		scissor.y = 0;
-		scissor.width = drawable->texture()->width();
-		scissor.height = drawable->texture()->height();
+		scissor.width = m_CurrentDrawable->texture()->width();
+		scissor.height = m_CurrentDrawable->texture()->height();
 		s_ActiveEncoder->setScissorRect(scissor);
 	}
 
@@ -72,7 +96,8 @@ namespace cbk::platform::metal {
 
 	void MetalRendererAPI::draw(const Ref<GeometryDescriptor>& desc) {}
 
-	void MetalRendererAPI::drawIndexed(const Ref<Material>& material, const Ref<GeometryDescriptor>& desc, const math::Mat4& transform, uint32_t indexCount) {
+	void MetalRendererAPI::drawIndexed(const Ref<Material>& material, const Ref<GeometryDescriptor>& desc, const math::Mat4& transform,
+	                                   uint32_t indexCount) {
 		if (!s_ActiveEncoder || !s_CurrentShader)
 			return;
 
@@ -111,7 +136,7 @@ namespace cbk::platform::metal {
 		// 	(NS::UInteger)0
 		// );
 	}
-	
+
 	void MetalRendererAPI::setViewport(uint32_t x, uint32_t y, uint32_t width, uint32_t height) {}
 
 	void MetalRendererAPI::SetCurrentShader(MetalShader* shader) {
@@ -125,14 +150,23 @@ namespace cbk::platform::metal {
 			s_ActiveEncoder = nullptr;
 		}
 
-		if (m_ActiveCommandBuffer) {
-			MetalContext* context = static_cast<MetalContext*>(Application::get().getWindow().getContext());
-			CA::MetalDrawable* drawable = context->getCurrentDrawable();
+		// Check if this is needed.
+		if (m_CurrentDrawable) {
+			m_CurrentDrawable->release();
+			m_CurrentDrawable = nullptr;
+		}
 
-			m_ActiveCommandBuffer->presentDrawable(drawable);
+		if (m_ActiveCommandBuffer) {
+			m_CurrentDrawable = m_Swapchain->nextDrawable();
+
+			m_ActiveCommandBuffer->presentDrawable(m_CurrentDrawable);
 			m_ActiveCommandBuffer->commit();
 			m_ActiveCommandBuffer->release();
 			m_ActiveCommandBuffer = nullptr;
 		}
+	}
+
+	MTL::RenderCommandEncoder* MetalRendererAPI::GetActiveEncoder() {
+		return s_ActiveEncoder;
 	}
 } // namespace cbk::platform::metal

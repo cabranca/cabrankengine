@@ -8,81 +8,80 @@
 #include <Platform/OpenGL/OpenGLContext.h>
 
 namespace cbk {
-    static bool s_GLFWInitialized = false;
+	static bool s_GLFWInitialized = false;
 
-    static void GLFWErrorCallback(int error, const char* description) {
+	static void GLFWErrorCallback(int error, const char* description) {
 		CBK_CORE_ERROR("GLFW Error ({0}): {1}", error, description);
 	}
 
-    Scope<Window> Window::create(const WindowProps& props) {
-        return createScope<LinuxWindow>(props);
-    }
+	Scope<Window> Window::create(const WindowProps& props) {
+		return createScope<LinuxWindow>(props);
+	}
 
-    LinuxWindow::LinuxWindow(const WindowProps& props) {
-        init(props);
-    }
+	LinuxWindow::LinuxWindow(const WindowProps& props) {
+		init(props);
+	}
 
-    LinuxWindow::~LinuxWindow() {
-        shutdown();
-    }
+	LinuxWindow::~LinuxWindow() {
+		shutdown();
+	}
 
-    void LinuxWindow::onUpdate() {
-        glfwPollEvents();
-        m_Context->swapBuffers();
-    }
+	void LinuxWindow::onUpdate() {
+		glfwPollEvents();
+	}
 
-    void LinuxWindow::setVSync(bool enabled) {
+	void LinuxWindow::setVSync(bool enabled) {
 #if defined(CBK_RENDERER_OPENGL) && !defined(__EMSCRIPTEN__)
-        // The browser drives presentation through requestAnimationFrame, so swap
-        // intervals are meaningless on web. Worse, GLFW's emscripten compat layer
-        // routes glfwSwapInterval through emscripten_set_main_loop_timing, which
-        // warns if the main loop has not yet been registered (we register it in
-        // Application::Run, after Window construction).
-        if (enabled)
-            glfwSwapInterval(1);
-        else
-            glfwSwapInterval(0);
+		// The browser drives presentation through requestAnimationFrame, so swap
+		// intervals are meaningless on web. Worse, GLFW's emscripten compat layer
+		// routes glfwSwapInterval through emscripten_set_main_loop_timing, which
+		// warns if the main loop has not yet been registered (we register it in
+		// Application::Run, after Window construction).
+		if (enabled)
+			glfwSwapInterval(1);
+		else
+			glfwSwapInterval(0);
 #endif
-        // Vulkan: vsync is the swapchain present mode (FIFO_KHR), not a GLFW knob.
-        m_Data.VSync = enabled;
-    }
+		// Vulkan: vsync is the swapchain present mode (FIFO_KHR), not a GLFW knob.
+		m_Data.VSync = enabled;
+	}
 
-    bool LinuxWindow::isVSync() const {
-        return m_Data.VSync;
-    }
+	bool LinuxWindow::isVSync() const {
+		return m_Data.VSync;
+	}
 
 	rendering::GraphicsContext* LinuxWindow::getContext() const {
-        return m_Context.get();
-    }
+		return m_Context.get();
+	}
 
 	void LinuxWindow::init(const WindowProps& props) {
 		m_Data.Title = props.Title;
-        m_Data.Width = props.Width;
-        m_Data.Height = props.Height;
+		m_Data.Width = props.Width;
+		m_Data.Height = props.Height;
 
-        CBK_CORE_INFO("Creating window {0} ({1}, {2})", props.Title, props.Width, props.Height);
+		CBK_CORE_INFO("Creating window {0} ({1}, {2})", props.Title, props.Width, props.Height);
 
-        if (!s_GLFWInitialized) {
-            int success = glfwInit();
-            CBK_CORE_ASSERT(success, "Could not initialize GLFW!");
-            glfwSetErrorCallback(GLFWErrorCallback);
-            s_GLFWInitialized = true;
-        }
+		if (!s_GLFWInitialized) {
+			int success = glfwInit();
+			CBK_CORE_ASSERT(success, "Could not initialize GLFW!");
+			glfwSetErrorCallback(GLFWErrorCallback);
+			s_GLFWInitialized = true;
+		}
 
 #ifdef CBK_RENDERER_VULKAN
-        // Vulkan owns the surface, so GLFW must not create an OpenGL context.
-        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+		// Vulkan owns the surface, so GLFW must not create an OpenGL context.
+		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 #endif
 
-        m_Window = glfwCreateWindow(props.Width, props.Height, m_Data.Title.c_str(), nullptr, nullptr);
-        
-        m_Context = rendering::GraphicsContext::create(m_Window);
+		m_Window = glfwCreateWindow(props.Width, props.Height, m_Data.Title.c_str(), nullptr, nullptr);
+
+		m_Context = rendering::GraphicsContext::create();
 		m_Context->init();
 
-        glfwSetWindowUserPointer(m_Window, &m_Data);
-        setVSync(true);
+		glfwSetWindowUserPointer(m_Window, &m_Data);
+		setVSync(true);
 
-        // Set GLFW callbacks
+		// Set GLFW callbacks
 		glfwSetWindowSizeCallback(m_Window, [](GLFWwindow* window, int width, int height) {
 			WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
 			WindowResizeEvent event(width, height);
@@ -125,22 +124,23 @@ namespace cbk {
 			data.EventCallback(event);
 		});
 
-		glfwSetMouseButtonCallback(m_Window, [](GLFWwindow* window, int button, int action, int mods) { // TODO: find out the use of action and mods.
-			WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
-			
-			switch (action) {
-				case GLFW_PRESS: {
-					MouseButtonPressedEvent event(button);
-					data.EventCallback(event);
-					break;
-				}
-				case GLFW_RELEASE: {
-					MouseButtonReleasedEvent event(button);
-					data.EventCallback(event);
-					break;
-				}
-			}
-		});
+		glfwSetMouseButtonCallback(m_Window,
+		                           [](GLFWwindow* window, int button, int action, int mods) { // TODO: find out the use of action and mods.
+			                           WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+
+			                           switch (action) {
+				                           case GLFW_PRESS: {
+					                           MouseButtonPressedEvent event(button);
+					                           data.EventCallback(event);
+					                           break;
+				                           }
+				                           case GLFW_RELEASE: {
+					                           MouseButtonReleasedEvent event(button);
+					                           data.EventCallback(event);
+					                           break;
+				                           }
+			                           }
+		                           });
 
 		glfwSetScrollCallback(m_Window, [](GLFWwindow* window, double xOffset, double yOffset) {
 			WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
@@ -156,11 +156,11 @@ namespace cbk {
 	}
 
 	void LinuxWindow::shutdown() {
-        // Tear down the graphics backend (Vulkan device/allocator/instance, or no-op
-        // for OpenGL) before the surface/window goes away.
-        if (m_Context)
-            m_Context->shutdown();
-        glfwDestroyWindow(m_Window);
-    }
+		// Tear down the graphics backend (Vulkan device/allocator/instance, or no-op
+		// for OpenGL) before the surface/window goes away.
+		if (m_Context)
+			m_Context->shutdown();
+		glfwDestroyWindow(m_Window);
+	}
 
-}
+} // namespace cbk

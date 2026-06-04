@@ -7,7 +7,7 @@
 #include <Cabrankengine/Core/Application.h>
 #include <Cabrankengine/Core/Window.h>
 #include <Common/Math/MatrixFactory.h>
-#include <Platform/Metal/MetalContext.h>
+#include <Platform/Metal/MetalDeviceContext.h>
 #include <Platform/Metal/MetalRendererAPI.h>
 
 namespace cbk::platform::metal {
@@ -63,7 +63,7 @@ namespace cbk::platform::metal {
 	uint32_t MetalShader::getBufferIndex(const std::string& name) const {
 		static const std::unordered_map<std::string, uint32_t> s_NameToIndex = {
 			{ "u_ViewProjection", 30 },
-			{ "u_Model",          31 },
+			{ "u_Model", 31 },
 		};
 
 		auto it = s_NameToIndex.find(name);
@@ -146,7 +146,7 @@ namespace cbk::platform::metal {
 	void MetalShader::compileLibrary(const std::string& source) {
 		// 1. Obtener Device
 		const auto& window = Application::get().getWindow();
-		MetalContext* context = static_cast<MetalContext*>(window.getContext());
+		MetalDeviceContext* context = static_cast<MetalDeviceContext*>(window.getContext());
 		MTL::Device* device = context->getDevice();
 
 		NS::Error* error = nullptr;
@@ -174,20 +174,21 @@ namespace cbk::platform::metal {
 	}
 
 	void MetalShader::ensurePipelineState(MTL::VertexDescriptor* vertexDescriptor) {
-		if (m_PipelineState) return; // already created (simplistic, improve later)
+		if (m_PipelineState)
+			return; // already created (simplistic, improve later)
 
-		auto* context = static_cast<MetalContext*>(Application::get().getWindow().getContext());
+		auto* context = static_cast<MetalDeviceContext*>(Application::get().getWindow().getContext());
 		MTL::Device* device = context->getDevice();
 
 		MTL::RenderPipelineDescriptor* desc = MTL::RenderPipelineDescriptor::alloc()->init();
 		desc->setVertexFunction(m_VertexFunction);
 		desc->setFragmentFunction(m_FragmentFunction);
-		desc->setVertexDescriptor(vertexDescriptor);  // <-- from the vertex array!
+		desc->setVertexDescriptor(vertexDescriptor); // <-- from the vertex array!
 		desc->colorAttachments()->object(0)->setPixelFormat(MTL::PixelFormatBGRA8Unorm);
 
 		NS::Error* error = nullptr;
 		m_PipelineState = device->newRenderPipelineState(desc, &error);
-		
+
 		if (!m_PipelineState)
 			CBK_CORE_ERROR("Error pipeline: {}", error->localizedDescription()->utf8String());
 

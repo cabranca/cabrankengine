@@ -2,7 +2,10 @@
 #include "OpenGLRendererAPI.h"
 
 #include <glad/glad.h>
+#include <GLFW/glfw3.h>
 
+#include <Cabrankengine/Core/Application.h>
+#include <Cabrankengine/Core/Window.h>
 #include <Cabrankengine/Renderer/Materials/Material.h>
 
 #include "OpenGLContext.h"
@@ -35,8 +38,7 @@ namespace cbk::platform::opengl {
 
 	void OpenGLRendererAPI::beginFrame() {}
 
-	void OpenGLRendererAPI::draw(const Ref<GeometryDescriptor>& desc)
-	{
+	void OpenGLRendererAPI::draw(const Ref<GeometryDescriptor>& desc) {
 		auto vao = static_cast<OpenGLVertexArray*>(desc.get());
 		vao->bind();
 		glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -57,9 +59,12 @@ namespace cbk::platform::opengl {
 		// but keeping it here surfaces WebGL 2 errors (which has no debug callback) at a fixed
 		// cadence so they show up close to the frame that produced them.
 		checkGLError("endFrame");
+
+		auto glfwWindow = static_cast<GLFWwindow*>(Application::get().getWindow().getNativeWindow());
+		glfwSwapBuffers(glfwWindow);
 	}
 
 	void OpenGLRendererAPI::setViewport(uint32_t x, uint32_t y, uint32_t width, uint32_t height) {
 		glViewport(x, y, width, height);
 	}
-}
+} // namespace cbk::platform::opengl

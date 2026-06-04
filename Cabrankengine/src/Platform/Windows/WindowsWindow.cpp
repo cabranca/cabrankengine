@@ -7,11 +7,9 @@
 #include <Cabrankengine/Events/KeyEvent.h>
 #include <Cabrankengine/Events/MouseEvent.h>
 
-#include <Platform/OpenGL/OpenGLContext.h>
-
 namespace cbk {
 
-    using namespace rendering;
+	using namespace rendering;
 
 	static bool s_GLFWInitialized = false;
 
@@ -22,7 +20,7 @@ namespace cbk {
 	Scope<Window> Window::create(const WindowProps& props) {
 		return createScope<WindowsWindow>(props);
 	}
-	
+
 	WindowsWindow::WindowsWindow(const WindowProps& props) {
 		CBK_PROFILE_FUNCTION();
 
@@ -37,7 +35,6 @@ namespace cbk {
 
 	void WindowsWindow::onUpdate() {
 		glfwPollEvents();
-		m_Context->swapBuffers();
 	}
 
 	void WindowsWindow::setVSync(bool enabled) {
@@ -55,7 +52,7 @@ namespace cbk {
 	}
 
 	rendering::GraphicsContext* WindowsWindow::getContext() const {
-		return m_Context;
+		return m_Context.get();
 	}
 
 	void WindowsWindow::init(const WindowProps& props) {
@@ -82,7 +79,7 @@ namespace cbk {
 			m_Window = glfwCreateWindow(props.Width, props.Height, m_Data.Title.c_str(), nullptr, nullptr);
 		}
 
-		m_Context = new platform::opengl::OpenGLContext(m_Window);
+		m_Context = GraphicsContext::create();
 		m_Context->init();
 
 		glfwSetWindowUserPointer(m_Window, &m_Data);
@@ -131,22 +128,23 @@ namespace cbk {
 			data.EventCallback(event);
 		});
 
-		glfwSetMouseButtonCallback(m_Window, [](GLFWwindow* window, int button, int action, int mods) { // TODO: find out the use of action and mods.
-			WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
-			
-			switch (action) {
-				case GLFW_PRESS: {
-					MouseButtonPressedEvent event(button);
-					data.EventCallback(event);
-					break;
-				}
-				case GLFW_RELEASE: {
-					MouseButtonReleasedEvent event(button);
-					data.EventCallback(event);
-					break;
-				}
-			}
-		});
+		glfwSetMouseButtonCallback(m_Window,
+		                           [](GLFWwindow* window, int button, int action, int mods) { // TODO: find out the use of action and mods.
+			                           WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
+
+			                           switch (action) {
+				                           case GLFW_PRESS: {
+					                           MouseButtonPressedEvent event(button);
+					                           data.EventCallback(event);
+					                           break;
+				                           }
+				                           case GLFW_RELEASE: {
+					                           MouseButtonReleasedEvent event(button);
+					                           data.EventCallback(event);
+					                           break;
+				                           }
+			                           }
+		                           });
 
 		glfwSetScrollCallback(m_Window, [](GLFWwindow* window, double xOffset, double yOffset) {
 			WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
@@ -170,4 +168,4 @@ namespace cbk {
 			m_Context->shutdown();
 		glfwDestroyWindow(m_Window);
 	}
-}
+} // namespace cbk

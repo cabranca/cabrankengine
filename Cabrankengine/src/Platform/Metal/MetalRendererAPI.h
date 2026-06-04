@@ -6,6 +6,10 @@ namespace MTL {
 	class RenderCommandEncoder;
 	class CommandBuffer;
 } // namespace MTL
+namespace CA {
+	class MetalLayer;
+	class MetalDrawable;
+} // namespace CA
 
 namespace cbk::platform::metal {
 
@@ -30,8 +34,8 @@ namespace cbk::platform::metal {
 		void draw(const Ref<rendering::GeometryDescriptor>& desc) override;
 
 		// Draws the indexed vertices from the vertex array.
-		void drawIndexed(const Ref<rendering::Material>& material, const Ref<rendering::GeometryDescriptor>& vertexArray, const math::Mat4& transform,
-			                         uint32_t indexCount = 0) override;
+		void drawIndexed(const Ref<rendering::Material>& material, const Ref<rendering::GeometryDescriptor>& vertexArray,
+		                 const math::Mat4& transform, uint32_t indexCount = 0) override;
 
 		void endFrame() override;
 
@@ -39,7 +43,7 @@ namespace cbk::platform::metal {
 		void setViewport(uint32_t x, uint32_t y, uint32_t width, uint32_t height) override;
 
 		// Returns the current rendering API.
-		static API getAPI() {
+		[[nodiscard]] static API getAPI() {
 			return API::Metal;
 		}
 
@@ -47,14 +51,17 @@ namespace cbk::platform::metal {
 		static void SetCurrentShader(MetalShader* shader);
 
 		// Returns the active render command encoder (used by textures to bind themselves).
-		static MTL::RenderCommandEncoder* GetActiveEncoder() { return s_ActiveEncoder; }
+		[[nodiscard]] static MTL::RenderCommandEncoder* GetActiveEncoder();
 
 	  private:
 		math::Vector4 m_ClearColor = { 0.f, 0.f, 0.f, 1.f };
 
 		// Per-frame state (static so other Metal subsystems can access them)
-        MTL::CommandBuffer* m_ActiveCommandBuffer = nullptr;
-        inline static MTL::RenderCommandEncoder* s_ActiveEncoder = nullptr;
+		MTL::CommandBuffer* m_ActiveCommandBuffer = nullptr;
+		inline static MTL::RenderCommandEncoder* s_ActiveEncoder = nullptr;
 		inline static MetalShader* s_CurrentShader = nullptr;
+
+		CA::MetalLayer* m_Swapchain;
+		CA::MetalDrawable* m_CurrentDrawable = nullptr;
 	};
 } // namespace cbk::platform::metal

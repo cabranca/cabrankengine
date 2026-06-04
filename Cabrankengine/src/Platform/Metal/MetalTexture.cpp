@@ -8,7 +8,7 @@
 
 #include <Cabrankengine/Core/Application.h>
 #include <Cabrankengine/Core/Window.h>
-#include "MetalContext.h"
+#include "MetalDeviceContext.h"
 #include "MetalRendererAPI.h"
 
 namespace cbk::platform::metal {
@@ -17,9 +17,12 @@ namespace cbk::platform::metal {
 
 	static MTL::PixelFormat imageFormatToMetalPixelFormat(ImageFormat format) {
 		switch (format) {
-			case ImageFormat::RGBA8: return MTL::PixelFormatRGBA8Unorm;
-			case ImageFormat::RGB8:  return MTL::PixelFormatRGBA8Unorm; // Metal has no RGB8; we use RGBA8 and pad
-			case ImageFormat::R8:    return MTL::PixelFormatR8Unorm;
+			case ImageFormat::RGBA8:
+				return MTL::PixelFormatRGBA8Unorm;
+			case ImageFormat::RGB8:
+				return MTL::PixelFormatRGBA8Unorm; // Metal has no RGB8; we use RGBA8 and pad
+			case ImageFormat::R8:
+				return MTL::PixelFormatR8Unorm;
 			default:
 				CBK_CORE_ASSERT(false, "Unsupported image format for Metal!");
 				return MTL::PixelFormatRGBA8Unorm;
@@ -28,15 +31,19 @@ namespace cbk::platform::metal {
 
 	static uint32_t bytesPerPixelForFormat(ImageFormat format) {
 		switch (format) {
-			case ImageFormat::RGBA8: return 4;
-			case ImageFormat::RGB8:  return 4; // We pad to RGBA
-			case ImageFormat::R8:    return 1;
-			default: return 4;
+			case ImageFormat::RGBA8:
+				return 4;
+			case ImageFormat::RGB8:
+				return 4; // We pad to RGBA
+			case ImageFormat::R8:
+				return 1;
+			default:
+				return 4;
 		}
 	}
 
 	void MetalTexture2D::createTexture(uint32_t width, uint32_t height, ImageFormat format) {
-		// auto* context = static_cast<MetalContext*>(Application::get().getWindow().getContext());
+		// auto* context = static_cast<MetalDeviceContext*>(Application::get().getWindow().getContext());
 		// MTL::Device* device = context->getDevice();
 
 		// MTL::TextureDescriptor* desc = MTL::TextureDescriptor::texture2DDescriptor(
@@ -52,7 +59,7 @@ namespace cbk::platform::metal {
 	}
 
 	MetalTexture2D::MetalTexture2D(const TextureSpecification& specification)
-		: m_Specification(specification), m_Width(specification.Width), m_Height(specification.Height) {
+	    : m_Specification(specification), m_Width(specification.Width), m_Height(specification.Height) {
 		// CBK_PROFILE_FUNCTION();
 
 		// m_BytesPerPixel = bytesPerPixelForFormat(specification.Format);
@@ -141,4 +148,4 @@ namespace cbk::platform::metal {
 		if (encoder && m_Texture)
 			encoder->setFragmentTexture(m_Texture, slot);
 	}
-}
+} // namespace cbk::platform::metal

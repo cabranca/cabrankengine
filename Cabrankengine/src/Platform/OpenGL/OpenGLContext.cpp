@@ -7,21 +7,18 @@
 namespace cbk::platform::opengl {
 
 #ifndef __EMSCRIPTEN__
-	static void GLAPIENTRY GLDebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
-	                                       GLsizei /*length*/, const GLchar* message, const void* /*userParam*/) {
+	static void GLAPIENTRY GLDebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei /*length*/,
+	                                       const GLchar* message, const void* /*userParam*/) {
 		// Notification-level spam is mostly buffer-bind chatter; skip it.
-		if (severity == GL_DEBUG_SEVERITY_NOTIFICATION) return;
-		const char* sev = severity == GL_DEBUG_SEVERITY_HIGH   ? "HIGH"
-		                : severity == GL_DEBUG_SEVERITY_MEDIUM ? "MED"
-		                : severity == GL_DEBUG_SEVERITY_LOW    ? "LOW"
-		                                                       : "NOTE";
+		if (severity == GL_DEBUG_SEVERITY_NOTIFICATION)
+			return;
+		const char* sev = severity == GL_DEBUG_SEVERITY_HIGH     ? "HIGH"
+		                  : severity == GL_DEBUG_SEVERITY_MEDIUM ? "MED"
+		                  : severity == GL_DEBUG_SEVERITY_LOW    ? "LOW"
+		                                                         : "NOTE";
 		CBK_CORE_ERROR("GL [{0}] src=0x{1:x} type=0x{2:x} id={3}: {4}", sev, source, type, id, message);
 	}
 #endif
-
-	OpenGLContext::OpenGLContext(GLFWwindow* windowHandle) : m_WindowHandle(windowHandle) {
-		CBK_CORE_ASSERT(m_WindowHandle, "Window handle is null!");
-	}
 
 	void OpenGLContext::init() {
 		CBK_PROFILE_FUNCTION();
@@ -52,19 +49,13 @@ namespace cbk::platform::opengl {
 	void checkGLError(const char* where) {
 		GLenum err;
 		while ((err = glGetError()) != GL_NO_ERROR) {
-			const char* name = err == GL_INVALID_ENUM                  ? "GL_INVALID_ENUM"
-			                 : err == GL_INVALID_VALUE                 ? "GL_INVALID_VALUE"
-			                 : err == GL_INVALID_OPERATION             ? "GL_INVALID_OPERATION"
-			                 : err == GL_INVALID_FRAMEBUFFER_OPERATION ? "GL_INVALID_FRAMEBUFFER_OPERATION"
-			                 : err == GL_OUT_OF_MEMORY                 ? "GL_OUT_OF_MEMORY"
-			                                                           : "unknown";
+			const char* name = err == GL_INVALID_ENUM                    ? "GL_INVALID_ENUM"
+			                   : err == GL_INVALID_VALUE                 ? "GL_INVALID_VALUE"
+			                   : err == GL_INVALID_OPERATION             ? "GL_INVALID_OPERATION"
+			                   : err == GL_INVALID_FRAMEBUFFER_OPERATION ? "GL_INVALID_FRAMEBUFFER_OPERATION"
+			                   : err == GL_OUT_OF_MEMORY                 ? "GL_OUT_OF_MEMORY"
+			                                                             : "unknown";
 			CBK_CORE_ERROR("GL error at {0}: {1} (0x{2:x})", where, name, err);
 		}
 	}
-
-	void OpenGLContext::swapBuffers() {
-		CBK_PROFILE_FUNCTION();
-
-		glfwSwapBuffers(m_WindowHandle);
-	}
-}
+} // namespace cbk::platform::opengl

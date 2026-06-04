@@ -10,8 +10,6 @@
 #include <Cabrankengine/Events/ApplicationEvent.h>
 #include <Cabrankengine/Events/KeyEvent.h>
 
-#include <Platform/Metal/MetalContext.h>
-
 namespace cbk {
 	static bool s_GLFWInitialized = false;
 
@@ -33,7 +31,6 @@ namespace cbk {
 
 	void MacOSWindow::onUpdate() {
 		glfwPollEvents();
-		m_Context->swapBuffers();
 	}
 
 	void MacOSWindow::setVSync(bool enabled) {
@@ -69,7 +66,7 @@ namespace cbk {
 
 		m_Window = glfwCreateWindow(props.Width, props.Height, m_Data.Title.c_str(), nullptr, nullptr);
 
-		m_Context = rendering::GraphicsContext::create(m_Window);
+		m_Context = rendering::GraphicsContext::create();
 		m_Context->init();
 
 		glfwSetWindowUserPointer(m_Window, &m_Data);
@@ -94,21 +91,21 @@ namespace cbk {
 			WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
 
 			switch (action) {
-			case GLFW_PRESS: {
-				KeyPressedEvent event(key, 0);
-				data.EventCallback(event);
-				break;
-			}
-			case GLFW_RELEASE: {
-				KeyReleasedEvent event(key);
-				data.EventCallback(event);
-				break;
-			}
-			case GLFW_REPEAT: {
-				KeyPressedEvent event(key, 1);
-				data.EventCallback(event);
-				break;
-			}
+				case GLFW_PRESS: {
+					KeyPressedEvent event(key, 0);
+					data.EventCallback(event);
+					break;
+				}
+				case GLFW_RELEASE: {
+					KeyReleasedEvent event(key);
+					data.EventCallback(event);
+					break;
+				}
+				case GLFW_REPEAT: {
+					KeyPressedEvent event(key, 1);
+					data.EventCallback(event);
+					break;
+				}
 			}
 		});
 
@@ -123,16 +120,16 @@ namespace cbk {
 			                           WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
 
 			                           switch (action) {
-			                           case GLFW_PRESS: {
-				                           MouseButtonPressedEvent event(button);
-				                           data.EventCallback(event);
-				                           break;
-			                           }
-			                           case GLFW_RELEASE: {
-				                           MouseButtonReleasedEvent event(button);
-				                           data.EventCallback(event);
-				                           break;
-			                           }
+				                           case GLFW_PRESS: {
+					                           MouseButtonPressedEvent event(button);
+					                           data.EventCallback(event);
+					                           break;
+				                           }
+				                           case GLFW_RELEASE: {
+					                           MouseButtonReleasedEvent event(button);
+					                           data.EventCallback(event);
+					                           break;
+				                           }
 			                           }
 		                           });
 
