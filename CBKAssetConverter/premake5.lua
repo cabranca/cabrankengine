@@ -16,6 +16,9 @@ project "CBKAssetConverter"
         pic "on"
         links { "z" }
 
+    filter "system:macosx"
+        links { "z" }
+
     filter "system:windows"
         buildoptions { "/utf-8" }
 
