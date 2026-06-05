@@ -14,9 +14,6 @@ namespace cbk::platform::opengl {
 		// Sets the color used to clear the screen.
 		virtual void setClearColor(const math::Vector4& color) override;
 
-		// Clears the screen with the previously set clear color.
-		virtual void clear() override;
-
 		void beginFrame() override;
 
 		// Draws the vertex array vertices in order

@@ -12,7 +12,6 @@ namespace cbk::platform::vk {
 		void init() override;
 		void shutdown() override;
 		void setClearColor(const math::Vector4& color) override;
-		void clear() override;
 		void beginFrame() override;
 		void draw(const Ref<rendering::GeometryDescriptor>& desc) override;
 		void drawIndexed(const Ref<rendering::Material>& material, const Ref<rendering::GeometryDescriptor>& desc,

@@ -5,6 +5,7 @@
 namespace MTL {
 	class RenderCommandEncoder;
 	class CommandBuffer;
+	class Texture;
 } // namespace MTL
 namespace CA {
 	class MetalLayer;
@@ -12,8 +13,6 @@ namespace CA {
 } // namespace CA
 
 namespace cbk::platform::metal {
-
-	class MetalShader; // Forward declaration
 
 	class MetalRendererAPI : public rendering::RendererAPI {
 	  public:
@@ -24,9 +23,6 @@ namespace cbk::platform::metal {
 
 		// Sets the color used to clear the screen.
 		void setClearColor(const math::Vector4& color) override;
-
-		// Clears the screen with the previously set clear color.
-		void clear() override;
 
 		void beginFrame() override;
 
@@ -47,21 +43,25 @@ namespace cbk::platform::metal {
 			return API::Metal;
 		}
 
-		// Sets the currently active Metal shader for the next draw call.
-		static void SetCurrentShader(MetalShader* shader);
-
 		// Returns the active render command encoder (used by textures to bind themselves).
 		[[nodiscard]] static MTL::RenderCommandEncoder* GetActiveEncoder();
 
 	  private:
 		math::Vector4 m_ClearColor = { 0.f, 0.f, 0.f, 1.f };
 
-		// Per-frame state (static so other Metal subsystems can access them)
+		// Per-frame state. The encoder is static so other Metal subsystems (textures)
+		// can bind onto the in-flight pass.
 		MTL::CommandBuffer* m_ActiveCommandBuffer = nullptr;
 		inline static MTL::RenderCommandEncoder* s_ActiveEncoder = nullptr;
-		inline static MetalShader* s_CurrentShader = nullptr;
 
 		CA::MetalLayer* m_Swapchain;
 		CA::MetalDrawable* m_CurrentDrawable = nullptr;
+
+		// Depth buffer for the main pass. Recreated when the drawable size changes,
+		// cleared to 1.0 each frame and never stored (DontCare). Mirrors the Vulkan
+		// backend's per-swapchain-image depth attachment.
+		MTL::Texture* m_DepthTexture = nullptr;
+		uint32_t m_DepthWidth = 0;
+		uint32_t m_DepthHeight = 0;
 	};
 } // namespace cbk::platform::metal

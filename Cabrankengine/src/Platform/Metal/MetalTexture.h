@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include <Cabrankengine/Renderer/Texture.h>
 
 namespace MTL {
@@ -20,10 +22,10 @@ namespace cbk::platform::metal {
 
 			// Returns the texture width
 			uint32_t getWidth() const override { return m_Width; }
-		
+
 			// Returns the texture height
 			uint32_t getHeight() const override { return m_Height; }
-		
+
 			// Returns the texture's renderer ID, which is used by the graphics API to identify the texture.
 			uint64_t getRendererID() const override { return m_RendererID; }
 
@@ -44,7 +46,21 @@ namespace cbk::platform::metal {
 				return m_RendererID == other.getRendererID();
 			}
 		private:
-			void createTexture(uint32_t width, uint32_t height, rendering::ImageFormat format);
+			// One mip level inside a source pixel blob.
+			struct MipLevel {
+				uint32_t width;
+				uint32_t height;
+				size_t byteOffset;
+				size_t byteSize;
+			};
+
+			// Allocates m_Texture (m_Width x m_Height, `mipLevels` levels) as a
+			// shader-read, shared-storage 2D texture. metalPixelFormat is an
+			// MTL::PixelFormat value (passed as uint32_t to keep Metal out of the header).
+			void createTexture(uint32_t metalPixelFormat, uint32_t mipLevels);
+
+			// Creates the texture and uploads each mip level via replaceRegion.
+			void uploadPixels(uint32_t metalPixelFormat, uint32_t bytesPerPixel, const void* data, const std::vector<MipLevel>& mips);
 
 			rendering::TextureSpecification m_Specification;
 

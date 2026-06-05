@@ -91,8 +91,12 @@ namespace cbk::rendering {
 		s_AltSceneData.DirLight.direction = environment.DirLight.direction;
 		s_AltSceneData.DirLight.radiance = environment.DirLight.radiance;
 		s_AltSceneData.CameraPosition = cameraWorldPosition;
-		s_SceneUBO->setData(&s_AltSceneData,
-		                    sizeof(AltSceneData)); // TODO: if this is the same size as in the initialization, why pass it again?
+		// The Metal backend has no UniformBuffer implementation: its materials push the
+		// scene globals inline via setVertex/FragmentBytes(sceneUniformData(), ...), so
+		// s_SceneUBO is null there. Guard the upload — s_AltSceneData is already filled
+		// above, which is all the inline-bytes path needs. OpenGL/Vulkan still bind it.
+		if (s_SceneUBO)
+			s_SceneUBO->setData(&s_AltSceneData, sizeof(AltSceneData));
 		s_SceneData->lightEnvironment = environment;
 
 		uploadLightEnvironment();
@@ -111,6 +115,14 @@ namespace cbk::rendering {
 
 	Ref<StorageBuffer> Renderer::getLightSSBO() {
 		return s_SceneData->lightSSBO;
+	}
+
+	const void* Renderer::sceneUniformData() {
+		return &s_AltSceneData;
+	}
+
+	uint32_t Renderer::sceneUniformSize() {
+		return sizeof(AltSceneData);
 	}
 
 	void Renderer::onWindowResize(uint32_t width, uint32_t height) {

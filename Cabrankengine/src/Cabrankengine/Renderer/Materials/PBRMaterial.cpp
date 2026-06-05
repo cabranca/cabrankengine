@@ -11,6 +11,10 @@
 	#include <Platform/Vulkan/VulkanPBRMaterial.h>
 #endif
 
+#ifdef CBK_RENDERER_METAL
+	#include <Platform/Metal/MetalPBRMaterial.h>
+#endif
+
 namespace cbk::rendering {
 
     using namespace scene;
@@ -18,6 +22,8 @@ namespace cbk::rendering {
 	Ref<PBRMaterial> PBRMaterial::create() {
 #ifdef CBK_RENDERER_OPENGL
 		return createRef<platform::opengl::OpenGLPBRMaterial>();
+#elif defined(CBK_RENDERER_METAL)
+		return createRef<platform::metal::MetalPBRMaterial>();
 #elif defined(CBK_RENDERER_VULKAN)
 		return createRef<platform::vk::VulkanPBRMaterial>();
 #else

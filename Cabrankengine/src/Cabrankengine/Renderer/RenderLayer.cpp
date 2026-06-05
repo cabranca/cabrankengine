@@ -23,7 +23,6 @@ namespace cbk::rendering {
 
 	void RenderLayer::onUpdate(Timestep dt) {
 		RenderCommand::setClearColor(m_Scene->getMetadata().BackgroundColor);
-		RenderCommand::clear();
 
 		Mat4    vp;
 		Vector3 camPos;

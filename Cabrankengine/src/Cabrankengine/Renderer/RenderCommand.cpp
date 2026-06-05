@@ -42,10 +42,6 @@ namespace cbk::rendering {
 		s_RendererAPI->setClearColor(color);
 	}
 
-	void RenderCommand::clear() {
-		s_RendererAPI->clear();
-	}
-
 	void RenderCommand::beginFrame() {
 		s_RendererAPI->beginFrame();
 	}

@@ -12,11 +12,17 @@
 	#include <Platform/Vulkan/VulkanTextMaterial.h>
 #endif
 
+#ifdef CBK_RENDERER_METAL
+	#include <Platform/Metal/MetalTextMaterial.h>
+#endif
+
 namespace cbk::rendering {
 
 	Ref<TextMaterial> TextMaterial::create() {
 #ifdef CBK_RENDERER_OPENGL
 		return createRef<platform::opengl::OpenGLTextMaterial>();
+#elif defined(CBK_RENDERER_METAL)
+		return createRef<platform::metal::MetalTextMaterial>();
 #elif defined(CBK_RENDERER_VULKAN)
 		return createRef<platform::vk::VulkanTextMaterial>();
 #else

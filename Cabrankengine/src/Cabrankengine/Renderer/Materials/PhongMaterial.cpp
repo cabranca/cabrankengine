@@ -12,11 +12,17 @@
 	#include <Platform/Vulkan/VulkanPhongMaterial.h>
 #endif
 
+#ifdef CBK_RENDERER_METAL
+	#include <Platform/Metal/MetalPhongMaterial.h>
+#endif
+
 namespace cbk::rendering {
 
 	Ref<PhongMaterial> PhongMaterial::create() {
 #ifdef CBK_RENDERER_OPENGL
 		return createRef<platform::opengl::OpenGLPhongMaterial>();
+#elif defined(CBK_RENDERER_METAL)
+		return createRef<platform::metal::MetalPhongMaterial>();
 #elif defined(CBK_RENDERER_VULKAN)
 		return createRef<platform::vk::VulkanPhongMaterial>();
 #else

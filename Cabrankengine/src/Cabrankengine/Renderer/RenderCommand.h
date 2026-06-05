@@ -19,9 +19,6 @@ namespace cbk::rendering {
 		// Sets the color used to clear the screen.
 		static void setClearColor(const math::Vector4& color);
 
-		// Clears the screen with the previously set clear color.
-		static void clear();
-
 		static void beginFrame();
 
 		// Draws the vertex array vertices in order

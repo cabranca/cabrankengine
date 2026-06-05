@@ -59,11 +59,6 @@ namespace cbk::platform::vk {
 		m_ClearColor = color;
 	}
 
-	// No-op on Vulkan. With dynamic rendering the clear is encoded into
-	// VK_ATTACHMENT_LOAD_OP_CLEAR inside beginFrame()'s VkRenderingAttachmentInfo,
-	// using the color stored by setClearColor(). Nothing to do here at draw time.
-	void VulkanRendererAPI::clear() {}
-
 	void VulkanRendererAPI::beginFrame() {
 		if (!syncAndAcquire())
 			return;

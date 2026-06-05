@@ -32,11 +32,9 @@ namespace cbk::platform::opengl {
 		glClearColor(color.x, color.y, color.z, color.w);
 	}
 
-	void OpenGLRendererAPI::clear() {
+	void OpenGLRendererAPI::beginFrame() {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	}
-
-	void OpenGLRendererAPI::beginFrame() {}
 
 	void OpenGLRendererAPI::draw(const Ref<GeometryDescriptor>& desc) {
 		auto vao = static_cast<OpenGLVertexArray*>(desc.get());

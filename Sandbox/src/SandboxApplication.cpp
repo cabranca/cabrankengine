@@ -23,7 +23,8 @@ class ExampleLayer : public Layer {
 
 		// Sponza is authored in centimeters — scale down to meters
 		PBRModelArch sponza{ "assets/models/sponza/Sponza.cbkm" };
-		PBRModelArch curtains{ "assets/models/sponza_curtains/Curtains.cbkm" };
+		sponza.transform().Scale = Vector3(0.1f);
+		// PBRModelArch curtains{ "assets/models/sponza_curtains/Curtains.cbkm" };
 
 		// Start camera inside the main hall, looking down the corridor
 		CameraControllerArch camera(ProjectionType::Perspective);

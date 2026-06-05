@@ -12,11 +12,15 @@
 #include <Cabrankengine/Core/Application.h>
 #include <Cabrankengine/Core/Window.h>
 #include <Cabrankengine/Renderer/GeometryDescriptor.h>
+#include <Cabrankengine/Renderer/Materials/Material.h>
 
-#include "MetalBuffer.h"
+#include "IMetalRecordable.h"
 #include "MetalDeviceContext.h"
-#include "MetalShader.h"
-#include "MetalVertexArray.h"
+#include "MetalGeometryDescriptor.h"
+#include "MetalPBRMaterial.h"
+#include "MetalPhongMaterial.h"
+#include "MetalTextMaterial.h"
+#include "MetalTexture2DMaterial.h"
 
 namespace cbk::platform::metal {
 
@@ -26,29 +30,33 @@ namespace cbk::platform::metal {
 		auto& window = Application::get().getWindow();
 		auto glfwWindow = static_cast<GLFWwindow*>(window.getNativeWindow());
 
-		// Investigate more on the connection between Metal and GLFW
-		// --- MAGIA para conectar GLFW con Metal-cpp sin usar .mm ---
-		// 1. Obtener la NSWindow (void*)
+		// Connect GLFW (Cocoa) to Metal without an Objective-C++ (.mm) file: fetch the
+		// NSWindow's contentView and attach a CAMetalLayer to it via objc_msgSend.
 		void* nswindow = glfwGetCocoaWindow(glfwWindow);
-
-		// 2. Obtener la contentView: [nswindow contentView]
-		// Usamos objc_msgSend para llamar métodos de ObjC desde C++
 		void* contentView = ((void* (*)(id, SEL))objc_msgSend)((id)nswindow, sel_registerName("contentView"));
 
-		// 3. Configurar el Layer
 		m_Swapchain = CA::MetalLayer::layer();
 		m_Swapchain->setDevice(static_cast<MetalDeviceContext*>(window.getContext())->getDevice());
+		m_Swapchain->setDrawableSize(CGSize{ .width = static_cast<double>(window.getWidth()), .height = static_cast<double>(window.getHeight())});
 
 		// This shouldn't be hardcoded. Maybe better to ask capabilities as with Vulkan?
 		m_Swapchain->setPixelFormat(MTL::PixelFormatBGRA8Unorm);
+		m_CurrentDrawable = m_Swapchain->nextDrawable();
 
-		// 4. Asignar el layer: [view setLayer:layer] y [view setWantsLayer:YES]
 		((void (*)(id, SEL, void*))objc_msgSend)((id)contentView, sel_registerName("setLayer:"), (void*)m_Swapchain);
 		((void (*)(id, SEL, BOOL))objc_msgSend)((id)contentView, sel_registerName("setWantsLayer:"), YES);
-		// ------------------------------------------------------------
 	}
 
 	void MetalRendererAPI::shutdown() {
+		// Release each material class's shared pipeline state while the device is alive.
+		MetalTexture2DMaterial::destroySharedResources();
+		MetalTextMaterial::destroySharedResources();
+		MetalPhongMaterial::destroySharedResources();
+		MetalPBRMaterial::destroySharedResources();
+
+		if (m_DepthTexture)
+			m_DepthTexture->release();
+
 		if (m_Swapchain)
 			m_Swapchain->release();
 	}
@@ -57,7 +65,7 @@ namespace cbk::platform::metal {
 		m_ClearColor = color;
 	}
 
-	void MetalRendererAPI::clear() {
+	void MetalRendererAPI::beginFrame() {
 		const auto& window = Application::get().getWindow();
 		MetalDeviceContext* context = static_cast<MetalDeviceContext*>(window.getContext());
 
@@ -70,6 +78,37 @@ namespace cbk::platform::metal {
 		colorAtt->setLoadAction(MTL::LoadActionClear);
 		colorAtt->setClearColor(MTL::ClearColor::Make(m_ClearColor[0], m_ClearColor[1], m_ClearColor[2], m_ClearColor[3]));
 		colorAtt->setStoreAction(MTL::StoreActionStore);
+
+		// Depth attachment. The depth texture must match the color target's dimensions,
+		// so recreate it whenever the drawable resizes. Cleared to the far plane (1.0)
+		// and not stored — nothing samples depth after the pass (mirrors the Vulkan
+		// backend's DONT_CARE store). Depth32Float here must match the format every
+		// material PSO declares via setDepthAttachmentPixelFormat.
+		const uint32_t width = m_CurrentDrawable->texture()->width();
+		const uint32_t height = m_CurrentDrawable->texture()->height();
+		if (!m_DepthTexture || m_DepthWidth != width || m_DepthHeight != height) {
+			if (m_DepthTexture)
+				m_DepthTexture->release();
+
+			MTL::TextureDescriptor* depthDesc = MTL::TextureDescriptor::alloc()->init();
+			depthDesc->setTextureType(MTL::TextureType2D);
+			depthDesc->setPixelFormat(MTL::PixelFormatDepth32Float);
+			depthDesc->setWidth(width);
+			depthDesc->setHeight(height);
+			depthDesc->setUsage(MTL::TextureUsageRenderTarget);
+			depthDesc->setStorageMode(MTL::StorageModePrivate);
+			m_DepthTexture = context->getDevice()->newTexture(depthDesc);
+			depthDesc->release();
+
+			m_DepthWidth = width;
+			m_DepthHeight = height;
+		}
+
+		auto* depthAtt = pass->depthAttachment();
+		depthAtt->setTexture(m_DepthTexture);
+		depthAtt->setLoadAction(MTL::LoadActionClear);
+		depthAtt->setClearDepth(1.0);
+		depthAtt->setStoreAction(MTL::StoreActionDontCare);
 
 		s_ActiveEncoder = m_ActiveCommandBuffer->renderCommandEncoder(pass);
 		pass->release();
@@ -92,56 +131,32 @@ namespace cbk::platform::metal {
 		s_ActiveEncoder->setScissorRect(scissor);
 	}
 
-	void MetalRendererAPI::beginFrame() {}
-
 	void MetalRendererAPI::draw(const Ref<GeometryDescriptor>& desc) {}
 
 	void MetalRendererAPI::drawIndexed(const Ref<Material>& material, const Ref<GeometryDescriptor>& desc, const math::Mat4& transform,
 	                                   uint32_t indexCount) {
-		if (!s_ActiveEncoder || !s_CurrentShader)
+		if (!s_ActiveEncoder)
 			return;
 
-		// auto* metalVA = static_cast<MetalVertexArray*>(desc.get());
+		auto* recordable = dynamic_cast<IMetalRecordable*>(material.get());
+		CBK_CORE_ASSERT(recordable, "MetalRendererAPI: material does not implement IMetalRecordable");
+		if (!recordable)
+			return;
 
-		// // Ensure PSO exists — creates it lazily with the vertex descriptor from the GeometryDescriptor
-		// s_CurrentShader->ensurePipelineState(metalVA->getVertexDescriptor());
+		auto* metalDesc = static_cast<MetalGeometryDescriptor*>(desc.get());
 
-		// MTL::RenderPipelineState* pso = s_CurrentShader->getPipelineState();
-		// if (!pso)
-		// 	return;
+		// The material sets the PSO, pushes uniform bytes and binds textures; geometry
+		// binds its vertex buffer; the draw reads indices from the same buffer at its
+		// offset (mirrors VulkanRendererAPI::commitRenderCommands).
+		recordable->record(s_ActiveEncoder, transform);
+		metalDesc->bindBuffers(s_ActiveEncoder);
 
-		// s_ActiveEncoder->setRenderPipelineState(pso);
-
-		// // Push pending uniform buffers onto the encoder (setMat4, setFloat4, etc.)
-		// for (const auto& [bufferIndex, data] : s_CurrentShader->getPendingVertexBytes()) {
-		// 	s_ActiveEncoder->setVertexBytes(data.data(), data.size(), bufferIndex);
-		// }
-
-		// // Set vertex buffers on the encoder
-		// const auto& vbs = metalVA->getVertexBuffers();
-		// for (uint32_t i = 0; i < vbs.size(); i++) {
-		// 	auto* metalVB = static_cast<MetalVertexBuffer*>(vbs[i].get());
-		// 	s_ActiveEncoder->setVertexBuffer(metalVB->getBuffer(), 0, i);
-		// }
-
-		// // Draw with index buffer
-		// auto* metalIB = static_cast<MetalIndexBuffer*>(metalVA->getIndexBuffer().get());
-		// uint32_t count = indexCount == 0 ? metalIB->getCount() : indexCount;
-
-		// s_ActiveEncoder->drawIndexedPrimitives(
-		// 	MTL::PrimitiveTypeTriangle,
-		// 	(NS::UInteger)count,
-		// 	MTL::IndexTypeUInt32,
-		// 	metalIB->getBuffer(),
-		// 	(NS::UInteger)0
-		// );
+		uint32_t count = indexCount == 0 ? metalDesc->getIndexCount() : indexCount;
+		s_ActiveEncoder->drawIndexedPrimitives(MTL::PrimitiveTypeTriangle, (NS::UInteger)count, MTL::IndexTypeUInt32,
+		                                       metalDesc->getBuffer(), (NS::UInteger)metalDesc->getIndexBufferOffset());
 	}
 
 	void MetalRendererAPI::setViewport(uint32_t x, uint32_t y, uint32_t width, uint32_t height) {}
-
-	void MetalRendererAPI::SetCurrentShader(MetalShader* shader) {
-		s_CurrentShader = shader;
-	}
 
 	void MetalRendererAPI::endFrame() {
 		if (s_ActiveEncoder) {

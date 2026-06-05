@@ -49,6 +49,13 @@ namespace cbk::rendering {
 			// the per-frame descriptor set at draw time.
 			static Ref<StorageBuffer> getLightSSBO();
 
+			// Raw scene-globals block (view-projection, dir light, camera pos) — the
+			// same bytes uploaded to the scene UBO each beginScene(). Exposed for
+			// backends that push the block as bytes instead of binding a UBO (Metal,
+			// which has no UniformBuffer implementation).
+			static const void* sceneUniformData();
+			static uint32_t sceneUniformSize();
+
 		private:
 			// This structure holds data that is specific to the current scene being rendered.
 			struct SceneData {
