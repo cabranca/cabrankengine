@@ -14,130 +14,61 @@ using namespace cbk::rendering;
 using namespace cbk::scene;
 using namespace cbk::scene::arch;
 
-#ifdef CBK_RENDERER_METAL
-
 class ExampleLayer : public Layer {
   public:
 	ExampleLayer() : Layer("Example") {
 		auto* reg = Application::get().getRegistry();
 
 		// Sponza is authored in centimeters — scale down to meters
-		PBRModelArch sponza{ "assets/models/sponza/Sponza.cbkm" };
-		sponza.transform().Scale = Vector3(0.1f);
+		// PBRModelArch sponza{ "assets/models/sponza/Sponza.cbkm" };
+		// sponza.transform().Scale = Vector3(0.1f);
 		// PBRModelArch curtains{ "assets/models/sponza_curtains/Curtains.cbkm" };
 
+		PhongModelArch backpack{ "assets/models/backpack/backpack.cbkm" };
+
 		// Start camera inside the main hall, looking down the corridor
 		CameraControllerArch camera(ProjectionType::Perspective);
-		camera.transform().Position = { 0.f, 1.8f, 0.f };
-		camera.camera().Far = 200.f;   // Sponza is deep; default 100 clips it
+		camera.transform().Position = { 0.F, 1.8F, 0.F };
+		camera.camera().Far = 200.F;           // Sponza is deep; default 100 clips it
 		camera.controller().FreeFlight = true; // fly freely along the look direction
 
 		// Key light — created manually so onImGuiRender can edit it
 		m_SunEntity = reg->createEntity();
 		reg->addComponent<CDirectionalLight>(m_SunEntity,
-		                                     CDirectionalLight{ .Direction = { 1.f, -1.2f, 0.f }, .Radiance = { 4.f, 3.7f, 3.1f } });
+		                                     CDirectionalLight{ .Direction = { 1.F, -1.F, -1.F }, .Radiance = { 2.F, 2.F, 2.F } });
+		m_PointLight = reg->createEntity();
+		reg->addComponent(m_PointLight, CTransform{ .Position = { 0.F, 0.F, 2.F } });
+		reg->addComponent(m_PointLight, CPointLight{ .Radiance = { 5.F, 0.F, 0.F } });
 	}
 
-	void onUpdate(Timestep delta) override {
-	}
-
-	void onImGuiRender() override {}
-
-  private:
-  Entity m_SunEntity = INVALID_ENTITY;
-	Entity m_RimEntity = INVALID_ENTITY;
-	float m_Time = 0.f;
-	bool m_AnimateSun = true;
-};
-#endif
-
-#if defined(CBK_RENDERER_OPENGL) || defined(CBK_RENDERER_VULKAN)
-class ExampleLayer : public Layer {
-  public:
-	ExampleLayer() : Layer("Example") {
-		// Application::get().loadScene(Scene(SceneMetadata{ .Name = "Showcase", .BackgroundColor = { 0.05f, 0.05f, 0.05f, 1.f } }));
-
-		auto* reg = Application::get().getRegistry();
-
-		// Sponza is authored in centimeters — scale down to meters
-		PBRModelArch sponza{ "assets/models/sponza/Sponza.cbkm" };
-		PBRModelArch curtains{ "assets/models/sponza_curtains/Curtains.cbkm" };
-
-		// Start camera inside the main hall, looking down the corridor
-		CameraControllerArch camera(ProjectionType::Perspective);
-		camera.transform().Position = { 0.f, 1.8f, 0.f };
-		camera.camera().Far = 200.f;   // Sponza is deep; default 100 clips it
-		camera.controller().FreeFlight = true; // fly freely along the look direction
-
-		// Key light — created manually so onImGuiRender can edit it
-		m_SunEntity = reg->createEntity();
-		reg->addComponent<CDirectionalLight>(m_SunEntity,
-		                                     CDirectionalLight{ .Direction = { 1.f, -1.2f, 0.f }, .Radiance = { 4.f, 3.7f, 3.1f } });
-
-		// // Rim point light — created manually for the same reason
-		// m_RimEntity = reg->createEntity();
-		// reg->addComponent<CTransform>(m_RimEntity, CTransform{ .Position = { 0.f, 5.f, -4.f } });
-		// reg->addComponent<CPointLight>(m_RimEntity, CPointLight{
-		//     .Radiance  = { 1.f, 0.5f, 0.2f },
-		//     .Linear    = 0.07f,
-		//     .Quadratic = 0.017f
-		// });
-	}
-
-	void onUpdate(Timestep delta) override {
-		CBK_PROFILE_FUNCTION();
-
-		if (!m_AnimateSun)
-			return;
-
-		m_Time += delta;
-		float angle = m_Time * 0.1f;
-		if (auto light = Application::get().getRegistry()->getComponent<CDirectionalLight>(m_SunEntity))
-			(*light)->Direction = { std::cos(angle), -1.2f, std::sin(angle) };
-	}
+	void onUpdate(Timestep delta) override {}
 
 	void onImGuiRender() override {
-		CBK_PROFILE_FUNCTION();
-
 		auto* reg = Application::get().getRegistry();
+		auto* dirLight = reg->getComponent<CDirectionalLight>(m_SunEntity).value();
+
+		auto* pointLightTrans = reg->getComponent<CTransform>(m_PointLight).value();
+		auto* pointLight = reg->getComponent<CPointLight>(m_PointLight).value();
 
 		ImGui::Begin("Lights");
-
-		if (ImGui::CollapsingHeader("Sun (Directional)", ImGuiTreeNodeFlags_DefaultOpen)) {
-			ImGui::Checkbox("Animate", &m_AnimateSun);
-
-			if (auto light = reg->getComponent<CDirectionalLight>(m_SunEntity)) {
-				ImGui::DragFloat3("Direction", &(*light)->Direction.x, 0.01f, -1.f, 1.f);
-				ImGui::ColorEdit3("Radiance", &(*light)->Radiance.x, ImGuiColorEditFlags_HDR | ImGuiColorEditFlags_Float);
-			}
-		}
-
-		// if (ImGui::CollapsingHeader("Rim (Point)", ImGuiTreeNodeFlags_DefaultOpen)) {
-		// 	if (auto t = reg->getComponent<CTransform>(m_RimEntity))
-		// 		ImGui::DragFloat3("Position",  &(*t)->Position.x, 0.1f);
-		// 	if (auto pl = reg->getComponent<CPointLight>(m_RimEntity)) {
-		// 		ImGui::ColorEdit3("Radiance",  &(*pl)->Radiance.x, ImGuiColorEditFlags_HDR | ImGuiColorEditFlags_Float);
-		// 		ImGui::DragFloat("Linear",     &(*pl)->Linear,     0.001f, 0.f, 1.f);
-		// 		ImGui::DragFloat("Quadratic",  &(*pl)->Quadratic,  0.001f, 0.f, 1.f);
-		// 	}
-		// }
-
+		ImGui::DragFloat3("Directional Light Direction", &(dirLight->Direction.x));
+		ImGui::ColorEdit3("Directional Light Position", &(dirLight->Radiance.x), ImGuiColorEditFlags_HDR | ImGuiColorEditFlags_Float);
+		ImGui::Separator();
+		ImGui::InputFloat3("Point Light Position", &(pointLightTrans->Position.x));
+		ImGui::ColorEdit3("Point Light Position", &(pointLight->Radiance.x), ImGuiColorEditFlags_HDR | ImGuiColorEditFlags_Float);
 		ImGui::End();
 	}
 
   private:
 	Entity m_SunEntity = INVALID_ENTITY;
-	Entity m_RimEntity = INVALID_ENTITY;
-	float m_Time = 0.f;
-	bool m_AnimateSun = true;
+	Entity m_PointLight = INVALID_ENTITY;
 };
-#endif
 
 class Sandbox : public Application {
   public:
 	Sandbox() {
 		pushLayer(createScope<ExampleLayer>());
-		//pushLayer(createScope<Sandbox2D>());
+		// pushLayer(createScope<Sandbox2D>());
 	}
 	~Sandbox() {}
 };
