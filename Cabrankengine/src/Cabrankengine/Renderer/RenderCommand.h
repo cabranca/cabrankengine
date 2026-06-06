@@ -33,7 +33,7 @@ namespace cbk::rendering {
 
 		static void setViewport(uint32_t x, uint32_t y, uint32_t width, uint32_t height);
 
-		static RendererAPI* getRendererAPI();
+		[[nodiscard]] static RendererAPI* getRendererAPI();
 
 	  private:
 		static Scope<RendererAPI> s_RendererAPI; // This is a pointer to the RendererAPI instance that will be used for rendering commands.

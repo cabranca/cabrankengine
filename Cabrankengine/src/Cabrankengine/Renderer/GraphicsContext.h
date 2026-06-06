@@ -18,6 +18,6 @@ namespace cbk::rendering {
 		// called before the windowing system tears down the surface.
 		virtual void shutdown() = 0;
 
-		static Scope<GraphicsContext> create();
+		[[nodiscard]] static Scope<GraphicsContext> create();
 	};
 } // namespace cbk::rendering

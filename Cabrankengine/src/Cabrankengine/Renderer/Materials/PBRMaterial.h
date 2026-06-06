@@ -7,16 +7,16 @@ namespace cbk::rendering {
 	// Abstract: data + behavior live here; bind() is implemented per-backend.
 	class PBRMaterial : public Material {
 	  public:
-		static Ref<PBRMaterial> create();
+		[[nodiscard]] static Ref<PBRMaterial> create();
 
 		void setAlbedoMap(const Ref<Texture2D>& tex);
 		void setNormalMap(const Ref<Texture2D>& tex);
 		void setMetalRoughMap(const Ref<Texture2D>& tex);
 		void setAOMap(const Ref<Texture2D>& tex);
 
-		math::Vector3 getAlbedoColor() const;
-		float getMetalness() const;
-		float getRoughness() const;
+		[[nodiscard]] math::Vector3 getAlbedoColor() const;
+		[[nodiscard]] float getMetalness() const;
+		[[nodiscard]] float getRoughness() const;
 
 		void setAlbedoColor(math::Vector3 color);
 		void setMetalness(float value);
@@ -25,7 +25,9 @@ namespace cbk::rendering {
 		void applyTexture(common::TextureType type, const Ref<Texture2D>& texture) override;
 		void applyProperty(uint32_t key, float value) override;
 
-		Ref<Material> instantiate() const override { return create(); }
+		[[nodiscard]] Ref<Material> instantiate() const override {
+			return create();
+		}
 
 	  protected:
 		PBRMaterial();

@@ -10,7 +10,7 @@ namespace cbk::rendering {
 	// Mirrors Texture2DMaterial; the difference is the shader (glyphs sample 1:1).
 	class TextMaterial : public Material {
 	  public:
-		static Ref<TextMaterial> create();
+		[[nodiscard]] static Ref<TextMaterial> create();
 
 		virtual void setTextureSlot(uint32_t slot, const Ref<Texture2D>& texture) = 0;
 		virtual void setViewProjection(const math::Mat4& viewProjection) = 0;

@@ -56,7 +56,7 @@ namespace cbk::rendering {
 		    : Name(name), Type(type), Size(shaderDataTypeSize(type)), Offset(0), Normalized(normalized) {}
 
 		// Returns the number of components in the ShaderDataType.
-		uint32_t getComponentCount() const {
+		[[nodiscard]] uint32_t getComponentCount() const {
 			switch (Type) {
 				case ShaderDataType::Float:
 					return 1;
@@ -100,32 +100,32 @@ namespace cbk::rendering {
 		}
 
 		// Returns a vector of BufferElements, representing the layout of the buffer.
-		const std::vector<BufferElement>& getElements() const {
+		[[nodiscard]] const std::vector<BufferElement>& getElements() const {
 			return m_Elements;
 		}
 
 		// Returns the total stride of the buffer layout, which is the sum of the sizes of all elements.
-		uint32_t getStride() const {
+		[[nodiscard]] uint32_t getStride() const {
 			return m_Stride;
 		}
 
 		// Returns an interator to the beginning of the elements vector.
-		std::vector<BufferElement>::iterator begin() {
+		[[nodiscard]] std::vector<BufferElement>::iterator begin() {
 			return m_Elements.begin();
 		}
 
 		// Returns an interator to the end of the elements vector.
-		std::vector<BufferElement>::iterator end() {
+		[[nodiscard]] std::vector<BufferElement>::iterator end() {
 			return m_Elements.end();
 		}
 
 		// Returns a const interator to the beginning of the elements vector.
-		std::vector<BufferElement>::const_iterator begin() const {
+		[[nodiscard]] std::vector<BufferElement>::const_iterator begin() const {
 			return m_Elements.begin();
 		}
 
 		// Returns a const interator to the end of the elements vector.
-		std::vector<BufferElement>::const_iterator end() const {
+		[[nodiscard]] std::vector<BufferElement>::const_iterator end() const {
 			return m_Elements.end();
 		}
 
@@ -150,11 +150,11 @@ namespace cbk::rendering {
 	  public:
 		virtual ~GeometryDescriptor() = default;
 		virtual void setData(const void* data, uint32_t size) = 0;
-		virtual uint32_t getIndexCount() const = 0;
-		
-		static Ref<GeometryDescriptor> create(const void* vertexData, size_t vertexDataSize, const void* indexData, size_t indexDataSize,
-		                                      const VertexLayout& layout);
-		static Ref<GeometryDescriptor> create(size_t vertexDataSize, const void* indexData, size_t indexDataSize,
-		                                      const VertexLayout& layout);
+		[[nodiscard]] virtual uint32_t getIndexCount() const = 0;
+
+		[[nodiscard]] static Ref<GeometryDescriptor> create(const void* vertexData, size_t vertexDataSize, const void* indexData,
+		                                                    size_t indexDataSize, const VertexLayout& layout);
+		[[nodiscard]] static Ref<GeometryDescriptor> create(size_t vertexDataSize, const void* indexData, size_t indexDataSize,
+		                                                    const VertexLayout& layout);
 	};
 } // namespace cbk::rendering

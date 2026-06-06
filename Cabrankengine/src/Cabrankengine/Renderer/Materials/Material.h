@@ -4,7 +4,6 @@
 #include <Cabrankengine/Renderer/Texture.h>
 #include <Cabrankengine/Scene/DefaultLibrary.h>
 
-
 namespace cbk::rendering {
 
 	class Material {
@@ -22,9 +21,11 @@ namespace cbk::rendering {
 		// Returns a fresh, blank material of the same concrete type. Used by model
 		// loading to give each material slot its own instance. Returns nullptr if
 		// the concrete type does not support it.
-		virtual Ref<Material> instantiate() const { return nullptr; }
+		[[nodiscard]] virtual Ref<Material> instantiate() const {
+			return nullptr;
+		}
 
-		Ref<Shader> getShader() const {
+		[[nodiscard]] Ref<Shader> getShader() const {
 			return m_Shader;
 		}
 

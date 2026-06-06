@@ -4,7 +4,7 @@
 
 namespace cbk::math {
 
-    struct Vector4 {
+	struct Vector4 {
 		union {
 			struct {
 				float x, y, z, w;
@@ -18,29 +18,29 @@ namespace cbk::math {
 		constexpr Vector4(float x, float y, float z, float w) noexcept : x(x), y(y), z(z), w(w) {}
 		constexpr Vector4(const Vector3& v, float w = 1.f) noexcept : x(v.x), y(v.y), z(v.z), w(w) {}
 
-		constexpr float lengthSquared() const noexcept;
-		float length() const noexcept;
+		[[nodiscard]] constexpr float lengthSquared() const noexcept;
+		[[nodiscard]] float length() const noexcept;
 		void normalized() noexcept;
-		bool isNormalized() const noexcept;
+		[[nodiscard]] bool isNormalized() const noexcept;
 
-		constexpr bool operator==(const Vector4& other) const noexcept;
-		constexpr bool operator!=(const Vector4& other) const noexcept;
-		constexpr Vector4 operator+(const Vector4& other) const noexcept;
+		[[nodiscard]] constexpr bool operator==(const Vector4& other) const noexcept;
+		[[nodiscard]] constexpr bool operator!=(const Vector4& other) const noexcept;
+		[[nodiscard]] constexpr Vector4 operator+(const Vector4& other) const noexcept;
 		constexpr Vector4& operator+=(const Vector4& other) noexcept;
-		constexpr Vector4 operator-(const Vector4& other) const noexcept;
+		[[nodiscard]] constexpr Vector4 operator-(const Vector4& other) const noexcept;
 		constexpr Vector4& operator-=(const Vector4& other) noexcept;
-		constexpr Vector4 operator-() const noexcept;
-		constexpr Vector4 operator*(float scale) const noexcept;
+		[[nodiscard]] constexpr Vector4 operator-() const noexcept;
+		[[nodiscard]] constexpr Vector4 operator*(float scale) const noexcept;
 		constexpr Vector4& operator*=(float scale) noexcept;
-		constexpr Vector4 operator/(float scale) const noexcept;
+		[[nodiscard]] constexpr Vector4 operator/(float scale) const noexcept;
 		constexpr Vector4& operator/=(float scale) noexcept;
-		constexpr float& operator[](int index) noexcept;
-		constexpr const float& operator[](int index) const noexcept;
+		[[nodiscard]] constexpr float& operator[](int index) noexcept;
+		[[nodiscard]] constexpr const float& operator[](int index) const noexcept;
 
-		constexpr Vector3 toVector3() const noexcept;
+		[[nodiscard]] constexpr Vector3 toVector3() const noexcept;
 	};
 
-    inline constexpr float Vector4::lengthSquared() const noexcept {
+	inline constexpr float Vector4::lengthSquared() const noexcept {
 		return x * x + y * y + z * z + w * w;
 	}
 
@@ -59,7 +59,7 @@ namespace cbk::math {
 		w /= len;
 	}
 
-    inline bool Vector4::isNormalized() const noexcept {
+	inline bool Vector4::isNormalized() const noexcept {
 		float result = std::abs(lengthSquared() - 1.f);
 		return result < EPSILON;
 	}
@@ -141,7 +141,7 @@ namespace cbk::math {
 		return { x, y, z };
 	}
 
-    inline constexpr float dot(const Vector4& a, const Vector4& b) noexcept {
+	inline constexpr float dot(const Vector4& a, const Vector4& b) noexcept {
 		return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
 	}
 
@@ -157,4 +157,4 @@ namespace cbk::math {
 		cosTheta = std::clamp(cosTheta, -1.f, 1.f);
 		return std::acos(cosTheta);
 	}
-};
+}; // namespace cbk::math

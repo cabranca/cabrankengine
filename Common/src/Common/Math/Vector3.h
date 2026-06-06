@@ -4,7 +4,7 @@
 
 namespace cbk::math {
 
-    // This Vector implementation uses row convention: The vector is a 1x3 matrix
+	// This Vector implementation uses row convention: The vector is a 1x3 matrix
 	struct Vector3 {
 		union {
 			struct {
@@ -28,37 +28,37 @@ namespace cbk::math {
 		constexpr Vector3(float x, float y, float z) noexcept : x(x), y(y), z(z) {}
 		explicit constexpr Vector3(Vector2 xy, float z = 0) : x(xy.x), y(xy.y), z(z) {}
 
-		constexpr float lengthSquared() const noexcept;
-		float length() const noexcept;
+		[[nodiscard]] constexpr float lengthSquared() const noexcept;
+		[[nodiscard]] float length() const noexcept;
 		void normalized() noexcept;
-		Vector3 normalize() const noexcept;
-		bool isNormalized() const noexcept;
+		[[nodiscard]] Vector3 normalize() const noexcept;
+		[[nodiscard]] bool isNormalized() const noexcept;
 
-		constexpr bool operator==(const Vector3& other) const noexcept;
-		constexpr bool operator!=(const Vector3& other) const noexcept;
-		constexpr Vector3 operator+(const Vector3& other) const noexcept;
+		[[nodiscard]] constexpr bool operator==(const Vector3& other) const noexcept;
+		[[nodiscard]] constexpr bool operator!=(const Vector3& other) const noexcept;
+		[[nodiscard]] constexpr Vector3 operator+(const Vector3& other) const noexcept;
 		constexpr Vector3& operator+=(const Vector3& other) noexcept;
-		constexpr Vector3 operator-(const Vector3& other) const noexcept;
+		[[nodiscard]] constexpr Vector3 operator-(const Vector3& other) const noexcept;
 		constexpr Vector3& operator-=(const Vector3& other) noexcept;
-		constexpr Vector3 operator-() noexcept;
-		constexpr Vector3 operator*(float scale) const noexcept;
+		[[nodiscard]] constexpr Vector3 operator-() noexcept;
+		[[nodiscard]] constexpr Vector3 operator*(float scale) const noexcept;
 		constexpr Vector3& operator*=(float scale) noexcept;
-		constexpr Vector3 operator/(float scale) const noexcept;
+		[[nodiscard]] constexpr Vector3 operator/(float scale) const noexcept;
 		constexpr Vector3& operator/=(float scale) noexcept;
-		constexpr float& operator[](int index) noexcept;
-		constexpr const float& operator[](int index) const noexcept;
+		[[nodiscard]] constexpr float& operator[](int index) noexcept;
+		[[nodiscard]] constexpr const float& operator[](int index) const noexcept;
 	};
 
-    inline constexpr Vector3 Vector3::Right     { (1.f), (0.f), (0.f) };
-	inline constexpr Vector3 Vector3::Left      { (-1.f), (0.f), (0.f) };
-	inline constexpr Vector3 Vector3::Up        { (0.f), (1.f), (0.f) };
-	inline constexpr Vector3 Vector3::Down      { (0.f), (-1.f), (0.f) };
-	inline constexpr Vector3 Vector3::Forward   { (0.f), (0.f), (-1.f) };
-	inline constexpr Vector3 Vector3::Backward  { (0.f), (0.f), (1.f) };
-	inline constexpr Vector3 Vector3::Zero      { (0.f) };
-	inline constexpr Vector3 Vector3::One       { (1.f) };
+	inline constexpr Vector3 Vector3::Right{ (1.f), (0.f), (0.f) };
+	inline constexpr Vector3 Vector3::Left{ (-1.f), (0.f), (0.f) };
+	inline constexpr Vector3 Vector3::Up{ (0.f), (1.f), (0.f) };
+	inline constexpr Vector3 Vector3::Down{ (0.f), (-1.f), (0.f) };
+	inline constexpr Vector3 Vector3::Forward{ (0.f), (0.f), (-1.f) };
+	inline constexpr Vector3 Vector3::Backward{ (0.f), (0.f), (1.f) };
+	inline constexpr Vector3 Vector3::Zero{ (0.f) };
+	inline constexpr Vector3 Vector3::One{ (1.f) };
 
-    inline constexpr float Vector3::lengthSquared() const noexcept {
+	inline constexpr float Vector3::lengthSquared() const noexcept {
 		return x * x + y * y + z * z;
 	}
 
@@ -148,11 +148,11 @@ namespace cbk::math {
 	}
 
 	inline constexpr float& Vector3::operator[](int index) noexcept {
-        CBK_CORE_ASSERT(index >= 0 || index < 3, "Trying to acces a Vector with invalid index!")
+		CBK_CORE_ASSERT(index >= 0 || index < 3, "Trying to acces a Vector with invalid index!")
 		return coords[index];
 	}
 
-    inline constexpr const float& Vector3::operator[](int index) const noexcept {
+	inline constexpr const float& Vector3::operator[](int index) const noexcept {
 		CBK_CORE_ASSERT(index >= 0 || index < 3, "Trying to acces a Vector with invalid index!")
 		return coords[index];
 	}
@@ -173,7 +173,7 @@ namespace cbk::math {
 		return dot(a, b) == 0;
 	}
 
-    inline float angleBetween(const Vector3& a, const Vector3& b) noexcept {
+	inline float angleBetween(const Vector3& a, const Vector3& b) noexcept {
 		float denom = a.length() * b.length();
 		if (denom == 0.f)
 			return 0.f;

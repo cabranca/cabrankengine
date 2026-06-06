@@ -11,7 +11,7 @@ namespace cbk::rendering {
 	// binding; engine code only ever sees this interface.
 	class Texture2DMaterial : public Material {
 	  public:
-		static Ref<Texture2DMaterial> create();
+		[[nodiscard]] static Ref<Texture2DMaterial> create();
 
 		virtual void setTextureSlot(uint32_t slot, const Ref<Texture2D>& texture) = 0;
 		virtual void setViewProjection(const math::Mat4& viewProjection) = 0;
