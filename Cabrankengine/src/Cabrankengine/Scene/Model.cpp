@@ -72,9 +72,14 @@ namespace cbk::scene {
 				}
 
 				std::string fullPath = directory + "/" + texPath;
-				auto& texture = textureCache[fullPath];
+				// Diffuse/albedo (BaseColor) is authored in sRGB and must decode to
+				// linear before lighting; all other maps (normal, specular, metal-rough,
+				// AO) are linear data. The colorspace is part of the cache key so the same
+				// image used as both color and data can't alias to the wrong format.
+				const bool sRGB = (entry.type == cbk::common::TextureType::Diffuse);
+				auto& texture = textureCache[sRGB ? fullPath + "#srgb" : fullPath];
 				if (!texture)
-					texture = rendering::Texture2D::create(fullPath);
+					texture = rendering::Texture2D::create(fullPath, sRGB);
 				material->applyTexture(entry.type, texture);
 			}
 
@@ -110,13 +115,13 @@ namespace cbk::scene {
 			}
 
 			CBK_CORE_ASSERT(mh.materialIndex < materials.size(), "Invalid material index for model {}!", path);
-			
+
 			m_Meshes.emplace_back(std::move(vertices), std::move(indices), materials[mh.materialIndex]);
 		}
 	}
 
 	void Model::draw(const math::Mat4& transform) {
-		for (auto& mesh : m_Meshes)
+		for (auto& mesh: m_Meshes)
 			mesh.draw(transform);
 	}
 

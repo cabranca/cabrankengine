@@ -13,10 +13,10 @@ namespace cbk::platform::opengl {
 
 		static GLenum cbkImageFormatToGLDataFormat(ImageFormat format) {
 			switch (format) {
-			case ImageFormat::RGB8:
-				return GL_RGB;
-			case ImageFormat::RGBA8:
-				return GL_RGBA;
+				case ImageFormat::RGB8:
+					return GL_RGB;
+				case ImageFormat::RGBA8:
+					return GL_RGBA;
 			}
 
 			CBK_CORE_ASSERT(false, "Invalid image format!");
@@ -25,10 +25,10 @@ namespace cbk::platform::opengl {
 
 		static GLenum cbkImageFormatToGLInternalFormat(ImageFormat format) {
 			switch (format) {
-			case ImageFormat::RGB8:
-				return GL_RGB8;
-			case ImageFormat::RGBA8:
-				return GL_RGBA8;
+				case ImageFormat::RGB8:
+					return GL_RGB8;
+				case ImageFormat::RGBA8:
+					return GL_RGBA8;
 			}
 
 			CBK_CORE_ASSERT(false, "Invalid image format!");
@@ -68,7 +68,7 @@ namespace cbk::platform::opengl {
 #endif
 	}
 
-	OpenGLTexture2D::OpenGLTexture2D(const std::string& path) : m_Path(path) {
+	OpenGLTexture2D::OpenGLTexture2D(const std::string& path, bool sRGB) : m_Path(path) {
 		CBK_PROFILE_FUNCTION();
 
 		std::error_code errorCode;
@@ -119,12 +119,16 @@ namespace cbk::platform::opengl {
 			m_Width = header.width;
 			m_Height = header.height;
 
+			// Color textures (diffuse/albedo) request an sRGB internal format so the
+			// GPU decodes sRGB->linear on every sample (and filters/mips in linear
+			// space). The transfer (data) format stays GL_RGB/GL_RGBA — sRGB affects
+			// only how the stored bytes are interpreted, not the upload layout.
 			GLenum internalFormat = 0, dataFormat = 0;
 			if (header.channels == 4) {
-				internalFormat = GL_RGBA8;
+				internalFormat = sRGB ? GL_SRGB8_ALPHA8 : GL_RGBA8;
 				dataFormat = GL_RGBA;
 			} else if (header.channels == 3) {
-				internalFormat = GL_RGB8;
+				internalFormat = sRGB ? GL_SRGB8 : GL_RGB8;
 				dataFormat = GL_RGB;
 			}
 
@@ -178,11 +182,11 @@ namespace cbk::platform::opengl {
 			size_t offset = 0;
 			for (uint32_t level = 0; level < mipLevels; level++) {
 #ifdef CBK_OPENGL_ES
-				glTexSubImage2D(GL_TEXTURE_2D, static_cast<GLint>(level), 0, 0, mipW, mipH,
-				                dataFormat, GL_UNSIGNED_BYTE, uncompressedBuffer.data() + offset);
+				glTexSubImage2D(GL_TEXTURE_2D, static_cast<GLint>(level), 0, 0, mipW, mipH, dataFormat, GL_UNSIGNED_BYTE,
+				                uncompressedBuffer.data() + offset);
 #else
-				glTextureSubImage2D(m_RendererID, static_cast<GLint>(level), 0, 0, mipW, mipH,
-				                    dataFormat, GL_UNSIGNED_BYTE, uncompressedBuffer.data() + offset);
+				glTextureSubImage2D(m_RendererID, static_cast<GLint>(level), 0, 0, mipW, mipH, dataFormat, GL_UNSIGNED_BYTE,
+				                    uncompressedBuffer.data() + offset);
 #endif
 				offset += static_cast<size_t>(mipW) * mipH * header.channels;
 				mipW = std::max(1u, mipW / 2);
@@ -199,9 +203,9 @@ namespace cbk::platform::opengl {
 		// Whitespace and several control glyphs have a 0x0 bitmap. glTexStorage2D rejects
 		// zero dimensions (WebGL spams a warning per glyph), so use a 1x1 placeholder —
 		// metrics like advance/bearing are still meaningful for layout.
-		const uint32_t width  = std::max<uint32_t>(face->glyph->bitmap.width, 1);
-		const uint32_t height = std::max<uint32_t>(face->glyph->bitmap.rows,  1);
-		const bool hasPixels  = face->glyph->bitmap.width > 0 && face->glyph->bitmap.rows > 0;
+		const uint32_t width = std::max<uint32_t>(face->glyph->bitmap.width, 1);
+		const uint32_t height = std::max<uint32_t>(face->glyph->bitmap.rows, 1);
+		const bool hasPixels = face->glyph->bitmap.width > 0 && face->glyph->bitmap.rows > 0;
 
 #ifdef CBK_OPENGL_ES
 		glGenTextures(1, &m_RendererID);

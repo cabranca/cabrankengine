@@ -10,7 +10,7 @@ namespace cbk::platform::vk {
 	class VulkanTexture : public rendering::Texture2D {
 	  public:
 		VulkanTexture(const rendering::TextureSpecification& specification);
-		VulkanTexture(const std::string& path);
+		VulkanTexture(const std::string& path, bool sRGB = false);
 		VulkanTexture(const FT_Face& face);
 
 		~VulkanTexture();
@@ -59,8 +59,7 @@ namespace cbk::platform::vk {
 		// `mips.size()` levels, uploads each level via a single staging buffer,
 		// transitions all levels to shader-read layout, and populates
 		// m_TexDescriptorInfo. Shared by all three constructors / setData.
-		void uploadPixels(VkFormat format, const void* data, VkDeviceSize dataSize,
-		                  const std::vector<MipLevel>& mips);
+		void uploadPixels(VkFormat format, const void* data, VkDeviceSize dataSize, const std::vector<MipLevel>& mips);
 
 		struct TextureData {
 			VmaAllocation allocation{ VK_NULL_HANDLE };
@@ -68,7 +67,7 @@ namespace cbk::platform::vk {
 			VkImageView view{ VK_NULL_HANDLE };
 			VkSampler sampler{ VK_NULL_HANDLE };
 		};
-		
+
 		TextureData m_Texture;
 		VkDescriptorImageInfo m_TexDescriptorInfo{};
 

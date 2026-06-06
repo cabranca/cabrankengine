@@ -19,9 +19,12 @@ namespace cbk::platform::metal {
 	namespace {
 		MTL::PixelFormat imageFormatToMetalPixelFormat(ImageFormat format) {
 			switch (format) {
-				case ImageFormat::RGBA8: return MTL::PixelFormatRGBA8Unorm;
-				case ImageFormat::RGB8:  return MTL::PixelFormatRGBA8Unorm; // Metal has no RGB8; pad to RGBA
-				case ImageFormat::R8:    return MTL::PixelFormatR8Unorm;
+				case ImageFormat::RGBA8:
+					return MTL::PixelFormatRGBA8Unorm;
+				case ImageFormat::RGB8:
+					return MTL::PixelFormatRGBA8Unorm; // Metal has no RGB8; pad to RGBA
+				case ImageFormat::R8:
+					return MTL::PixelFormatR8Unorm;
 				default:
 					CBK_CORE_ASSERT(false, "Unsupported image format for Metal!");
 					return MTL::PixelFormatRGBA8Unorm;
@@ -30,10 +33,14 @@ namespace cbk::platform::metal {
 
 		uint32_t bytesPerPixelForFormat(ImageFormat format) {
 			switch (format) {
-				case ImageFormat::RGBA8: return 4;
-				case ImageFormat::RGB8:  return 4; // padded to RGBA
-				case ImageFormat::R8:    return 1;
-				default:                 return 4;
+				case ImageFormat::RGBA8:
+					return 4;
+				case ImageFormat::RGB8:
+					return 4; // padded to RGBA
+				case ImageFormat::R8:
+					return 1;
+				default:
+					return 4;
 			}
 		}
 	} // namespace
@@ -78,7 +85,7 @@ namespace cbk::platform::metal {
 		m_IsLoaded = (m_Texture != nullptr);
 	}
 
-	MetalTexture2D::MetalTexture2D(const std::string& path) : m_Path(path) {
+	MetalTexture2D::MetalTexture2D(const std::string& path, bool sRGB) : m_Path(path) {
 		CBK_PROFILE_FUNCTION();
 
 		std::error_code errorCode;
@@ -114,9 +121,9 @@ namespace cbk::platform::metal {
 		}
 
 		std::vector<uint8_t> uncompressedBuffer(header.uncompressedSize);
-		int result = LZ4_decompress_safe(reinterpret_cast<const char*>(compressedBuffer.data()),
-		                                 reinterpret_cast<char*>(uncompressedBuffer.data()), header.compressedSize,
-		                                 header.uncompressedSize);
+		int result =
+		    LZ4_decompress_safe(reinterpret_cast<const char*>(compressedBuffer.data()), reinterpret_cast<char*>(uncompressedBuffer.data()),
+		                        header.compressedSize, header.uncompressedSize);
 		if (result < 0) {
 			CBK_CORE_ERROR("LZ4 decompression failed for {0}", path);
 			return;
@@ -147,13 +154,14 @@ namespace cbk::platform::metal {
 			// Metal has no 24-bit RGB sampled format; expand each mip to RGBA8.
 			auto srcMips = buildMipLevels(3);
 			size_t totalRgba = 0;
-			for (const auto& m : srcMips) totalRgba += (m.byteSize / 3) * 4;
+			for (const auto& m: srcMips)
+				totalRgba += (m.byteSize / 3) * 4;
 			std::vector<uint8_t> rgba(totalRgba);
 
 			std::vector<MipLevel> dstMips;
 			dstMips.reserve(mipLevels);
 			size_t dstOffset = 0;
-			for (const auto& src : srcMips) {
+			for (const auto& src: srcMips) {
 				const size_t pixelCount = src.byteSize / 3;
 				const uint8_t* srcPtr = uncompressedBuffer.data() + src.byteOffset;
 				uint8_t* dstPtr = rgba.data() + dstOffset;
@@ -166,14 +174,24 @@ namespace cbk::platform::metal {
 				dstMips.push_back({ src.width, src.height, dstOffset, pixelCount * 4 });
 				dstOffset += pixelCount * 4;
 			}
-			uploadPixels(MTL::PixelFormatRGBA8Unorm, 4, rgba.data(), dstMips);
+			// Color textures use the sRGB format so the GPU decodes to linear on sample.
+			uploadPixels(sRGB ? MTL::PixelFormatRGBA8Unorm_sRGB : MTL::PixelFormatRGBA8Unorm, 4, rgba.data(), dstMips);
 		} else {
 			MTL::PixelFormat format;
 			uint32_t bpp;
 			switch (header.channels) {
-				case 1: format = MTL::PixelFormatR8Unorm;    bpp = 1; break;
-				case 2: format = MTL::PixelFormatRG8Unorm;   bpp = 2; break;
-				case 4: format = MTL::PixelFormatRGBA8Unorm; bpp = 4; break;
+				case 1:
+					format = MTL::PixelFormatR8Unorm;
+					bpp = 1;
+					break;
+				case 2:
+					format = MTL::PixelFormatRG8Unorm;
+					bpp = 2;
+					break;
+				case 4:
+					format = sRGB ? MTL::PixelFormatRGBA8Unorm_sRGB : MTL::PixelFormatRGBA8Unorm;
+					bpp = 4;
+					break;
 				default:
 					CBK_CORE_ERROR("MetalTexture2D(): unsupported channel count {0} in {1}", header.channels, path);
 					return;
