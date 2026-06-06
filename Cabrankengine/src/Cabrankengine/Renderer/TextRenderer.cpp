@@ -197,8 +197,8 @@ namespace cbk::rendering {
 			// A texture for each letter. Ideally we'd use a TextureAtlas
 			auto charTexture = Texture2D::create(face);
 
-			Character character = { charTexture, Vector2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
-				                    Vector2(face->glyph->bitmap_left, face->glyph->bitmap_top),
+			Character character = { charTexture, Vector2(static_cast<float>(face->glyph->bitmap.width), static_cast<float>(face->glyph->bitmap.rows)),
+				                    Vector2(static_cast<float>(face->glyph->bitmap_left), static_cast<float>(face->glyph->bitmap_top)),
 				                    static_cast<unsigned int>(face->glyph->advance.x) };
 			s_Characters.emplace(c, character);
 		}

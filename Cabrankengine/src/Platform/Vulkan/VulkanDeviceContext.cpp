@@ -33,8 +33,6 @@ namespace cbk::platform::vk {
 		vkDestroyInstance(m_Instance, nullptr);
 	}
 
-	void VulkanDeviceContext::swapBuffers() {}
-
     VkInstance VulkanDeviceContext::getInstance() const {
         return m_Instance;
     }

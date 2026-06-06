@@ -15,11 +15,11 @@ namespace cbk::platform::opengl {
 	class OpenGLContext : public rendering::GraphicsContext {
 	  public:
 		// Initializes the graphics context.
-		virtual void init() override;
+		void init() override;
 
 		// OpenGL has no explicit context teardown beyond glfwDestroyWindow, so this
 		// is a no-op. Implemented to satisfy the GraphicsContext interface.
-		virtual void shutdown() override;
+		void shutdown() override;
 
 	  private:
 		GLFWwindow* m_WindowHandle; // Handle to the GLFW window associated with this context

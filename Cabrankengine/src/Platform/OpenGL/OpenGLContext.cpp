@@ -46,6 +46,8 @@ namespace cbk::platform::opengl {
 #endif
 	}
 
+	void OpenGLContext::shutdown() {}
+
 	void checkGLError(const char* where) {
 		GLenum err;
 		while ((err = glGetError()) != GL_NO_ERROR) {
