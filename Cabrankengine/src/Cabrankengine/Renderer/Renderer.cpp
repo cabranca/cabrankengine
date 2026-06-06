@@ -162,7 +162,7 @@ namespace cbk::rendering {
 		}
 
 		if (s_SceneData->lightSSBO) {
-			s_SceneData->lightSSBO->setData(bufferData.data(), bufferData.size());
+			s_SceneData->lightSSBO->setData(bufferData.data(), static_cast<uint32_t>(bufferData.size()));
 			s_SceneData->lightSSBO->bind(0);
 		}
 	}

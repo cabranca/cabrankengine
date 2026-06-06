@@ -125,7 +125,7 @@ project("Cabrankengine")
 
 		links({ "Cocoa.framework", "Foundation.framework", "Metal.framework", "QuartzCore.framework" })
 
-		filter("configurations:Debug")
+	filter("configurations:Debug")
 		defines("CBK_DEBUG")
 		runtime("Debug")
 		symbols("on")

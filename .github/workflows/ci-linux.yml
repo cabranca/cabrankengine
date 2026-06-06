@@ -79,13 +79,13 @@ jobs:
         id: premake-cache
         uses: actions/cache@v4
         with:
-          key: premake5-5.0.0-beta7-linux
+          key: premake5-5.0.0-beta8-linux
           path: ./premake5
 
       - name: Download premake5
         if: steps.premake-cache.outputs.cache-hit != 'true'
         run: |
-          curl -sSL https://github.com/premake/premake-core/releases/download/v5.0.0-beta7/premake-5.0.0-beta7-linux.tar.gz | tar -xz -C .
+          curl -sSL https://github.com/premake/premake-core/releases/download/v5.0.0-beta8/premake-5.0.0-beta8-linux.tar.gz | tar -xz -C .
           chmod +x ./premake5
 
       - name: Cache engine vendor libs
@@ -130,13 +130,13 @@ jobs:
         id: premake-cache
         uses: actions/cache@v4
         with:
-          key: premake5-5.0.0-beta7-linux
+          key: premake5-5.0.0-beta8-linux
           path: ./premake5
 
       - name: Download premake5
         if: steps.premake-cache.outputs.cache-hit != 'true'
         run: |
-          curl -sSL https://github.com/premake/premake-core/releases/download/v5.0.0-beta7/premake-5.0.0-beta7-linux.tar.gz | tar -xz -C .
+          curl -sSL https://github.com/premake/premake-core/releases/download/v5.0.0-beta8/premake-5.0.0-beta8-linux.tar.gz | tar -xz -C .
           chmod +x ./premake5
 
       - name: Cache Assimp
@@ -177,13 +177,13 @@ jobs:
         id: premake-cache
         uses: actions/cache@v4
         with:
-          key: premake5-5.0.0-beta7-linux
+          key: premake5-5.0.0-beta8-linux
           path: ./premake5
 
       - name: Download premake5
         if: steps.premake-cache.outputs.cache-hit != 'true'
         run: |
-          curl -sSL https://github.com/premake/premake-core/releases/download/v5.0.0-beta7/premake-5.0.0-beta7-linux.tar.gz | tar -xz -C .
+          curl -sSL https://github.com/premake/premake-core/releases/download/v5.0.0-beta8/premake-5.0.0-beta8-linux.tar.gz | tar -xz -C .
           chmod +x ./premake5
 
       - name: Restore engine vendor libs
@@ -264,13 +264,13 @@ jobs:
         id: premake-cache
         uses: actions/cache@v4
         with:
-          key: premake5-5.0.0-beta7-linux
+          key: premake5-5.0.0-beta8-linux
           path: ./premake5
 
       - name: Download premake5
         if: steps.premake-cache.outputs.cache-hit != 'true'
         run: |
-          curl -sSL https://github.com/premake/premake-core/releases/download/v5.0.0-beta7/premake-5.0.0-beta7-linux.tar.gz | tar -xz -C .
+          curl -sSL https://github.com/premake/premake-core/releases/download/v5.0.0-beta8/premake-5.0.0-beta8-linux.tar.gz | tar -xz -C .
           chmod +x ./premake5
 
       - name: Restore engine vendor libs
@@ -345,13 +345,13 @@ jobs:
         id: premake-cache
         uses: actions/cache@v4
         with:
-          key: premake5-5.0.0-beta7-linux
+          key: premake5-5.0.0-beta8-linux
           path: ./premake5
 
       - name: Download premake5
         if: steps.premake-cache.outputs.cache-hit != 'true'
         run: |
-          curl -sSL https://github.com/premake/premake-core/releases/download/v5.0.0-beta7/premake-5.0.0-beta7-linux.tar.gz | tar -xz -C .
+          curl -sSL https://github.com/premake/premake-core/releases/download/v5.0.0-beta8/premake-5.0.0-beta8-linux.tar.gz | tar -xz -C .
           chmod +x ./premake5
 
       - name: Restore Assimp
@@ -395,13 +395,13 @@ jobs:
         id: premake-cache
         uses: actions/cache@v4
         with:
-          key: premake5-5.0.0-beta7-linux
+          key: premake5-5.0.0-beta8-linux
           path: ./premake5
 
       - name: Download premake5
         if: steps.premake-cache.outputs.cache-hit != 'true'
         run: |
-          curl -sSL https://github.com/premake/premake-core/releases/download/v5.0.0-beta7/premake-5.0.0-beta7-linux.tar.gz | tar -xz -C .
+          curl -sSL https://github.com/premake/premake-core/releases/download/v5.0.0-beta8/premake-5.0.0-beta8-linux.tar.gz | tar -xz -C .
           chmod +x ./premake5
 
       - name: Restore engine vendor libs

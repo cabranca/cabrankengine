@@ -78,14 +78,14 @@ jobs:
         id: premake-cache
         uses: actions/cache@v4
         with:
-          key: premake5-5.0.0-beta7-windows
+          key: premake5-5.0.0-beta8-windows
           path: ./premake5.exe
 
       - name: Download premake5
         if: steps.premake-cache.outputs.cache-hit != 'true'
         shell: pwsh
         run: |
-          Invoke-WebRequest -Uri "https://github.com/premake/premake-core/releases/download/v5.0.0-beta7/premake-5.0.0-beta7-windows.zip" -OutFile premake5.zip
+          Invoke-WebRequest -Uri "https://github.com/premake/premake-core/releases/download/v5.0.0-beta8/premake-5.0.0-beta8-windows.zip" -OutFile premake5.zip
           Expand-Archive premake5.zip -DestinationPath .
 
       - name: Cache engine vendor libs
@@ -126,14 +126,14 @@ jobs:
         id: premake-cache
         uses: actions/cache@v4
         with:
-          key: premake5-5.0.0-beta7-windows
+          key: premake5-5.0.0-beta8-windows
           path: ./premake5.exe
 
       - name: Download premake5
         if: steps.premake-cache.outputs.cache-hit != 'true'
         shell: pwsh
         run: |
-          Invoke-WebRequest -Uri "https://github.com/premake/premake-core/releases/download/v5.0.0-beta7/premake-5.0.0-beta7-windows.zip" -OutFile premake5.zip
+          Invoke-WebRequest -Uri "https://github.com/premake/premake-core/releases/download/v5.0.0-beta8/premake-5.0.0-beta8-windows.zip" -OutFile premake5.zip
           Expand-Archive premake5.zip -DestinationPath .
 
       - name: Cache Assimp
@@ -179,14 +179,14 @@ jobs:
         id: premake-cache
         uses: actions/cache@v4
         with:
-          key: premake5-5.0.0-beta7-windows
+          key: premake5-5.0.0-beta8-windows
           path: ./premake5.exe
 
       - name: Download premake5
         if: steps.premake-cache.outputs.cache-hit != 'true'
         shell: pwsh
         run: |
-          Invoke-WebRequest -Uri "https://github.com/premake/premake-core/releases/download/v5.0.0-beta7/premake-5.0.0-beta7-windows.zip" -OutFile premake5.zip
+          Invoke-WebRequest -Uri "https://github.com/premake/premake-core/releases/download/v5.0.0-beta8/premake-5.0.0-beta8-windows.zip" -OutFile premake5.zip
           Expand-Archive premake5.zip -DestinationPath .
 
       - name: Restore engine vendor libs
@@ -255,14 +255,14 @@ jobs:
         id: premake-cache
         uses: actions/cache@v4
         with:
-          key: premake5-5.0.0-beta7-windows
+          key: premake5-5.0.0-beta8-windows
           path: ./premake5.exe
 
       - name: Download premake5
         if: steps.premake-cache.outputs.cache-hit != 'true'
         shell: pwsh
         run: |
-          Invoke-WebRequest -Uri "https://github.com/premake/premake-core/releases/download/v5.0.0-beta7/premake-5.0.0-beta7-windows.zip" -OutFile premake5.zip
+          Invoke-WebRequest -Uri "https://github.com/premake/premake-core/releases/download/v5.0.0-beta8/premake-5.0.0-beta8-windows.zip" -OutFile premake5.zip
           Expand-Archive premake5.zip -DestinationPath .
 
       - name: Restore engine vendor libs
@@ -317,14 +317,14 @@ jobs:
         id: premake-cache
         uses: actions/cache@v4
         with:
-          key: premake5-5.0.0-beta7-windows
+          key: premake5-5.0.0-beta8-windows
           path: ./premake5.exe
 
       - name: Download premake5
         if: steps.premake-cache.outputs.cache-hit != 'true'
         shell: pwsh
         run: |
-          Invoke-WebRequest -Uri "https://github.com/premake/premake-core/releases/download/v5.0.0-beta7/premake-5.0.0-beta7-windows.zip" -OutFile premake5.zip
+          Invoke-WebRequest -Uri "https://github.com/premake/premake-core/releases/download/v5.0.0-beta8/premake-5.0.0-beta8-windows.zip" -OutFile premake5.zip
           Expand-Archive premake5.zip -DestinationPath .
 
       - name: Restore Assimp
@@ -374,14 +374,14 @@ jobs:
         id: premake-cache
         uses: actions/cache@v4
         with:
-          key: premake5-5.0.0-beta7-windows
+          key: premake5-5.0.0-beta8-windows
           path: ./premake5.exe
 
       - name: Download premake5
         if: steps.premake-cache.outputs.cache-hit != 'true'
         shell: pwsh
         run: |
-          Invoke-WebRequest -Uri "https://github.com/premake/premake-core/releases/download/v5.0.0-beta7/premake-5.0.0-beta7-windows.zip" -OutFile premake5.zip
+          Invoke-WebRequest -Uri "https://github.com/premake/premake-core/releases/download/v5.0.0-beta8/premake-5.0.0-beta8-windows.zip" -OutFile premake5.zip
           Expand-Archive premake5.zip -DestinationPath .
 
       - name: Restore engine vendor libs
