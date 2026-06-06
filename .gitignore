@@ -16,6 +16,9 @@ profiling/
 # Configuration files
 config.json
 
+# Personal Claude Code instructions (private)
+CLAUDE.local.md
+
 # Other files
 GenerateFiles.bat
 imgui.ini
