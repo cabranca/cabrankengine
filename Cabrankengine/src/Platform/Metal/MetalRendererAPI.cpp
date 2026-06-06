@@ -37,7 +37,16 @@ namespace cbk::platform::metal {
 
 		m_Swapchain = CA::MetalLayer::layer();
 		m_Swapchain->setDevice(static_cast<MetalDeviceContext*>(window.getContext())->getDevice());
-		m_Swapchain->setDrawableSize(CGSize{ .width = static_cast<double>(window.getWidth()), .height = static_cast<double>(window.getHeight())});
+
+		// drawableSize is in *physical pixels*, not logical points. On a Retina display
+		// the window is e.g. 1280x720 points but the backing store is 2560x1440 pixels,
+		// so query the framebuffer size — using the point size would render at half
+		// resolution (upscaled by Core Animation) and, critically, would mismatch ImGui's
+		// HiDPI viewport (DisplaySize * DisplayFramebufferScale), making its UI 2x too big.
+		int fbWidth = 0;
+		int fbHeight = 0;
+		glfwGetFramebufferSize(glfwWindow, &fbWidth, &fbHeight);
+		m_Swapchain->setDrawableSize(CGSize{ .width = static_cast<double>(fbWidth), .height = static_cast<double>(fbHeight) });
 
 		// This shouldn't be hardcoded. Maybe better to ask capabilities as with Vulkan?
 		m_Swapchain->setPixelFormat(MTL::PixelFormatBGRA8Unorm);
@@ -110,8 +119,12 @@ namespace cbk::platform::metal {
 		depthAtt->setClearDepth(1.0);
 		depthAtt->setStoreAction(MTL::StoreActionDontCare);
 
-		s_ActiveEncoder = m_ActiveCommandBuffer->renderCommandEncoder(pass);
-		pass->release();
+		m_ActiveEncoder = m_ActiveCommandBuffer->renderCommandEncoder(pass);
+
+		// Keep the pass descriptor alive for the whole frame: ImGui_ImplMetal_NewFrame
+		// (called from ImGuiLayer::begin, after beginFrame) reads its color/depth pixel
+		// formats and sample count to build its pipeline state. Released in endFrame().
+		m_RenderPassDescriptor = pass;
 
 		// Viewport and scissor must be set every frame in Metal
 		MTL::Viewport viewport;
@@ -121,21 +134,21 @@ namespace cbk::platform::metal {
 		viewport.height = (double)m_CurrentDrawable->texture()->height();
 		viewport.znear = 0.0;
 		viewport.zfar = 1.0;
-		s_ActiveEncoder->setViewport(viewport);
+		m_ActiveEncoder->setViewport(viewport);
 
 		MTL::ScissorRect scissor;
 		scissor.x = 0;
 		scissor.y = 0;
 		scissor.width = m_CurrentDrawable->texture()->width();
 		scissor.height = m_CurrentDrawable->texture()->height();
-		s_ActiveEncoder->setScissorRect(scissor);
+		m_ActiveEncoder->setScissorRect(scissor);
 	}
 
 	void MetalRendererAPI::draw(const Ref<GeometryDescriptor>& desc) {}
 
 	void MetalRendererAPI::drawIndexed(const Ref<Material>& material, const Ref<GeometryDescriptor>& desc, const math::Mat4& transform,
 	                                   uint32_t indexCount) {
-		if (!s_ActiveEncoder)
+		if (!m_ActiveEncoder)
 			return;
 
 		auto* recordable = dynamic_cast<IMetalRecordable*>(material.get());
@@ -148,21 +161,27 @@ namespace cbk::platform::metal {
 		// The material sets the PSO, pushes uniform bytes and binds textures; geometry
 		// binds its vertex buffer; the draw reads indices from the same buffer at its
 		// offset (mirrors VulkanRendererAPI::commitRenderCommands).
-		recordable->record(s_ActiveEncoder, transform);
-		metalDesc->bindBuffers(s_ActiveEncoder);
+		recordable->record(m_ActiveEncoder, transform);
+		metalDesc->bindBuffers(m_ActiveEncoder);
 
 		uint32_t count = indexCount == 0 ? metalDesc->getIndexCount() : indexCount;
-		s_ActiveEncoder->drawIndexedPrimitives(MTL::PrimitiveTypeTriangle, (NS::UInteger)count, MTL::IndexTypeUInt32,
+		m_ActiveEncoder->drawIndexedPrimitives(MTL::PrimitiveTypeTriangle, (NS::UInteger)count, MTL::IndexTypeUInt32,
 		                                       metalDesc->getBuffer(), (NS::UInteger)metalDesc->getIndexBufferOffset());
 	}
 
 	void MetalRendererAPI::setViewport(uint32_t x, uint32_t y, uint32_t width, uint32_t height) {}
 
 	void MetalRendererAPI::endFrame() {
-		if (s_ActiveEncoder) {
-			s_ActiveEncoder->endEncoding();
-			s_ActiveEncoder->release();
-			s_ActiveEncoder = nullptr;
+		if (m_ActiveEncoder) {
+			m_ActiveEncoder->endEncoding();
+			m_ActiveEncoder->release();
+			m_ActiveEncoder = nullptr;
+		}
+
+		// Held since beginFrame() so ImGui could read it; the encoder is done with it now.
+		if (m_RenderPassDescriptor) {
+			m_RenderPassDescriptor->release();
+			m_RenderPassDescriptor = nullptr;
 		}
 
 		// Check if this is needed.
@@ -181,7 +200,15 @@ namespace cbk::platform::metal {
 		}
 	}
 
-	MTL::RenderCommandEncoder* MetalRendererAPI::GetActiveEncoder() {
-		return s_ActiveEncoder;
+	MTL::RenderPassDescriptor* MetalRendererAPI::getRenderPassDescriptor() const {
+		return m_RenderPassDescriptor;
+	}
+
+	MTL::CommandBuffer* MetalRendererAPI::getCommandBuffer() const {
+		return m_ActiveCommandBuffer;
+	}
+
+	MTL::RenderCommandEncoder* MetalRendererAPI::getCommandEncoder() const {
+		return m_ActiveEncoder;
 	}
 } // namespace cbk::platform::metal

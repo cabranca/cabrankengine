@@ -53,10 +53,10 @@ namespace cbk::rendering {
 		static void add(const Ref<Shader>& shader);
 
 		// Loads a shader from a file path and adds it to the library with the name derived from the file path .
-		[[nodiscard]] static Ref<Shader> load(const std::string& filepath);
+		static void load(const std::string& filepath);
 
 		// Loads a shader from a file path and adds it to the library with a specified name.
-		[[nodiscard]] static Ref<Shader> load(const std::string& name, const std::string& filepath);
+		static void load(const std::string& name, const std::string& filepath);
 
 		// Retrieves a shader from the library by its name.
 		[[nodiscard]] static Ref<Shader> get(const std::string& name);

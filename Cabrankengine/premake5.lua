@@ -117,6 +117,9 @@ project("Cabrankengine")
 		"src/Platform/Metal/**.cpp",
 		"src/Platform/Metal/**.mm",
 		"vendor/imgui/backends/imgui_impl_metal.mm",
+		-- ImGuiBuild.cpp (removed below) pulls in the GLFW backend on the other
+		-- platforms; on Metal we compile the Metal + GLFW backends directly.
+		"vendor/imgui/backends/imgui_impl_glfw.cpp",
 		})
 
 		removefiles({ "src/Cabrankengine/ImGui/ImGuiBuild.cpp" })

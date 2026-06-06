@@ -56,7 +56,8 @@ namespace cbk::scene {
 	}
 
 	void DefaultLibrary::setupBasicShaders() {
-		s_ErrorShader = ShaderLibrary::load("assets/shaders/Error");
+		ShaderLibrary::load("assets/shaders/Error");
+		s_ErrorShader = ShaderLibrary::get("Error");
 		ShaderLibrary::load("assets/shaders/Phong");
 		ShaderLibrary::load("assets/shaders/Texture");
 		ShaderLibrary::load("assets/shaders/Text");

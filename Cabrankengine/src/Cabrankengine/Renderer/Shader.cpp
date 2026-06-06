@@ -52,16 +52,14 @@ namespace cbk::rendering {
 		s_Shaders[name] = shader;
 	}
 
-	Ref<Shader> ShaderLibrary::load(const std::string& filepath) {
+	void ShaderLibrary::load(const std::string& filepath) {
 		auto shader = Shader::create(filepath);
 		add(shader);
-		return shader;
 	}
 
-	Ref<Shader> ShaderLibrary::load(const std::string& name, const std::string& filepath) {
+	void ShaderLibrary::load(const std::string& name, const std::string& filepath) {
 		auto shader = Shader::create(filepath);
 		add(name, shader);
-		return shader;
 	}
 
 	Ref<Shader> ShaderLibrary::get(const std::string& name) {

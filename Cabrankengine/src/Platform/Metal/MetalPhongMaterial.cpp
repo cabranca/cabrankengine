@@ -12,6 +12,7 @@
 #include "MetalBinding.h"
 #include "MetalDeviceContext.h"
 #include "MetalShader.h"
+#include "MetalStorageBuffer.h"
 
 namespace cbk::platform::metal {
 
@@ -39,6 +40,11 @@ namespace cbk::platform::metal {
 		// Per-draw push: model matrix (vertex), shininess (fragment).
 		encoder->setVertexBytes(&transform, sizeof(math::Mat4), buffer_index::k_Push);
 		encoder->setFragmentBytes(&m_Shininess, sizeof(float), buffer_index::k_Push);
+
+		// Point-light array: the Renderer's storage buffer is a CPU byte-holder on
+		// Metal; push its bytes directly (count header + PointLight[], <4 KB).
+		if (auto* lights = static_cast<MetalStorageBuffer*>(Renderer::getLightSSBO().get()))
+			encoder->setFragmentBytes(lights->data(), lights->size(), buffer_index::k_Lights);
 
 		if (m_DiffuseMap)
 			m_DiffuseMap->bind(0);

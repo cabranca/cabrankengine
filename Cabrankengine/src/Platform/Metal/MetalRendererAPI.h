@@ -6,6 +6,7 @@ namespace MTL {
 	class RenderCommandEncoder;
 	class CommandBuffer;
 	class Texture;
+	class RenderPassDescriptor;
 } // namespace MTL
 namespace CA {
 	class MetalLayer;
@@ -43,16 +44,21 @@ namespace cbk::platform::metal {
 			return API::Metal;
 		}
 
-		// Returns the active render command encoder (used by textures to bind themselves).
-		[[nodiscard]] static MTL::RenderCommandEncoder* GetActiveEncoder();
+		// Per-frame handles exposed for ImGui's Metal backend (NewFrame / RenderDrawData).
+		[[nodiscard]] MTL::RenderPassDescriptor* getRenderPassDescriptor() const;
+		[[nodiscard]] MTL::CommandBuffer* getCommandBuffer() const;
+		[[nodiscard]] MTL::RenderCommandEncoder* getCommandEncoder() const;
 
 	  private:
 		math::Vector4 m_ClearColor = { 0.f, 0.f, 0.f, 1.f };
 
-		// Per-frame state. The encoder is static so other Metal subsystems (textures)
-		// can bind onto the in-flight pass.
+		// Per-frame state, valid between beginFrame() and endFrame(). The encoder is
+		// threaded explicitly into materials/geometry during recording; it is also
+		// exposed (with the command buffer and pass descriptor) so the ImGui layer can
+		// draw into the same in-flight pass.
 		MTL::CommandBuffer* m_ActiveCommandBuffer = nullptr;
-		inline static MTL::RenderCommandEncoder* s_ActiveEncoder = nullptr;
+		MTL::RenderCommandEncoder* m_ActiveEncoder = nullptr;
+		MTL::RenderPassDescriptor* m_RenderPassDescriptor = nullptr;
 
 		CA::MetalLayer* m_Swapchain;
 		CA::MetalDrawable* m_CurrentDrawable = nullptr;

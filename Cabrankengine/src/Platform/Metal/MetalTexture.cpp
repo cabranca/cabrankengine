@@ -9,6 +9,7 @@
 
 #include <Cabrankengine/Core/Application.h>
 #include <Cabrankengine/Core/Window.h>
+#include <Cabrankengine/Renderer/RenderCommand.h>
 #include "MetalDeviceContext.h"
 #include "MetalRendererAPI.h"
 
@@ -244,7 +245,11 @@ namespace cbk::platform::metal {
 	void MetalTexture2D::bind(uint32_t slot) const {
 		CBK_PROFILE_FUNCTION();
 
-		auto* encoder = MetalRendererAPI::GetActiveEncoder();
+		// bind() is part of the cross-backend Texture2D interface, so it can't take the
+		// encoder as a parameter; reach the in-flight encoder through the single
+		// RendererAPI instance instead (same access path the ImGui layer uses).
+		auto* rendererAPI = static_cast<MetalRendererAPI*>(RenderCommand::getRendererAPI());
+		auto* encoder = rendererAPI->getCommandEncoder();
 		if (encoder && m_Texture)
 			encoder->setFragmentTexture(m_Texture, slot);
 	}
