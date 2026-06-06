@@ -11,7 +11,6 @@ namespace cbk::platform::vk {
 	  public:
 		void init() override;
 		void shutdown() override;
-		void swapBuffers() override;
 
 		[[nodiscard]] VkInstance getInstance() const;
 		[[nodiscard]] VkDevice getLogicalDevice() const;
