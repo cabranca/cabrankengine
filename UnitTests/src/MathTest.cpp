@@ -43,30 +43,30 @@ TEST_CASE("Vector3 Scalar Multiplication") {
 
 	SECTION("Binary multiplication scales all components") {
 		auto result = v * 2.f;
-		REQUIRE(result.x == Approx(2.f).margin(EPSILON));
-		REQUIRE(result.y == Approx(-4.f).margin(EPSILON));
-		REQUIRE(result.z == Approx(6.f).margin(EPSILON));
+		REQUIRE(result.x == Approx(2.f).margin(k_Epsilon));
+		REQUIRE(result.y == Approx(-4.f).margin(k_Epsilon));
+		REQUIRE(result.z == Approx(6.f).margin(k_Epsilon));
 	}
 
 	SECTION("Unary multiplication assignment updates in place") {
 		v *= 0.5f;
-		REQUIRE(v.x == Approx(0.5f).margin(EPSILON));
-		REQUIRE(v.y == Approx(-1.f).margin(EPSILON));
-		REQUIRE(v.z == Approx(1.5f).margin(EPSILON));
+		REQUIRE(v.x == Approx(0.5f).margin(k_Epsilon));
+		REQUIRE(v.y == Approx(-1.f).margin(k_Epsilon));
+		REQUIRE(v.z == Approx(1.5f).margin(k_Epsilon));
 	}
 
 	SECTION("Multiplying by zero gives zero Vector3") {
 		auto result = v * 0.f;
-		REQUIRE(result.x == Approx(0.f).margin(EPSILON));
-		REQUIRE(result.y == Approx(0.f).margin(EPSILON));
-		REQUIRE(result.z == Approx(0.f).margin(EPSILON));
+		REQUIRE(result.x == Approx(0.f).margin(k_Epsilon));
+		REQUIRE(result.y == Approx(0.f).margin(k_Epsilon));
+		REQUIRE(result.z == Approx(0.f).margin(k_Epsilon));
 	}
 
 	SECTION("Multiplying by -1 inverts direction") {
 		auto result = v * -1.f;
-		REQUIRE(result.x == Approx(-v.x).margin(EPSILON));
-		REQUIRE(result.y == Approx(-v.y).margin(EPSILON));
-		REQUIRE(result.z == Approx(-v.z).margin(EPSILON));
+		REQUIRE(result.x == Approx(-v.x).margin(k_Epsilon));
+		REQUIRE(result.y == Approx(-v.y).margin(k_Epsilon));
+		REQUIRE(result.z == Approx(-v.z).margin(k_Epsilon));
 	}
 
 	SECTION("Scalar multiplication is distributive") {
@@ -75,9 +75,9 @@ TEST_CASE("Vector3 Scalar Multiplication") {
 		float s = 2.f;
 		auto left = (a + b) * s;
 		auto right = (a * s) + (b * s);
-		REQUIRE(left.x == Approx(right.x).margin(EPSILON));
-		REQUIRE(left.y == Approx(right.y).margin(EPSILON));
-		REQUIRE(left.z == Approx(right.z).margin(EPSILON));
+		REQUIRE(left.x == Approx(right.x).margin(k_Epsilon));
+		REQUIRE(left.y == Approx(right.y).margin(k_Epsilon));
+		REQUIRE(left.z == Approx(right.z).margin(k_Epsilon));
 	}
 }
 
@@ -86,21 +86,21 @@ TEST_CASE("Vector3 Unary Negation") {
 
 	SECTION("Negation flips all signs") {
 		auto neg = -v;
-		REQUIRE(neg.x == Approx(-1.f).margin(EPSILON));
-		REQUIRE(neg.y == Approx(2.f).margin(EPSILON));
-		REQUIRE(neg.z == Approx(-3.f).margin(EPSILON));
+		REQUIRE(neg.x == Approx(-1.f).margin(k_Epsilon));
+		REQUIRE(neg.y == Approx(2.f).margin(k_Epsilon));
+		REQUIRE(neg.z == Approx(-3.f).margin(k_Epsilon));
 	}
 
 	SECTION("Double negation returns original Vector3") {
 		auto neg = -(-v);
-		REQUIRE(neg.x == Approx(v.x).margin(EPSILON));
-		REQUIRE(neg.y == Approx(v.y).margin(EPSILON));
-		REQUIRE(neg.z == Approx(v.z).margin(EPSILON));
+		REQUIRE(neg.x == Approx(v.x).margin(k_Epsilon));
+		REQUIRE(neg.y == Approx(v.y).margin(k_Epsilon));
+		REQUIRE(neg.z == Approx(v.z).margin(k_Epsilon));
 	}
 
 	SECTION("Negation preserves length") {
 		auto neg = -v;
-		REQUIRE(v.length() == Approx(neg.length()).margin(EPSILON));
+		REQUIRE(v.length() == Approx(neg.length()).margin(k_Epsilon));
 	}
 
 	SECTION("Negating zero Vector3 stays zero") {
@@ -114,29 +114,29 @@ TEST_CASE("Vector3 Unary Negation") {
 
 TEST_CASE("Vector3 Length and Normalization") {
 	Vector3 v{ 3, 4, 0 };
-	REQUIRE(v.lengthSquared() == Approx(25.f).margin(EPSILON));
+	REQUIRE(v.lengthSquared() == Approx(25.f).margin(k_Epsilon));
 
 	Vector3 zero = Vector3::Zero;
-	REQUIRE(zero.lengthSquared() == Approx(0.f).margin(EPSILON));
+	REQUIRE(zero.lengthSquared() == Approx(0.f).margin(k_Epsilon));
 
 	SECTION("Length of standard axes") {
-		REQUIRE(Vector3::Right.length() == Approx(1.f).margin(EPSILON));
-		REQUIRE(Vector3::Up.length() == Approx(1.f).margin(EPSILON));
-		REQUIRE(Vector3::Backward.length() == Approx(1.f).margin(EPSILON));
-		REQUIRE(Vector3::Zero.length() == Approx(0.f).margin(EPSILON));
+		REQUIRE(Vector3::Right.length() == Approx(1.f).margin(k_Epsilon));
+		REQUIRE(Vector3::Up.length() == Approx(1.f).margin(k_Epsilon));
+		REQUIRE(Vector3::Backward.length() == Approx(1.f).margin(k_Epsilon));
+		REQUIRE(Vector3::Zero.length() == Approx(0.f).margin(k_Epsilon));
 	}
 
 	SECTION("Length of arbitrary Vector3") {
 		Vector3 v{ 3, 4, 0 };
-		REQUIRE(v.length() == Approx(5.f).margin(EPSILON));
+		REQUIRE(v.length() == Approx(5.f).margin(k_Epsilon));
 	}
 
 	SECTION("Normalize non-zero Vector3") {
 		Vector3 v{ 3, 4, 0 };
 		v.normalized();
-		REQUIRE(v.length() == Approx(1.f).margin(EPSILON));
-		REQUIRE(v.x == Approx(0.6f).margin(EPSILON));
-		REQUIRE(v.y == Approx(0.8f).margin(EPSILON));
+		REQUIRE(v.length() == Approx(1.f).margin(k_Epsilon));
+		REQUIRE(v.x == Approx(0.6f).margin(k_Epsilon));
+		REQUIRE(v.y == Approx(0.8f).margin(k_Epsilon));
 	}
 
 	SECTION("Normalize zero Vector3 is no-op") {
@@ -152,9 +152,9 @@ TEST_CASE("Vector3 Length and Normalization") {
 		v.normalize();
 		Vector3 before = v;
 		v.normalize();
-		REQUIRE(v.x == Approx(before.x).margin(EPSILON));
-		REQUIRE(v.y == Approx(before.y).margin(EPSILON));
-		REQUIRE(v.z == Approx(before.z).margin(EPSILON));
+		REQUIRE(v.x == Approx(before.x).margin(k_Epsilon));
+		REQUIRE(v.y == Approx(before.y).margin(k_Epsilon));
+		REQUIRE(v.z == Approx(before.z).margin(k_Epsilon));
 	}
 }
 
@@ -170,38 +170,38 @@ TEST_CASE("Vector3 Dot Product") {
 	}
 
 	SECTION("Parallel Vector3fs give product of magnitudes") {
-		REQUIRE(dot({ 2, 0, 0 }, { 3, 0, 0 }) == Approx(6.f).margin(EPSILON));
+		REQUIRE(dot({ 2, 0, 0 }, { 3, 0, 0 }) == Approx(6.f).margin(k_Epsilon));
 	}
 
 	SECTION("Opposite Vector3fs give negative result") {
-		REQUIRE(dot({ 1, 0, 0 }, { -1, 0, 0 }) == Approx(-1.f).margin(EPSILON));
+		REQUIRE(dot({ 1, 0, 0 }, { -1, 0, 0 }) == Approx(-1.f).margin(k_Epsilon));
 	}
 }
 
 TEST_CASE("Vector3 Cross Product") {
 	SECTION("Cross product of orthogonal basis Vector3fs") {
 		auto result = cross(Vector3::Right, Vector3::Up);
-		REQUIRE(result.x == Approx(0.f).margin(EPSILON));
-		REQUIRE(result.y == Approx(0.f).margin(EPSILON));
-		REQUIRE(result.z == Approx(1.f).margin(EPSILON));
+		REQUIRE(result.x == Approx(0.f).margin(k_Epsilon));
+		REQUIRE(result.y == Approx(0.f).margin(k_Epsilon));
+		REQUIRE(result.z == Approx(1.f).margin(k_Epsilon));
 	}
 
 	SECTION("Cross product is anti-commutative") {
-		REQUIRE(cross(Vector3::Right, Vector3::Up).z == Approx(1.f).margin(EPSILON));
-		REQUIRE(cross(Vector3::Up, Vector3::Right).z == Approx(-1.f).margin(EPSILON));
+		REQUIRE(cross(Vector3::Right, Vector3::Up).z == Approx(1.f).margin(k_Epsilon));
+		REQUIRE(cross(Vector3::Up, Vector3::Right).z == Approx(-1.f).margin(k_Epsilon));
 	}
 
 	SECTION("Cross product of parallel Vector3fs is zero") {
 		auto result = cross(Vector3::Right, Vector3::Right);
-		REQUIRE(result.length() == Approx(0.f).margin(EPSILON));
+		REQUIRE(result.length() == Approx(0.f).margin(k_Epsilon));
 	}
 
 	SECTION("Result is orthogonal to both operands") {
 		Vector3 a{ 1, 2, 3 };
 		Vector3 b{ 4, 5, 6 };
 		Vector3 c = cross(a, b);
-		REQUIRE(dot(c, a) == Approx(0.f).margin(EPSILON));
-		REQUIRE(dot(c, b) == Approx(0.f).margin(EPSILON));
+		REQUIRE(dot(c, a) == Approx(0.f).margin(k_Epsilon));
+		REQUIRE(dot(c, b) == Approx(0.f).margin(k_Epsilon));
 	}
 }
 
@@ -250,19 +250,19 @@ TEST_CASE("Vector3 Equality and Inequality") {
 
 TEST_CASE("Vector3 Angle Between") {
 	SECTION("Parallel vectors have 0 radians between them") {
-		REQUIRE(angleBetween(Vector3::Right, Vector3::Right) == Approx(0.f).margin(EPSILON));
+		REQUIRE(angleBetween(Vector3::Right, Vector3::Right) == Approx(0.f).margin(k_Epsilon));
 	}
 
 	SECTION("Opposite vectors have pi radians between them") {
-		REQUIRE(angleBetween(Vector3::Right, Vector3::Left) == Approx(static_cast<float>(PI)).margin(EPSILON));
+		REQUIRE(angleBetween(Vector3::Right, Vector3::Left) == Approx(static_cast<float>(k_Pi)).margin(k_Epsilon));
 	}
 
 	SECTION("Perpendicular vectors have pi/2 radians between them") {
-		REQUIRE(angleBetween(Vector3::Right, Vector3::Up) == Approx(static_cast<float>(HALF_PI)).margin(EPSILON));
+		REQUIRE(angleBetween(Vector3::Right, Vector3::Up) == Approx(static_cast<float>(k_HalfPi)).margin(k_Epsilon));
 	}
 
 	SECTION("Angle with zero vector returns 0") {
-		REQUIRE(angleBetween(Vector3::Zero, Vector3::Right) == Approx(0.f).margin(EPSILON));
+		REQUIRE(angleBetween(Vector3::Zero, Vector3::Right) == Approx(0.f).margin(k_Epsilon));
 	}
 }
 
@@ -277,16 +277,16 @@ TEST_CASE("Mat4 Constructors and Constants") {
 	}
 
 	SECTION("Identity matrix matches expected pattern") {
-		const auto& I = identityMat();
-		REQUIRE(I.elements[0] == Vector4{ 1, 0, 0, 0 });
-		REQUIRE(I.elements[1] == Vector4{ 0, 1, 0, 0 });
-		REQUIRE(I.elements[2] == Vector4{ 0, 0, 1, 0 });
-		REQUIRE(I.elements[3] == Vector4{ 0, 0, 0, 1 });
+		const auto& i = identityMat();
+		REQUIRE(i.elements[0] == Vector4{ 1, 0, 0, 0 });
+		REQUIRE(i.elements[1] == Vector4{ 0, 1, 0, 0 });
+		REQUIRE(i.elements[2] == Vector4{ 0, 0, 1, 0 });
+		REQUIRE(i.elements[3] == Vector4{ 0, 0, 0, 1 });
 	}
 
 	SECTION("Zero matrix has all zeros") {
-		const auto& Z = zeroMat();
-		for (const auto& row: Z.elements)
+		const auto& z = zeroMat();
+		for (const auto& row: z.elements)
 			REQUIRE(row == Vector4{ 0, 0, 0, 0 });
 	}
 }
@@ -295,18 +295,18 @@ TEST_CASE("Mat4 Constructors and Constants") {
 // Equality and Inequality
 // ====================================================
 TEST_CASE("Mat4 Equality and Inequality") {
-	Mat4 A{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
-	Mat4 B{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
-	Mat4 C{ 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 };
+	Mat4 a{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
+	Mat4 b{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
+	Mat4 c{ 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 };
 
 	SECTION("Identical matrices are equal") {
-		REQUIRE(A == B);
-		REQUIRE_FALSE(A != B);
+		REQUIRE(a == b);
+		REQUIRE_FALSE(a != b);
 	}
 
 	SECTION("Different matrices are not equal") {
-		REQUIRE(A != C);
-		REQUIRE_FALSE(A == C);
+		REQUIRE(a != c);
+		REQUIRE_FALSE(a == c);
 	}
 }
 
@@ -356,26 +356,26 @@ TEST_CASE("Mat4 Translation") {
 TEST_CASE("Mat4 Rotation around single axes") {
 	SECTION("Rotation X 90° swaps Y and Z with sign") {
 		Mat4 rx = rotateX(90.f);
-		REQUIRE(rx.elements[1].y == Approx(0.f).margin(EPSILON));
-		REQUIRE(rx.elements[1].z == Approx(1.f).margin(EPSILON));
-		REQUIRE(rx.elements[2].y == Approx(-1.f).margin(EPSILON));
-		REQUIRE(rx.elements[2].z == Approx(0.f).margin(EPSILON));
+		REQUIRE(rx.elements[1].y == Approx(0.f).margin(k_Epsilon));
+		REQUIRE(rx.elements[1].z == Approx(1.f).margin(k_Epsilon));
+		REQUIRE(rx.elements[2].y == Approx(-1.f).margin(k_Epsilon));
+		REQUIRE(rx.elements[2].z == Approx(0.f).margin(k_Epsilon));
 	}
 
 	SECTION("Rotation Y 90° swaps X and Z") {
 		Mat4 ry = rotateY(90.f);
-		REQUIRE(ry.elements[0].x == Approx(0.f).margin(EPSILON));
-		REQUIRE(ry.elements[0].z == Approx(-1.f).margin(EPSILON));
-		REQUIRE(ry.elements[2].x == Approx(1.f).margin(EPSILON));
-		REQUIRE(ry.elements[2].z == Approx(0.f).margin(EPSILON));
+		REQUIRE(ry.elements[0].x == Approx(0.f).margin(k_Epsilon));
+		REQUIRE(ry.elements[0].z == Approx(-1.f).margin(k_Epsilon));
+		REQUIRE(ry.elements[2].x == Approx(1.f).margin(k_Epsilon));
+		REQUIRE(ry.elements[2].z == Approx(0.f).margin(k_Epsilon));
 	}
 
 	SECTION("Rotation Z 90° swaps X and Y") {
 		Mat4 rz = rotateZ(90.f);
-		REQUIRE(rz.elements[0].x == Approx(0.f).margin(EPSILON));
-		REQUIRE(rz.elements[0].y == Approx(1.f).margin(EPSILON));
-		REQUIRE(rz.elements[1].x == Approx(-1.f).margin(EPSILON));
-		REQUIRE(rz.elements[1].y == Approx(0.f).margin(EPSILON));
+		REQUIRE(rz.elements[0].x == Approx(0.f).margin(k_Epsilon));
+		REQUIRE(rz.elements[0].y == Approx(1.f).margin(k_Epsilon));
+		REQUIRE(rz.elements[1].x == Approx(-1.f).margin(k_Epsilon));
+		REQUIRE(rz.elements[1].y == Approx(0.f).margin(k_Epsilon));
 	}
 }
 
@@ -419,20 +419,20 @@ TEST_CASE("Mat4 Transpose") {
 // Matrix Product
 // ====================================================
 TEST_CASE("Mat4 Product") {
-	Mat4 A{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
-	Mat4 B{ 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32 };
+	Mat4 a{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
+	Mat4 b{ 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32 };
 	Mat4 expected{ 250, 260, 270, 280, 618, 644, 670, 696, 986, 1028, 1070, 1112, 1354, 1412, 1470, 1528 };
-	Mat4 prod = A * B;
+	Mat4 prod = a * b;
 
 	SECTION("Product matches expected values") {
 		REQUIRE(prod == expected);
 	}
 
 	SECTION("Multiplying by Identity returns same matrix") {
-		REQUIRE((A * identityMat()) == A);
+		REQUIRE((a * identityMat()) == a);
 	}
 
 	SECTION("Multiplying Identity by any matrix returns same matrix") {
-		REQUIRE((identityMat() * A) == A);
+		REQUIRE((identityMat() * a) == a);
 	}
 }

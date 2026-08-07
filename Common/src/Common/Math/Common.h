@@ -4,12 +4,12 @@
 
 namespace cbk::math {
 
-	inline constexpr float PI = std::numbers::pi_v<float>;
-	inline constexpr float HALF_PI = std::numbers::pi_v<float> / 2.0f;
-	inline constexpr float TWO_PI = std::numbers::pi_v<float> * 2.0f;
-	inline constexpr float EPSILON = 1e-5f;
+	inline constexpr float k_Pi = std::numbers::pi_v<float>;
+	inline constexpr float k_HalfPi = std::numbers::pi_v<float> / 2.0f;
+	inline constexpr float k_TwoPi = std::numbers::pi_v<float> * 2.0f;
+	inline constexpr float k_Epsilon = 1e-5f;
 
 	inline float radians(float degrees) {
-		return degrees * PI / 180.f;
+		return degrees * k_Pi / 180.f;
 	}
 } // namespace cbk::math

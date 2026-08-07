@@ -13,10 +13,10 @@ using namespace cbk::scene;
 using namespace cbk::scene::arch;
 
 namespace {
-	constexpr int GRID_X = 100;
-	constexpr int GRID_Y = 100;
-	constexpr float QUAD_SIZE = 14.f;
-	constexpr float QUAD_SPACING = 16.f;
+	constexpr int k_GridX = 100;
+	constexpr int k_GridY = 100;
+	constexpr float k_QuadSize = 14.f;
+	constexpr float k_QuadSpacing = 16.f;
 
 	struct QuadInstance {
 		Entity Id;
@@ -38,7 +38,7 @@ void Sandbox2D::onAttach() {
 	CameraArch camera(ProjectionType::Orthographic);
 	camera.camera().Far = 1.f;
 	camera.camera().Near = -1.f;
-	camera.camera().OrthoSize = (GRID_Y + 4) * QUAD_SPACING;
+	camera.camera().OrthoSize = (k_GridY + 4) * k_QuadSpacing;
 
 	// One texture, shared by every sprite — this is what lets the SpriteRenderSystem
 	// emit a single batched draw call instead of one per quad.
@@ -47,17 +47,17 @@ void Sandbox2D::onAttach() {
 	auto* reg = Application::get().getRegistry();
 	auto& scene = Application::get().getScene();
 
-	s_Quads.reserve(GRID_X * GRID_Y);
+	s_Quads.reserve(k_GridX * k_GridY);
 
-	const float originX = -(GRID_X - 1) * QUAD_SPACING * 0.5f;
-	const float originY = -(GRID_Y - 1) * QUAD_SPACING * 0.5f;
+	const float originX = -(k_GridX - 1) * k_QuadSpacing * 0.5f;
+	const float originY = -(k_GridY - 1) * k_QuadSpacing * 0.5f;
 
-	for (int y = 0; y < GRID_Y; ++y) {
-		for (int x = 0; x < GRID_X; ++x) {
+	for (int y = 0; y < k_GridY; ++y) {
+		for (int x = 0; x < k_GridX; ++x) {
 			Entity e = scene.createEntity("Quad");
 			reg->addComponent(e, CTransform{
-			                         .Position = { originX + x * QUAD_SPACING, originY + y * QUAD_SPACING, 0.f },
-			                         .Scale = { QUAD_SIZE, QUAD_SIZE, 0.f },
+			                         .Position = { originX + x * k_QuadSpacing, originY + y * k_QuadSpacing, 0.f },
+			                         .Scale = { k_QuadSize, k_QuadSize, 0.f },
 			                     });
 			reg->addComponent(e, CSprite{
 			                         .Path = "assets/textures/container2.cbkt",
@@ -97,7 +97,7 @@ void Sandbox2D::onUpdate(cbk::Timestep delta) {
 		// its argument as DEGREES — so this gives 30°/sec spin staggered per quad.
 		transform->Rotation.z = s_Time * 30.f + q.PhaseOffset;
 
-		const float t = s_Time + q.PhaseOffset * (PI / 180.f);
+		const float t = s_Time + q.PhaseOffset * (k_Pi / 180.f);
 		sprite->Tint = Vector4(0.5f + 0.5f * std::sin(t),
 		                       0.5f + 0.5f * std::sin(t + 2.094f), // +120°
 		                       0.5f + 0.5f * std::sin(t + 4.188f), // +240°

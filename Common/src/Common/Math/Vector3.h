@@ -14,6 +14,10 @@ namespace cbk::math {
 			float coords[3];
 		};
 
+		// Named direction constants keep their bare PascalCase spelling rather than the
+		// k_ prefix used for other constants: Vector3::Up reads better than Vector3::k_Up,
+		// and matches what every other engine calls these.
+		// NOLINTBEGIN(readability-identifier-naming)
 		static const Vector3 Right;
 		static const Vector3 Left;
 		static const Vector3 Up;
@@ -22,6 +26,7 @@ namespace cbk::math {
 		static const Vector3 Backward;
 		static const Vector3 Zero;
 		static const Vector3 One;
+		// NOLINTEND(readability-identifier-naming)
 
 		constexpr Vector3() noexcept : x(), y(), z() {}
 		explicit constexpr Vector3(float uniform) noexcept : x(uniform), y(uniform), z(uniform) {}
@@ -49,6 +54,7 @@ namespace cbk::math {
 		[[nodiscard]] constexpr const float& operator[](int index) const noexcept;
 	};
 
+	// NOLINTBEGIN(readability-identifier-naming)
 	inline constexpr Vector3 Vector3::Right{ (1.f), (0.f), (0.f) };
 	inline constexpr Vector3 Vector3::Left{ (-1.f), (0.f), (0.f) };
 	inline constexpr Vector3 Vector3::Up{ (0.f), (1.f), (0.f) };
@@ -57,6 +63,7 @@ namespace cbk::math {
 	inline constexpr Vector3 Vector3::Backward{ (0.f), (0.f), (1.f) };
 	inline constexpr Vector3 Vector3::Zero{ (0.f) };
 	inline constexpr Vector3 Vector3::One{ (1.f) };
+	// NOLINTEND(readability-identifier-naming)
 
 	inline constexpr float Vector3::lengthSquared() const noexcept {
 		return x * x + y * y + z * z;
@@ -86,7 +93,7 @@ namespace cbk::math {
 
 	inline bool Vector3::isNormalized() const noexcept {
 		float result = abs(lengthSquared() - 1.f);
-		return result < EPSILON;
+		return result < k_Epsilon;
 	}
 
 	inline constexpr bool Vector3::operator==(const Vector3& other) const noexcept {

@@ -6,14 +6,14 @@
 namespace cbk::ecs {
 
 	EntityManager::EntityManager() {
-		for (Entity e = 0; e < MAX_ENTITIES; e++)
+		for (Entity e = 0; e < k_MaxEntities; e++)
 			m_AvailableEntities.push(e);
 	}
 
 	Entity EntityManager::createEntity() {
-		if (m_LivingEntityCount >= MAX_ENTITIES) {
-			CBK_CORE_WARN("Maximum entity count ({0}) reached. Entity not created.", MAX_ENTITIES);
-			return INVALID_ENTITY;
+		if (m_LivingEntityCount >= k_MaxEntities) {
+			CBK_CORE_WARN("Maximum entity count ({0}) reached. Entity not created.", k_MaxEntities);
+			return k_InvalidEntity;
 		}
 		Entity id = m_AvailableEntities.front();
 		m_AvailableEntities.pop();
@@ -23,8 +23,8 @@ namespace cbk::ecs {
 	}
 
 	void EntityManager::destroyEntity(Entity e) {
-		if (e >= MAX_ENTITIES) {
-			CBK_CORE_ERROR("destroyEntity: entity {0} out of bounds (max {1})", e, MAX_ENTITIES);
+		if (e >= k_MaxEntities) {
+			CBK_CORE_ERROR("destroyEntity: entity {0} out of bounds (max {1})", e, k_MaxEntities);
 			return;
 		}
 		m_Signatures[e].reset();
@@ -34,8 +34,8 @@ namespace cbk::ecs {
 	}
 
 	void EntityManager::setSignature(Entity e, Signature signature) {
-		if (e >= MAX_ENTITIES) {
-			CBK_CORE_ERROR("setSignature: entity {0} out of bounds (max {1})", e, MAX_ENTITIES);
+		if (e >= k_MaxEntities) {
+			CBK_CORE_ERROR("setSignature: entity {0} out of bounds (max {1})", e, k_MaxEntities);
 			return;
 		}
 		m_Signatures[e] = signature;
@@ -44,8 +44,8 @@ namespace cbk::ecs {
 
 	// I don't like that one could get the signature of a non existing entity (it would be 0, but still)
 	Signature EntityManager::getSignature(Entity e) {
-		if (e >= MAX_ENTITIES) {
-			CBK_CORE_ERROR("getSignature: entity {0} out of bounds (max {1})", e, MAX_ENTITIES);
+		if (e >= k_MaxEntities) {
+			CBK_CORE_ERROR("getSignature: entity {0} out of bounds (max {1})", e, k_MaxEntities);
 			return Signature{};
 		}
 		return m_Signatures[e];

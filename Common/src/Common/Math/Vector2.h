@@ -19,12 +19,15 @@ namespace cbk::math {
 			float coords[2]{ 0 };
 		};
 
+		// Named direction constants — see the note in Vector3.h.
+		// NOLINTBEGIN(readability-identifier-naming)
 		static const Vector2 Right;
 		static const Vector2 Left;
 		static const Vector2 Up;
 		static const Vector2 Down;
 		static const Vector2 Zero;
 		static const Vector2 One;
+		// NOLINTEND(readability-identifier-naming)
 
 		constexpr Vector2() noexcept : x(), y() {}
 		explicit constexpr Vector2(float uniform) noexcept : x(uniform), y(uniform) {}
@@ -50,12 +53,14 @@ namespace cbk::math {
 		[[nodiscard]] constexpr const float& operator[](int index) const noexcept;
 	};
 
+	// NOLINTBEGIN(readability-identifier-naming)
 	inline constexpr Vector2 Vector2::Right{ (1.f), (0.f) };
 	inline constexpr Vector2 Vector2::Left{ (-1.f), (0.f) };
 	inline constexpr Vector2 Vector2::Up{ (0.f), (1.f) };
 	inline constexpr Vector2 Vector2::Down{ (0.f), (-1.f) };
 	inline constexpr Vector2 Vector2::Zero{ (0.f) };
 	inline constexpr Vector2 Vector2::One{ (1.f) };
+	// NOLINTEND(readability-identifier-naming)
 
 	inline constexpr float Vector2::lengthSquared() const noexcept {
 		return x * x + y * y;
@@ -76,7 +81,7 @@ namespace cbk::math {
 
 	inline bool Vector2::isNormalized() const noexcept {
 		float result = abs(lengthSquared() - 1.f);
-		return result < EPSILON;
+		return result < k_Epsilon;
 	}
 
 	inline constexpr bool Vector2::operator==(const Vector2& other) const noexcept {

@@ -16,7 +16,7 @@ TEST_CASE("AABB vs AABB - 2D Contact (no overlapping)") {
 	Vector2 pos2(1, 0);
 	Vector2 h2(0.5f, 0.5f);
 
-	auto result = AABB(pos1, h1, pos2, h2);
+	auto result = aabb(pos1, h1, pos2, h2);
 
 	REQUIRE(result.collided);
 	REQUIRE(result.penetration == 0.0f);
@@ -29,7 +29,7 @@ TEST_CASE("AABB vs AABB - 2D Overlap") {
 	Vector2 pos2(1, 0);
 	Vector2 h2(1.0f, 1.0f);
 
-	auto result = AABB(pos1, h1, pos2, h2);
+	auto result = aabb(pos1, h1, pos2, h2);
 
 	REQUIRE(result.collided);
 	REQUIRE(result.penetration > 0.0f);
@@ -42,7 +42,7 @@ TEST_CASE("AABB vs AABB - 2D No Collision") {
 	Vector2 pos2(5, 0);
 	Vector2 h2(0.5f, 0.5f);
 
-	auto result = AABB(pos1, h1, pos2, h2);
+	auto result = aabb(pos1, h1, pos2, h2);
 
 	REQUIRE_FALSE(result.collided);
 }
@@ -54,7 +54,7 @@ TEST_CASE("AABB vs AABB - 3D Contact (no overlapping)") {
 	Vector3 pos2(1, 1, 1);
 	Vector3 h2(0.5f, 0.5f, 0.5f);
 
-	auto result = AABB(pos1, h1, pos2, h2);
+	auto result = aabb(pos1, h1, pos2, h2);
 
 	REQUIRE(result.collided);
 	REQUIRE(result.penetration == 0.0f);
@@ -67,7 +67,7 @@ TEST_CASE("AABB vs AABB - 3D Overlap") {
 	Vector3 pos2(0.5f, 0.5f, 0.5f);
 	Vector3 h2(0.5f, 0.5f, 0.5f);
 
-	auto result = AABB(pos1, h1, pos2, h2);
+	auto result = aabb(pos1, h1, pos2, h2);
 
 	REQUIRE(result.collided);
 	REQUIRE(result.penetration > 0.0f);
@@ -80,7 +80,7 @@ TEST_CASE("AABB vs AABB - 3D No Collision") {
 	Vector3 pos2(5, 5, 5);
 	Vector3 h2(0.5f, 0.5f, 0.5f);
 
-	auto result = AABB(pos1, h1, pos2, h2);
+	auto result = aabb(pos1, h1, pos2, h2);
 
 	REQUIRE_FALSE(result.collided);
 }
@@ -92,7 +92,7 @@ TEST_CASE("Sphere vs Sphere - 2D Contact (no overlapping)") {
 	Vector2 pos1(0, 0);
 	Vector2 pos2(2, 0);
 
-	auto result = Sphere(pos1, 1.0f, pos2, 1.0f);
+	auto result = sphere(pos1, 1.0f, pos2, 1.0f);
 
 	REQUIRE(result.collided);
 	REQUIRE(result.penetration == Approx(0.0f).margin(1e-5));
@@ -102,7 +102,7 @@ TEST_CASE("Sphere vs Sphere - 2D Overlap") {
 	Vector2 pos1(0, 0);
 	Vector2 pos2(1, 0);
 
-	auto result = Sphere(pos1, 1.0f, pos2, 1.0f);
+	auto result = sphere(pos1, 1.0f, pos2, 1.0f);
 
 	REQUIRE(result.collided);
 	REQUIRE(result.penetration == Approx(1.0f).margin(1e-5));
@@ -112,7 +112,7 @@ TEST_CASE("Sphere vs Sphere - 2D No Collision") {
 	Vector2 pos1(0, 0);
 	Vector2 pos2(5, 0);
 
-	auto result = Sphere(pos1, 1.0f, pos2, 1.0f);
+	auto result = sphere(pos1, 1.0f, pos2, 1.0f);
 
 	REQUIRE_FALSE(result.collided);
 }
@@ -121,7 +121,7 @@ TEST_CASE("Sphere vs Sphere - 3D Contact (no overlapping)") {
 	Vector3 pos1(0, 0, 0);
 	Vector3 pos2(2, 0, 0);
 
-	auto result = Sphere(pos1, 1.0f, pos2, 1.0f);
+	auto result = sphere(pos1, 1.0f, pos2, 1.0f);
 
 	REQUIRE(result.collided);
 	REQUIRE(result.penetration == Approx(0.0f).margin(1e-5));
@@ -131,7 +131,7 @@ TEST_CASE("Sphere vs Sphere - 3D Overlap") {
 	Vector3 pos1(0, 0, 0);
 	Vector3 pos2(1, 0, 0);
 
-	auto result = Sphere(pos1, 1.0f, pos2, 1.0f);
+	auto result = sphere(pos1, 1.0f, pos2, 1.0f);
 
 	REQUIRE(result.collided);
 	REQUIRE(result.penetration == Approx(1.0f).margin(1e-5));
@@ -141,7 +141,7 @@ TEST_CASE("Sphere vs Sphere - 3D No Collision") {
 	Vector3 pos1(0, 0, 0);
 	Vector3 pos2(5, 0, 0);
 
-	auto result = Sphere(pos1, 1.0f, pos2, 1.0f);
+	auto result = sphere(pos1, 1.0f, pos2, 1.0f);
 
 	REQUIRE_FALSE(result.collided);
 }
@@ -156,7 +156,7 @@ TEST_CASE("Sphere vs AABB - 2D Contact (no overlapping)") {
 	Vector2 boxPos(0, 0);
 	Vector2 boxHalf(0.5f, 0.5f);
 
-	auto result = SphereAABB(circlePos, radius, boxPos, boxHalf);
+	auto result = sphereAabb(circlePos, radius, boxPos, boxHalf);
 
 	REQUIRE(result.collided);
 	REQUIRE(result.penetration == 0.0f);
@@ -169,7 +169,7 @@ TEST_CASE("Sphere vs AABB - 2D Overlap") {
 	Vector2 boxPos(0, 0);
 	Vector2 boxHalf(0.5f, 0.5f);
 
-	auto result = SphereAABB(circlePos, radius, boxPos, boxHalf);
+	auto result = sphereAabb(circlePos, radius, boxPos, boxHalf);
 
 	REQUIRE(result.collided);
 	REQUIRE(result.penetration > 0.0f);
@@ -182,7 +182,7 @@ TEST_CASE("Sphere vs AABB - 2D No Collision") {
 	Vector2 boxPos(0, 0);
 	Vector2 boxHalf(0.5f, 0.5f);
 
-	auto result = SphereAABB(circlePos, radius, boxPos, boxHalf);
+	auto result = sphereAabb(circlePos, radius, boxPos, boxHalf);
 
 	REQUIRE_FALSE(result.collided);
 }
@@ -194,7 +194,7 @@ TEST_CASE("Sphere vs AABB - 3D Contact (no overlapping)") {
 	Vector3 boxPos(0, 0, 0);
 	Vector3 boxHalf(0.5f, 0.5f, 0.5f);
 
-	auto result = SphereAABB(spherePos, radius, boxPos, boxHalf);
+	auto result = sphereAabb(spherePos, radius, boxPos, boxHalf);
 
 	REQUIRE(result.collided);
 	REQUIRE(result.penetration == 0.0f);
@@ -207,7 +207,7 @@ TEST_CASE("Sphere vs AABB - 3D Overlap") {
 	Vector3 boxPos(0, 0, 0);
 	Vector3 boxHalf(0.5f, 0.5f, 0.5f);
 
-	auto result = SphereAABB(spherePos, radius, boxPos, boxHalf);
+	auto result = sphereAabb(spherePos, radius, boxPos, boxHalf);
 
 	REQUIRE(result.collided);
 	REQUIRE(result.penetration > 0.0f);
@@ -220,7 +220,7 @@ TEST_CASE("Sphere vs AABB - 3D No Collision") {
 	Vector3 boxPos(0, 0, 0);
 	Vector3 boxHalf(0.5f, 0.5f, 0.5f);
 
-	auto result = SphereAABB(spherePos, radius, boxPos, boxHalf);
+	auto result = sphereAabb(spherePos, radius, boxPos, boxHalf);
 
 	REQUIRE_FALSE(result.collided);
 }
@@ -257,7 +257,7 @@ TEST_CASE("OBB vs OBB - 2D Aligned (effectively AABB) Overlap") {
 	Vector2 h2(0.5f, 0.5f);
 	float orient2 = 0.0f;
 
-	auto result = OBB(pos1, h1, orient1, pos2, h2, orient2);
+	auto result = obb(pos1, h1, orient1, pos2, h2, orient2);
 
 	REQUIRE(result.collided);
 	REQUIRE(result.penetration == Approx(0.5f).margin(1e-4));
@@ -272,7 +272,7 @@ TEST_CASE("OBB vs OBB - 2D Rotated 45deg Overlap") {
 	Vector2 h2(0.5f, 0.5f);
 	float orient2 = radians(45.0f);
 
-	auto result = OBB(pos1, h1, orient1, pos2, h2, orient2);
+	auto result = obb(pos1, h1, orient1, pos2, h2, orient2);
 
 	// At distance 1.0, boxes of half-extent 0.5 and one rotated 45deg should still overlap
 	REQUIRE(result.collided);
@@ -287,7 +287,7 @@ TEST_CASE("OBB vs OBB - 2D No Collision") {
 	Vector2 h2(0.5f, 0.5f);
 	float orient2 = 0.0f;
 
-	auto result = OBB(pos1, h1, orient1, pos2, h2, orient2);
+	auto result = obb(pos1, h1, orient1, pos2, h2, orient2);
 	REQUIRE_FALSE(result.collided);
 }
 
@@ -300,7 +300,7 @@ TEST_CASE("OBB vs OBB - 3D Aligned Overlap") {
 	Vector3 h2(0.5f);
 	math::Quaternion orient2{};
 
-	auto result = OBB(pos1, h1, orient1, pos2, h2, orient2);
+	auto result = obb(pos1, h1, orient1, pos2, h2, orient2);
 
 	REQUIRE(result.collided);
 	REQUIRE(result.penetration == Approx(0.5f).margin(1e-4));
@@ -315,7 +315,7 @@ TEST_CASE("OBB vs OBB - 3D Rotated 45deg Y-axis") {
 	Vector3 h2(0.5f);
 	math::Quaternion orient2 = math::Quaternion::fromAxisAngle({ 0, 1, 0 }, math::radians(45.0f));
 
-	auto result = OBB(pos1, h1, orient1, pos2, h2, orient2);
+	auto result = obb(pos1, h1, orient1, pos2, h2, orient2);
 	REQUIRE(result.collided);
 }
 
@@ -328,7 +328,7 @@ TEST_CASE("OBB vs OBB - 3D No Collision") {
 	Vector3 h2(0.5f);
 	math::Quaternion orient2{};
 
-	auto result = OBB(pos1, h1, orient1, pos2, h2, orient2);
+	auto result = obb(pos1, h1, orient1, pos2, h2, orient2);
 	REQUIRE_FALSE(result.collided);
 }
 
@@ -343,7 +343,7 @@ TEST_CASE("OBB vs Sphere - 2D Overlap") {
 	Vector2 spherePos(0.8f, 0);
 	float radius = 0.5f;
 
-	auto result = OBBSphere(obbPos, obbHalf, orient, spherePos, radius);
+	auto result = obbSphere(obbPos, obbHalf, orient, spherePos, radius);
 	REQUIRE(result.collided);
 }
 
@@ -355,7 +355,7 @@ TEST_CASE("OBB vs Sphere - 2D No Collision") {
 	Vector2 spherePos(5, 5);
 	float radius = 0.5f;
 
-	auto result = OBBSphere(obbPos, obbHalf, orient, spherePos, radius);
+	auto result = obbSphere(obbPos, obbHalf, orient, spherePos, radius);
 	REQUIRE_FALSE(result.collided);
 }
 
@@ -368,7 +368,7 @@ TEST_CASE("OBB vs Sphere - 3D Overlap rotated") {
 	Vector3 spherePos(0, 1.2f, 0);
 	float radius = 0.5f;
 
-	auto result = OBBSphere(obbPos, obbHalf, orient, spherePos, radius);
+	auto result = obbSphere(obbPos, obbHalf, orient, spherePos, radius);
 	REQUIRE(result.collided);
 }
 
@@ -383,7 +383,7 @@ TEST_CASE("OBB vs AABB - 2D Overlap") {
 	Vector2 aabbPos(0, 0);
 	Vector2 aabbHalf(0.5f, 0.5f);
 
-	auto result = OBBAABB(obbPos, obbHalf, orient, aabbPos, aabbHalf);
+	auto result = obbaabb(obbPos, obbHalf, orient, aabbPos, aabbHalf);
 	REQUIRE(result.collided);
 }
 
@@ -395,7 +395,7 @@ TEST_CASE("OBB vs AABB - 2D No Collision") {
 	Vector2 aabbPos(0, 0);
 	Vector2 aabbHalf(0.5f, 0.5f);
 
-	auto result = OBBAABB(obbPos, obbHalf, orient, aabbPos, aabbHalf);
+	auto result = obbaabb(obbPos, obbHalf, orient, aabbPos, aabbHalf);
 	REQUIRE_FALSE(result.collided);
 }
 
@@ -409,7 +409,7 @@ TEST_CASE("Plane vs Sphere - 2D Penetrating") {
 	Vector2 spherePos(0, 0.5f);
 	float radius = 1.0f;
 
-	auto result = PlaneSphere(normal, dist, spherePos, radius);
+	auto result = planeSphere(normal, dist, spherePos, radius);
 	REQUIRE(result.collided);
 	REQUIRE(result.penetration == Approx(0.5f).margin(1e-5));
 }
@@ -421,7 +421,7 @@ TEST_CASE("Plane vs Sphere - 2D Above") {
 	Vector2 spherePos(0, 5.0f);
 	float radius = 1.0f;
 
-	auto result = PlaneSphere(normal, dist, spherePos, radius);
+	auto result = planeSphere(normal, dist, spherePos, radius);
 	REQUIRE_FALSE(result.collided);
 }
 
@@ -432,7 +432,7 @@ TEST_CASE("Plane vs Sphere - 3D Penetrating") {
 	Vector3 spherePos(0, 0.3f, 0);
 	float radius = 1.0f;
 
-	auto result = PlaneSphere(normal, dist, spherePos, radius);
+	auto result = planeSphere(normal, dist, spherePos, radius);
 	REQUIRE(result.collided);
 	REQUIRE(result.penetration == Approx(0.7f).margin(1e-5));
 }
@@ -447,7 +447,7 @@ TEST_CASE("Plane vs AABB - 2D Penetrating") {
 	Vector2 boxPos(0, 0.3f);
 	Vector2 boxHalf(0.5f, 0.5f);
 
-	auto result = PlaneAABB(normal, dist, boxPos, boxHalf);
+	auto result = planeAabb(normal, dist, boxPos, boxHalf);
 	REQUIRE(result.collided);
 }
 
@@ -458,7 +458,7 @@ TEST_CASE("Plane vs AABB - 2D Above") {
 	Vector2 boxPos(0, 5.0f);
 	Vector2 boxHalf(0.5f, 0.5f);
 
-	auto result = PlaneAABB(normal, dist, boxPos, boxHalf);
+	auto result = planeAabb(normal, dist, boxPos, boxHalf);
 	REQUIRE_FALSE(result.collided);
 }
 
@@ -469,7 +469,7 @@ TEST_CASE("Plane vs AABB - 3D Penetrating") {
 	Vector3 boxPos(0, 0.3f, 0);
 	Vector3 boxHalf(0.5f, 0.5f, 0.5f);
 
-	auto result = PlaneAABB(normal, dist, boxPos, boxHalf);
+	auto result = planeAabb(normal, dist, boxPos, boxHalf);
 	REQUIRE(result.collided);
 }
 
@@ -484,7 +484,7 @@ TEST_CASE("Plane vs OBB - 2D Penetrating rotated") {
 	Vector2 obbHalf(0.5f, 0.5f);
 	float orient = radians(45.0f);
 
-	auto result = PlaneOBB(normal, dist, obbPos, obbHalf, orient);
+	auto result = planeObb(normal, dist, obbPos, obbHalf, orient);
 	REQUIRE(result.collided);
 }
 
@@ -496,7 +496,7 @@ TEST_CASE("Plane vs OBB - 3D Above") {
 	Vector3 obbHalf(0.5f);
 	math::Quaternion orient{};
 
-	auto result = PlaneOBB(normal, dist, obbPos, obbHalf, orient);
+	auto result = planeObb(normal, dist, obbPos, obbHalf, orient);
 	REQUIRE_FALSE(result.collided);
 }
 
@@ -510,7 +510,7 @@ TEST_CASE("Capsule vs Capsule - 2D Parallel Overlap") {
 	Vector2 pos2(0.5f, 0), dir2(0, 1);
 	float hh2 = 1.0f, r2 = 0.5f;
 
-	auto result = CapsuleCapsule(pos1, dir1, hh1, r1, pos2, dir2, hh2, r2);
+	auto result = capsuleCapsule(pos1, dir1, hh1, r1, pos2, dir2, hh2, r2);
 	REQUIRE(result.collided);
 	REQUIRE(result.penetration == Approx(0.5f).margin(1e-4));
 }
@@ -522,7 +522,7 @@ TEST_CASE("Capsule vs Capsule - 2D No Collision") {
 	Vector2 pos2(5, 0), dir2(0, 1);
 	float hh2 = 1.0f, r2 = 0.5f;
 
-	auto result = CapsuleCapsule(pos1, dir1, hh1, r1, pos2, dir2, hh2, r2);
+	auto result = capsuleCapsule(pos1, dir1, hh1, r1, pos2, dir2, hh2, r2);
 	REQUIRE_FALSE(result.collided);
 }
 
@@ -533,7 +533,7 @@ TEST_CASE("Capsule vs Capsule - 3D Crossing Overlap") {
 	Vector3 pos2(0, 0.4f, 0), dir2(0, 0, 1);
 	float hh2 = 1.0f, r2 = 0.3f;
 
-	auto result = CapsuleCapsule(pos1, dir1, hh1, r1, pos2, dir2, hh2, r2);
+	auto result = capsuleCapsule(pos1, dir1, hh1, r1, pos2, dir2, hh2, r2);
 	REQUIRE(result.collided);
 }
 
@@ -547,7 +547,7 @@ TEST_CASE("Capsule vs Sphere - 2D Broadside Contact") {
 	Vector2 spherePos(1.0f, 0);
 	float sphereR = 0.5f;
 
-	auto result = CapsuleSphere(capPos, capDir, capHH, capR, spherePos, sphereR);
+	auto result = capsuleSphere(capPos, capDir, capHH, capR, spherePos, sphereR);
 	REQUIRE(result.collided);
 	REQUIRE(result.penetration == Approx(0.0f).margin(1e-4));
 }
@@ -559,7 +559,7 @@ TEST_CASE("Capsule vs Sphere - 3D Tip Contact") {
 	Vector3 spherePos(0, 1.5f, 0);
 	float sphereR = 0.3f;
 
-	auto result = CapsuleSphere(capPos, capDir, capHH, capR, spherePos, sphereR);
+	auto result = capsuleSphere(capPos, capDir, capHH, capR, spherePos, sphereR);
 	// Closest point on segment to sphere is (0,1,0), distance = 0.5
 	// Combined radii = 0.6 > 0.5 → collision
 	REQUIRE(result.collided);
@@ -572,7 +572,7 @@ TEST_CASE("Capsule vs Sphere - 3D No Collision") {
 	Vector3 spherePos(5, 0, 0);
 	float sphereR = 0.3f;
 
-	auto result = CapsuleSphere(capPos, capDir, capHH, capR, spherePos, sphereR);
+	auto result = capsuleSphere(capPos, capDir, capHH, capR, spherePos, sphereR);
 	REQUIRE_FALSE(result.collided);
 }
 
@@ -586,7 +586,7 @@ TEST_CASE("Capsule vs AABB - 2D Overlap") {
 	Vector2 boxPos(0.8f, 0);
 	Vector2 boxHalf(0.5f, 0.5f);
 
-	auto result = CapsuleAABB(capPos, capDir, capHH, capR, boxPos, boxHalf);
+	auto result = capsuleAabb(capPos, capDir, capHH, capR, boxPos, boxHalf);
 	REQUIRE(result.collided);
 }
 
@@ -597,7 +597,7 @@ TEST_CASE("Capsule vs AABB - 3D No Collision") {
 	Vector3 boxPos(5, 5, 5);
 	Vector3 boxHalf(0.5f, 0.5f, 0.5f);
 
-	auto result = CapsuleAABB(capPos, capDir, capHH, capR, boxPos, boxHalf);
+	auto result = capsuleAabb(capPos, capDir, capHH, capR, boxPos, boxHalf);
 	REQUIRE_FALSE(result.collided);
 }
 
@@ -618,10 +618,10 @@ TEST_CASE("Capsule vs Plane - 2D Penetrating") {
 	// Wait, capPos.y=0.5, bottom=0.5-1.0=-0.5. signedDist of bottom = -0.5
 	// |signedDist| = 0.5 > capR(0.3) → no collision
 	// Let me adjust:
-	auto result = CapsulePlane(Vector2(0, 0.2f), capDir, capHH, capR, normal, dist);
+	auto result = capsulePlane(Vector2(0, 0.2f), capDir, capHH, capR, normal, dist);
 	// bottom endpoint at y = 0.2 - 1.0 = -0.8, signedDist = -0.8, |0.8| > 0.3 → no collision
 	// Need endpoint close to plane:
-	auto result2 = CapsulePlane(Vector2(0, 1.1f), capDir, capHH, capR, normal, dist);
+	auto result2 = capsulePlane(Vector2(0, 1.1f), capDir, capHH, capR, normal, dist);
 	// bottom endpoint at y = 1.1 - 1.0 = 0.1, signedDist = 0.1, |0.1| < 0.3 → collision!
 	REQUIRE(result2.collided);
 	REQUIRE(result2.penetration == Approx(0.2f).margin(1e-4));
@@ -634,7 +634,7 @@ TEST_CASE("Capsule vs Plane - 3D No Collision") {
 	Vector3 normal(0, 1, 0);
 	float dist = 0.0f;
 
-	auto result = CapsulePlane(capPos, capDir, capHH, capR, normal, dist);
+	auto result = capsulePlane(capPos, capDir, capHH, capR, normal, dist);
 	// Bottom endpoint at y = 4, signedDist = 4, |4| > 0.3
 	REQUIRE_FALSE(result.collided);
 }
@@ -650,7 +650,7 @@ TEST_CASE("Capsule vs OBB - 2D Overlap") {
 	Vector2 obbHalf(0.5f, 0.5f);
 	float orient = 0.0f;
 
-	auto result = CapsuleOBB(capPos, capDir, capHH, capR, obbPos, obbHalf, orient);
+	auto result = capsuleObb(capPos, capDir, capHH, capR, obbPos, obbHalf, orient);
 	REQUIRE(result.collided);
 }
 
@@ -662,7 +662,7 @@ TEST_CASE("Capsule vs OBB - 3D No Collision") {
 	Vector3 obbHalf(0.5f);
 	math::Quaternion orient{};
 
-	auto result = CapsuleOBB(capPos, capDir, capHH, capR, obbPos, obbHalf, orient);
+	auto result = capsuleObb(capPos, capDir, capHH, capR, obbPos, obbHalf, orient);
 	REQUIRE_FALSE(result.collided);
 }
 
@@ -676,7 +676,7 @@ TEST_CASE("Cylinder vs Sphere - 3D Broadside Overlap") {
 	Vector3 spherePos(0.8f, 0, 0);
 	float sphereR = 0.5f;
 
-	auto result = CylinderSphere(cylPos, cylHH, cylR, spherePos, sphereR);
+	auto result = cylinderSphere(cylPos, cylHH, cylR, spherePos, sphereR);
 	REQUIRE(result.collided);
 }
 
@@ -687,7 +687,7 @@ TEST_CASE("Cylinder vs Sphere - 3D Top Cap Overlap") {
 	Vector3 spherePos(0, 1.3f, 0);
 	float sphereR = 0.5f;
 
-	auto result = CylinderSphere(cylPos, cylHH, cylR, spherePos, sphereR);
+	auto result = cylinderSphere(cylPos, cylHH, cylR, spherePos, sphereR);
 	REQUIRE(result.collided);
 }
 
@@ -698,7 +698,7 @@ TEST_CASE("Cylinder vs Sphere - 3D No Collision") {
 	Vector3 spherePos(5, 5, 5);
 	float sphereR = 0.5f;
 
-	auto result = CylinderSphere(cylPos, cylHH, cylR, spherePos, sphereR);
+	auto result = cylinderSphere(cylPos, cylHH, cylR, spherePos, sphereR);
 	REQUIRE_FALSE(result.collided);
 }
 
@@ -712,7 +712,7 @@ TEST_CASE("Cylinder vs AABB - 3D Overlap") {
 	Vector3 boxPos(0.8f, 0, 0);
 	Vector3 boxHalf(0.5f, 0.5f, 0.5f);
 
-	auto result = CylinderAABB(cylPos, cylHH, cylR, boxPos, boxHalf);
+	auto result = cylinderAabb(cylPos, cylHH, cylR, boxPos, boxHalf);
 	REQUIRE(result.collided);
 }
 
@@ -723,7 +723,7 @@ TEST_CASE("Cylinder vs AABB - 3D No Collision (Y separated)") {
 	Vector3 boxPos(0, 5, 0);
 	Vector3 boxHalf(0.5f, 0.5f, 0.5f);
 
-	auto result = CylinderAABB(cylPos, cylHH, cylR, boxPos, boxHalf);
+	auto result = cylinderAabb(cylPos, cylHH, cylR, boxPos, boxHalf);
 	REQUIRE_FALSE(result.collided);
 }
 
@@ -734,7 +734,7 @@ TEST_CASE("Cylinder vs AABB - 3D No Collision (XZ separated)") {
 	Vector3 boxPos(5, 0, 0);
 	Vector3 boxHalf(0.5f, 0.5f, 0.5f);
 
-	auto result = CylinderAABB(cylPos, cylHH, cylR, boxPos, boxHalf);
+	auto result = cylinderAabb(cylPos, cylHH, cylR, boxPos, boxHalf);
 	REQUIRE_FALSE(result.collided);
 }
 
@@ -751,7 +751,7 @@ TEST_CASE("Cylinder vs Plane - 3D Penetrating (horizontal plane)") {
 	// Bottom of cylinder at y = -0.5. Disc is in XZ plane.
 	// Plane normal is (0,1,0), effective radius in XZ for normal (0,1,0) = cylR * |(0,0)| = 0
 	// So minDist = botDist - 0 = -0.5 - 0 = -0.5 → penetration = 0.5
-	auto result = CylinderPlane(cylPos, cylHH, cylR, normal, dist);
+	auto result = cylinderPlane(cylPos, cylHH, cylR, normal, dist);
 	REQUIRE(result.collided);
 	REQUIRE(result.penetration == Approx(0.5f).margin(1e-4));
 }
@@ -765,7 +765,7 @@ TEST_CASE("Cylinder vs Plane - 3D Penetrating (tilted plane)") {
 	Vector3 normal(invSqrt2, invSqrt2, 0);
 	float dist = 0.0f;
 
-	auto result = CylinderPlane(cylPos, cylHH, cylR, normal, dist);
+	auto result = cylinderPlane(cylPos, cylHH, cylR, normal, dist);
 	// The disc closest to the plane: depends on which disc center is closer
 	// Both discs: top y=1, bottom y=-1
 	// topDist = invSqrt2*0 + invSqrt2*1 = invSqrt2 ≈ 0.707
@@ -785,7 +785,7 @@ TEST_CASE("Cylinder vs Plane - 3D No Collision") {
 	Vector3 normal(0, 1, 0);
 	float dist = 0.0f;
 
-	auto result = CylinderPlane(cylPos, cylHH, cylR, normal, dist);
+	auto result = cylinderPlane(cylPos, cylHH, cylR, normal, dist);
 	// Bottom at y=4, effective radius = 0 (plane is horizontal), minDist = 4 > 0 → no collision
 	REQUIRE_FALSE(result.collided);
 }

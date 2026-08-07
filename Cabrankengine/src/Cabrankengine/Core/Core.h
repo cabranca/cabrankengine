@@ -37,13 +37,17 @@
 
 // Shifts a bit to the left. Replaced the macro with this to enforce type checking (and to practice)
 // The return type is uint32_t to ensure it can be used in bitwise operations. It allows 32 disjoint flags.
+// Named like a macro on purpose — it replaced one, and every call site reads as one.
+// NOLINTNEXTLINE(readability-identifier-naming)
 constexpr uint32_t BIT(int x) {
 	return 1u << x;
 }
 
 // Binds a function to an event. This is used to pass member functions as callbacks.
 // It uses perfect forwarding to preserve the value category of the function and the event.
+// Named like a macro on purpose — see BIT above.
 template <typename T, typename U>
+// NOLINTNEXTLINE(readability-identifier-naming)
 auto BIND_EVENT_FN(T&& func, U* instance) {
 	return [func = std::forward<T>(func), instance](auto&& event) -> decltype(auto) {
 		return (instance->*func)(std::forward<decltype(event)>(event));

@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
 	CBK_PROFILE_END_SESSION();
 
 	CBK_PROFILE_BEGIN_SESSION("Runtime", "CabrankengineProfile-Runtime.json");
-	app->Run();
+	app->run();
 	CBK_PROFILE_END_SESSION();
 
 	CBK_PROFILE_BEGIN_SESSION("Shutdown", "CabrankengineProfile-Shutdown.json");

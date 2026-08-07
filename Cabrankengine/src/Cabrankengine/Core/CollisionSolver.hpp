@@ -41,7 +41,7 @@ namespace cbk {
 			// Dimension count
 			template <typename VecType>
 			inline constexpr int dimensions() {
-				return math::VecTraits<VecType>::Dimensions;
+				return math::VecTraits<VecType>::k_Dimensions;
 			}
 
 			// Component-wise absolute value
@@ -86,7 +86,7 @@ namespace cbk {
 				float denom = a * e - b * b;
 
 				float s, t;
-				if (denom < math::EPSILON) {
+				if (denom < math::k_Epsilon) {
 					s = 0.0f;
 					t = f / e;
 				} else {
@@ -122,8 +122,8 @@ namespace cbk {
 			// Get OBB local axes from orientation
 			template <typename VecType>
 			inline auto getOBBAxes(const typename math::VecTraits<VecType>::OrientationType& orientation) {
-				constexpr int N = dimensions<VecType>();
-				if constexpr (N == 2) {
+				constexpr int n = dimensions<VecType>();
+				if constexpr (n == 2) {
 					float c = std::cos(orientation);
 					float s = std::sin(orientation);
 					std::array<VecType, 2> axes{};
@@ -165,19 +165,19 @@ namespace cbk {
 		// ============================================================
 
 		template <typename VecType>
-		Collision<VecType> AABB(const VecType& pos1, const VecType& halfExtents1, const VecType& pos2, const VecType& halfExtents2) {
-			constexpr int N = detail::dimensions<VecType>();
+		Collision<VecType> aabb(const VecType& pos1, const VecType& halfExtents1, const VecType& pos2, const VecType& halfExtents2) {
+			constexpr int n = detail::dimensions<VecType>();
 			VecType delta = detail::vecAbs(pos1 - pos2);
 			VecType overlap = halfExtents1 + halfExtents2 - delta;
 
-			for (int i = 0; i < N; ++i) {
+			for (int i = 0; i < n; ++i) {
 				if (overlap[i] < 0.0f)
 					return { VecType(0.0f), 0.0f, false };
 			}
 
 			int minAxis = 0;
 			float minOverlap = overlap[0];
-			for (int i = 1; i < N; ++i) {
+			for (int i = 1; i < n; ++i) {
 				if (overlap[i] < minOverlap) {
 					minOverlap = overlap[i];
 					minAxis = i;
@@ -195,7 +195,7 @@ namespace cbk {
 		// ============================================================
 
 		template <typename VecType>
-		Collision<VecType> Sphere(const VecType& pos1, float radius1, const VecType& pos2, float radius2) {
+		Collision<VecType> sphere(const VecType& pos1, float radius1, const VecType& pos2, float radius2) {
 			VecType delta = pos2 - pos1;
 			float dist2 = detail::vecDot(delta, delta);
 			float radiusSum = radius1 + radius2;
@@ -204,7 +204,7 @@ namespace cbk {
 				return { VecType(0.0f), 0.0f, false };
 
 			float dist = std::sqrt(dist2);
-			VecType normal = (dist > math::EPSILON) ? (delta / dist) : VecType(0.0f);
+			VecType normal = (dist > math::k_Epsilon) ? (delta / dist) : VecType(0.0f);
 			float penetration = radiusSum - dist;
 
 			return { normal, penetration, true };
@@ -215,8 +215,8 @@ namespace cbk {
 		// ============================================================
 
 		template <typename VecType>
-		Collision<VecType> SphereAABB(const VecType& spherePos, float radius, const VecType& boxPos, const VecType& boxHalf) {
-			constexpr int N = detail::dimensions<VecType>();
+		Collision<VecType> sphereAabb(const VecType& spherePos, float radius, const VecType& boxPos, const VecType& boxHalf) {
+			constexpr int n = detail::dimensions<VecType>();
 			VecType closestPoint = detail::closestPointOnAABB(boxPos, boxHalf, spherePos);
 
 			VecType delta = spherePos - closestPoint;
@@ -228,13 +228,13 @@ namespace cbk {
 			float dist = std::sqrt(dist2);
 
 			VecType normal{};
-			if (dist > math::EPSILON) {
+			if (dist > math::k_Epsilon) {
 				normal = delta / dist;
 			} else {
 				VecType overlap = boxHalf - detail::vecAbs(spherePos - boxPos);
 				int minAxis = 0;
 				float minOverlap = overlap[0];
-				for (int i = 1; i < N; ++i) {
+				for (int i = 1; i < n; ++i) {
 					if (overlap[i] < minOverlap) {
 						minOverlap = overlap[i];
 						minAxis = i;
@@ -253,10 +253,10 @@ namespace cbk {
 		// ============================================================
 
 		template <typename VecType>
-		Collision<VecType> OBB(const VecType& pos1, const VecType& halfExtents1,
+		Collision<VecType> obb(const VecType& pos1, const VecType& halfExtents1,
 		                       const typename math::VecTraits<VecType>::OrientationType& orient1, const VecType& pos2,
 		                       const VecType& halfExtents2, const typename math::VecTraits<VecType>::OrientationType& orient2) {
-			constexpr int N = detail::dimensions<VecType>();
+			constexpr int n = detail::dimensions<VecType>();
 			auto axes1 = detail::getOBBAxes<VecType>(orient1);
 			auto axes2 = detail::getOBBAxes<VecType>(orient2);
 
@@ -267,20 +267,20 @@ namespace cbk {
 
 			auto testAxis = [&](const VecType& axis) -> bool {
 				float axisLen2 = detail::vecDot(axis, axis);
-				if (axisLen2 < math::EPSILON)
+				if (axisLen2 < math::k_Epsilon)
 					return true;
 
 				float invLen = 1.0f / std::sqrt(axisLen2);
 				VecType normAxis{};
-				for (int i = 0; i < N; ++i)
+				for (int i = 0; i < n; ++i)
 					normAxis[i] = axis[i] * invLen;
 
 				float proj1 = 0.0f;
-				for (int i = 0; i < N; ++i)
+				for (int i = 0; i < n; ++i)
 					proj1 += halfExtents1[i] * std::abs(detail::vecDot(axes1[i], normAxis));
 
 				float proj2 = 0.0f;
-				for (int i = 0; i < N; ++i)
+				for (int i = 0; i < n; ++i)
 					proj2 += halfExtents2[i] * std::abs(detail::vecDot(axes2[i], normAxis));
 
 				float dist = std::abs(detail::vecDot(d, normAxis));
@@ -293,24 +293,24 @@ namespace cbk {
 					minPen = overlap;
 					minNormal = normAxis;
 					if (detail::vecDot(d, normAxis) < 0.0f) {
-						for (int i = 0; i < N; ++i)
+						for (int i = 0; i < n; ++i)
 							minNormal[i] = -minNormal[i];
 					}
 				}
 				return true;
 			};
 
-			for (int i = 0; i < N; ++i) {
+			for (int i = 0; i < n; ++i) {
 				if (!testAxis(axes1[i]))
 					return { VecType(0.0f), 0.0f, false };
 			}
 
-			for (int i = 0; i < N; ++i) {
+			for (int i = 0; i < n; ++i) {
 				if (!testAxis(axes2[i]))
 					return { VecType(0.0f), 0.0f, false };
 			}
 
-			if constexpr (N == 3) {
+			if constexpr (n == 3) {
 				for (int i = 0; i < 3; ++i) {
 					for (int j = 0; j < 3; ++j) {
 						VecType crossAxis{};
@@ -331,16 +331,16 @@ namespace cbk {
 		// ============================================================
 
 		template <typename VecType>
-		Collision<VecType> OBBSphere(const VecType& obbPos, const VecType& obbHalf,
+		Collision<VecType> obbSphere(const VecType& obbPos, const VecType& obbHalf,
 		                             const typename math::VecTraits<VecType>::OrientationType& orient, const VecType& spherePos,
 		                             float radius) {
-			constexpr int N = detail::dimensions<VecType>();
+			constexpr int n = detail::dimensions<VecType>();
 			auto axes = detail::getOBBAxes<VecType>(orient);
 
-			VecType local = detail::worldToOBBLocal<VecType, N>(spherePos, obbPos, axes);
+			VecType local = detail::worldToOBBLocal<VecType, n>(spherePos, obbPos, axes);
 
 			VecType closest{};
-			for (int i = 0; i < N; ++i)
+			for (int i = 0; i < n; ++i)
 				closest[i] = std::clamp(local[i], -obbHalf[i], obbHalf[i]);
 
 			VecType localDelta = local - closest;
@@ -352,19 +352,19 @@ namespace cbk {
 			float dist = std::sqrt(dist2);
 
 			VecType normal{};
-			if (dist > math::EPSILON) {
+			if (dist > math::k_Epsilon) {
 				VecType localNorm{};
-				for (int i = 0; i < N; ++i)
+				for (int i = 0; i < n; ++i)
 					localNorm[i] = localDelta[i] / dist;
-				normal = detail::obbLocalToWorldDir<VecType, N>(localNorm, axes);
+				normal = detail::obbLocalToWorldDir<VecType, n>(localNorm, axes);
 			} else {
 				VecType overlap{};
-				for (int i = 0; i < N; ++i)
+				for (int i = 0; i < n; ++i)
 					overlap[i] = obbHalf[i] - std::abs(local[i]);
 
 				int minAxis = 0;
 				float minOverlap = overlap[0];
-				for (int i = 1; i < N; ++i) {
+				for (int i = 1; i < n; ++i) {
 					if (overlap[i] < minOverlap) {
 						minOverlap = overlap[i];
 						minAxis = i;
@@ -372,7 +372,7 @@ namespace cbk {
 				}
 				VecType localNorm(0.0f);
 				localNorm[minAxis] = (local[minAxis] > 0.0f) ? 1.0f : -1.0f;
-				normal = detail::obbLocalToWorldDir<VecType, N>(localNorm, axes);
+				normal = detail::obbLocalToWorldDir<VecType, n>(localNorm, axes);
 				dist = 0.0f;
 			}
 
@@ -384,11 +384,11 @@ namespace cbk {
 		// ============================================================
 
 		template <typename VecType>
-		Collision<VecType> OBBAABB(const VecType& obbPos, const VecType& obbHalf,
+		Collision<VecType> obbaabb(const VecType& obbPos, const VecType& obbHalf,
 		                           const typename math::VecTraits<VecType>::OrientationType& orient, const VecType& aabbPos,
 		                           const VecType& aabbHalf) {
 			typename math::VecTraits<VecType>::OrientationType identity{};
-			return OBB(obbPos, obbHalf, orient, aabbPos, aabbHalf, identity);
+			return obb(obbPos, obbHalf, orient, aabbPos, aabbHalf, identity);
 		}
 
 		// ============================================================
@@ -396,7 +396,7 @@ namespace cbk {
 		// ============================================================
 
 		template <typename VecType>
-		Collision<VecType> PlaneSphere(const VecType& planeNormal, float planeDist, const VecType& spherePos, float radius) {
+		Collision<VecType> planeSphere(const VecType& planeNormal, float planeDist, const VecType& spherePos, float radius) {
 			float signedDist = detail::vecDot(planeNormal, spherePos) - planeDist;
 			float absDist = std::abs(signedDist);
 
@@ -414,11 +414,11 @@ namespace cbk {
 		// ============================================================
 
 		template <typename VecType>
-		Collision<VecType> PlaneAABB(const VecType& planeNormal, float planeDist, const VecType& boxPos, const VecType& boxHalf) {
-			constexpr int N = detail::dimensions<VecType>();
+		Collision<VecType> planeAabb(const VecType& planeNormal, float planeDist, const VecType& boxPos, const VecType& boxHalf) {
+			constexpr int n = detail::dimensions<VecType>();
 
 			float projRadius = 0.0f;
-			for (int i = 0; i < N; ++i)
+			for (int i = 0; i < n; ++i)
 				projRadius += boxHalf[i] * std::abs(planeNormal[i]);
 
 			float signedDist = detail::vecDot(planeNormal, boxPos) - planeDist;
@@ -438,13 +438,13 @@ namespace cbk {
 		// ============================================================
 
 		template <typename VecType>
-		Collision<VecType> PlaneOBB(const VecType& planeNormal, float planeDist, const VecType& obbPos, const VecType& obbHalf,
+		Collision<VecType> planeObb(const VecType& planeNormal, float planeDist, const VecType& obbPos, const VecType& obbHalf,
 		                            const typename math::VecTraits<VecType>::OrientationType& orient) {
-			constexpr int N = detail::dimensions<VecType>();
+			constexpr int n = detail::dimensions<VecType>();
 			auto axes = detail::getOBBAxes<VecType>(orient);
 
 			float projRadius = 0.0f;
-			for (int i = 0; i < N; ++i)
+			for (int i = 0; i < n; ++i)
 				projRadius += obbHalf[i] * std::abs(detail::vecDot(axes[i], planeNormal));
 
 			float signedDist = detail::vecDot(planeNormal, obbPos) - planeDist;
@@ -464,10 +464,10 @@ namespace cbk {
 		// ============================================================
 
 		template <typename VecType>
-		Collision<VecType> CapsuleCapsule(const VecType& pos1, const VecType& dir1, float halfH1, float r1, const VecType& pos2,
+		Collision<VecType> capsuleCapsule(const VecType& pos1, const VecType& dir1, float halfH1, float r1, const VecType& pos2,
 		                                  const VecType& dir2, float halfH2, float r2) {
 			auto [p1, p2] = detail::closestPointsSegmentSegment(pos1, dir1, halfH1, pos2, dir2, halfH2);
-			return Sphere(p1, r1, p2, r2);
+			return sphere(p1, r1, p2, r2);
 		}
 
 		// ============================================================
@@ -475,10 +475,10 @@ namespace cbk {
 		// ============================================================
 
 		template <typename VecType>
-		Collision<VecType> CapsuleSphere(const VecType& capPos, const VecType& capDir, float capHalfH, float capRadius,
+		Collision<VecType> capsuleSphere(const VecType& capPos, const VecType& capDir, float capHalfH, float capRadius,
 		                                 const VecType& spherePos, float sphereRadius) {
 			VecType closest = detail::closestPointOnSegment(capPos, capDir, capHalfH, spherePos);
-			return Sphere(closest, capRadius, spherePos, sphereRadius);
+			return sphere(closest, capRadius, spherePos, sphereRadius);
 		}
 
 		// ============================================================
@@ -486,7 +486,7 @@ namespace cbk {
 		// ============================================================
 
 		template <typename VecType>
-		Collision<VecType> CapsuleAABB(const VecType& capPos, const VecType& capDir, float capHalfH, float capRadius, const VecType& boxPos,
+		Collision<VecType> capsuleAabb(const VecType& capPos, const VecType& capDir, float capHalfH, float capRadius, const VecType& boxPos,
 		                               const VecType& boxHalf) {
 			// Iterative closest-point: find closest spine point to box, then closest box point to spine point
 			VecType endA = capPos + capDir * capHalfH;
@@ -523,7 +523,7 @@ namespace cbk {
 				return { VecType(0.0f), 0.0f, false };
 
 			float d = std::sqrt(d2);
-			VecType normal = (d > math::EPSILON) ? (delta / d) : VecType(0.0f);
+			VecType normal = (d > math::k_Epsilon) ? (delta / d) : VecType(0.0f);
 
 			return { normal, capRadius - d, true };
 		}
@@ -533,7 +533,7 @@ namespace cbk {
 		// ============================================================
 
 		template <typename VecType>
-		Collision<VecType> CapsulePlane(const VecType& capPos, const VecType& capDir, float capHalfH, float capRadius,
+		Collision<VecType> capsulePlane(const VecType& capPos, const VecType& capDir, float capHalfH, float capRadius,
 		                                const VecType& planeNormal, float planeDist) {
 			VecType endA = capPos + capDir * capHalfH;
 			VecType endB = capPos - capDir * capHalfH;
@@ -558,23 +558,23 @@ namespace cbk {
 		// ============================================================
 
 		template <typename VecType>
-		Collision<VecType> CapsuleOBB(const VecType& capPos, const VecType& capDir, float capHalfH, float capRadius, const VecType& obbPos,
+		Collision<VecType> capsuleObb(const VecType& capPos, const VecType& capDir, float capHalfH, float capRadius, const VecType& obbPos,
 		                              const VecType& obbHalf, const typename math::VecTraits<VecType>::OrientationType& orient) {
-			constexpr int N = detail::dimensions<VecType>();
+			constexpr int n = detail::dimensions<VecType>();
 			auto axes = detail::getOBBAxes<VecType>(orient);
 
-			VecType localCapPos = detail::worldToOBBLocal<VecType, N>(capPos, obbPos, axes);
+			VecType localCapPos = detail::worldToOBBLocal<VecType, n>(capPos, obbPos, axes);
 			VecType localCapDir{};
-			for (int i = 0; i < N; ++i)
+			for (int i = 0; i < n; ++i)
 				localCapDir[i] = detail::vecDot(capDir, axes[i]);
 
 			VecType zero(0.0f);
-			Collision<VecType> localResult = CapsuleAABB(localCapPos, localCapDir, capHalfH, capRadius, zero, obbHalf);
+			Collision<VecType> localResult = capsuleAabb(localCapPos, localCapDir, capHalfH, capRadius, zero, obbHalf);
 
 			if (!localResult.collided)
 				return localResult;
 
-			VecType worldNormal = detail::obbLocalToWorldDir<VecType, N>(localResult.normal, axes);
+			VecType worldNormal = detail::obbLocalToWorldDir<VecType, n>(localResult.normal, axes);
 			return { worldNormal, localResult.penetration, true };
 		}
 
@@ -583,9 +583,9 @@ namespace cbk {
 		// ============================================================
 
 		template <typename VecType>
-		Collision<VecType> CylinderSphere(const VecType& cylPos, float cylHalfH, float cylRadius, const VecType& spherePos,
+		Collision<VecType> cylinderSphere(const VecType& cylPos, float cylHalfH, float cylRadius, const VecType& spherePos,
 		                                  float sphereRadius) {
-			static_assert(math::VecTraits<VecType>::Dimensions == 3, "CylinderSphere is 3D only");
+			static_assert(math::VecTraits<VecType>::k_Dimensions == 3, "CylinderSphere is 3D only");
 
 			float dy = spherePos[1] - cylPos[1];
 			float clampedY = std::clamp(dy, -cylHalfH, cylHalfH);
@@ -598,7 +598,7 @@ namespace cbk {
 			closest[1] += clampedY;
 
 			float radialDist = std::sqrt(radialDist2);
-			if (radialDist > math::EPSILON) {
+			if (radialDist > math::k_Epsilon) {
 				float clampedR = std::min(radialDist, cylRadius);
 				closest[0] += dx / radialDist * clampedR;
 				closest[2] += dz / radialDist * clampedR;
@@ -611,16 +611,16 @@ namespace cbk {
 				return { VecType(0.0f), 0.0f, false };
 
 			float dist = std::sqrt(dist2);
-			VecType normal = (dist > math::EPSILON) ? (delta / dist) : VecType(0.0f);
+			VecType normal = (dist > math::k_Epsilon) ? (delta / dist) : VecType(0.0f);
 
 			return { normal, sphereRadius - dist, true };
 		}
 
 		// Cylinder vs AABB (3D only, Y-axis-aligned cylinder)
 		template <typename VecType>
-		Collision<VecType> CylinderAABB(const VecType& cylPos, float cylHalfH, float cylRadius, const VecType& boxPos,
+		Collision<VecType> cylinderAabb(const VecType& cylPos, float cylHalfH, float cylRadius, const VecType& boxPos,
 		                                const VecType& boxHalf) {
-			static_assert(math::VecTraits<VecType>::Dimensions == 3, "CylinderAABB is 3D only");
+			static_assert(math::VecTraits<VecType>::k_Dimensions == 3, "CylinderAABB is 3D only");
 
 			// Y-axis overlap
 			float cylMinY = cylPos[1] - cylHalfH;
@@ -653,7 +653,7 @@ namespace cbk {
 				normal[1] = (cylPos[1] > boxPos[1]) ? 1.0f : -1.0f;
 			} else {
 				pen = radialPen;
-				if (radialDist > math::EPSILON) {
+				if (radialDist > math::k_Epsilon) {
 					normal[0] = dx / radialDist;
 					normal[2] = dz / radialDist;
 				} else {
@@ -666,9 +666,9 @@ namespace cbk {
 
 		// Cylinder vs Plane (3D only, Y-axis-aligned cylinder)
 		template <typename VecType>
-		Collision<VecType> CylinderPlane(const VecType& cylPos, float cylHalfH, float cylRadius, const VecType& planeNormal,
+		Collision<VecType> cylinderPlane(const VecType& cylPos, float cylHalfH, float cylRadius, const VecType& planeNormal,
 		                                 float planeDist) {
-			static_assert(math::VecTraits<VecType>::Dimensions == 3, "CylinderPlane is 3D only");
+			static_assert(math::VecTraits<VecType>::k_Dimensions == 3, "CylinderPlane is 3D only");
 
 			VecType top = cylPos;
 			top[1] += cylHalfH;

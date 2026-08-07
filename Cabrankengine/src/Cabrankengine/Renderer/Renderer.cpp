@@ -16,7 +16,7 @@ namespace cbk::rendering {
 	using namespace scene;
 
 	// Estructura auxiliar para la luz (32 bytes total)
-	struct directionalLightData {
+	struct DirectionalLightData {
 		math::Vector3 direction; // 12 bytes
 		float _Pad0 = 0.0f;      // 4 bytes de relleno (Total: 16)
 
@@ -26,12 +26,12 @@ namespace cbk::rendering {
 
 	struct AltSceneData {
 		Mat4 ViewProjectionMatrix;     // 64 bytes
-		directionalLightData DirLight; // 32 bytes (Offset 64)
+		DirectionalLightData DirLight; // 32 bytes (Offset 64)
 		math::Vector3 CameraPosition;  // 12 bytes (Offset 96) -> Reemplaza al uniform viewPos
 		float _Pad2 = 0.0f;            // 4 bytes (Offset 108 -> Total 112 bytes)
 	};
 
-	static Ref<UniformBuffer> s_SceneUBO;
+	static Ref<UniformBuffer> s_SSceneUbo;
 	static AltSceneData s_AltSceneData;
 
 	// GLSL std430 alignment rules:
@@ -67,7 +67,7 @@ namespace cbk::rendering {
 		// at pipeline-layout construction time. The light SSBO is consumed the same
 		// way by VulkanPBRMaterial, so it must also be alive before that point.
 		s_SceneData->lightSSBO = StorageBuffer::create(sizeof(LightBufferHeader) + k_MaxPointLights * sizeof(PointLightGPU));
-		s_SceneUBO = UniformBuffer::create(sizeof(AltSceneData), 0);
+		s_SSceneUbo = UniformBuffer::create(sizeof(AltSceneData), 0);
 		Renderer2D::init();
 		TextRenderer::init();
 	}
@@ -75,7 +75,7 @@ namespace cbk::rendering {
 	void Renderer::shutdown() {
 		DefaultLibrary::shutdown();
 		ShaderLibrary::shutdown();
-		s_SceneUBO.reset();
+		s_SSceneUbo.reset();
 		if (s_SceneData)
 			s_SceneData->lightSSBO.reset();
 		TextRenderer::shutdown();
@@ -94,8 +94,8 @@ namespace cbk::rendering {
 		// scene globals inline via setVertex/FragmentBytes(sceneUniformData(), ...), so
 		// s_SceneUBO is null there. Guard the upload — s_AltSceneData is already filled
 		// above, which is all the inline-bytes path needs. OpenGL/Vulkan still bind it.
-		if (s_SceneUBO)
-			s_SceneUBO->setData(&s_AltSceneData, sizeof(AltSceneData));
+		if (s_SSceneUbo)
+			s_SSceneUbo->setData(&s_AltSceneData, sizeof(AltSceneData));
 		s_SceneData->lightEnvironment = environment;
 
 		uploadLightEnvironment();
@@ -109,7 +109,7 @@ namespace cbk::rendering {
 	}
 
 	Ref<UniformBuffer> Renderer::getSceneUBO() {
-		return s_SceneUBO;
+		return s_SSceneUbo;
 	}
 
 	Ref<StorageBuffer> Renderer::getLightSSBO() {

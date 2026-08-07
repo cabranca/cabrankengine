@@ -26,8 +26,8 @@ namespace cbk::ecs {
 		Signature getSignature(Entity e);
 
 	  private:
-		std::queue<Entity> m_AvailableEntities{};           // Recycled queue of available IDs
-		std::array<Signature, MAX_ENTITIES> m_Signatures{}; // Array of signatures corresponding to the ids of their indexes.
-		uint32_t m_LivingEntityCount = 0;                   // Counter for the current living entities
+		std::queue<Entity> m_AvailableEntities{};            // Recycled queue of available IDs
+		std::array<Signature, k_MaxEntities> m_Signatures{}; // Array of signatures corresponding to the ids of their indexes.
+		uint32_t m_LivingEntityCount = 0;                    // Counter for the current living entities
 	};
 } // namespace cbk::ecs

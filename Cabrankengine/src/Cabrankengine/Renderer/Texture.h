@@ -2,8 +2,9 @@
 
 #include <Common/BinaryFormats.h>
 
-// Forward declaration
+// Forward declaration. FT_Face is FreeType's own spelling — it must match upstream.
 struct FT_FaceRec_;
+// NOLINTNEXTLINE(readability-identifier-naming)
 typedef struct FT_FaceRec_* FT_Face;
 
 namespace cbk::rendering {

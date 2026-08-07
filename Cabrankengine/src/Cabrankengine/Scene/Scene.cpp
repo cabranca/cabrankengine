@@ -45,7 +45,7 @@ namespace cbk::scene {
 				return entity;
 
 		CBK_CORE_WARN("findEntityByName: there is no entity with the given name ({})", name);
-		return INVALID_ENTITY;
+		return k_InvalidEntity;
 	}
 
 	std::span<const Entity> Scene::getAllEntities() const {

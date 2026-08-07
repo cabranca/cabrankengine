@@ -7,7 +7,7 @@ namespace cbk::platform::opengl {
 
 	using namespace rendering;
 
-	static const char* FramebufferStatusName(GLenum status) {
+	static const char* framebufferStatusName(GLenum status) {
 		switch (status) {
 			case GL_FRAMEBUFFER_COMPLETE:
 				return "GL_FRAMEBUFFER_COMPLETE";
@@ -100,7 +100,7 @@ namespace cbk::platform::opengl {
 
 		auto status = glCheckNamedFramebufferStatus(m_RendererID, GL_FRAMEBUFFER);
 		if (status != GL_FRAMEBUFFER_COMPLETE)
-			CBK_CORE_ERROR("FrameBuffer incomplete ({0}x{1}): {2}", m_Specs.width, m_Specs.height, FramebufferStatusName(status));
+			CBK_CORE_ERROR("FrameBuffer incomplete ({0}x{1}): {2}", m_Specs.width, m_Specs.height, framebufferStatusName(status));
 		CBK_CORE_ASSERT(status == GL_FRAMEBUFFER_COMPLETE, "FrameBuffer is incomplete!");
 #endif
 	}

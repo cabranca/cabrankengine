@@ -10,7 +10,7 @@ namespace cbk::platform::opengl {
 	using namespace math;
 	using namespace rendering;
 
-	static GLenum ShaderTypeFromString(const std::string& type) {
+	static GLenum shaderTypeFromString(const std::string& type) {
 		if (type == "vertex")
 			return GL_VERTEX_SHADER;
 		else if (type == "fragment" || type == "pixel")
@@ -19,7 +19,7 @@ namespace cbk::platform::opengl {
 		return 0;
 	}
 
-	static const char* ShaderStageName(GLenum type) {
+	static const char* shaderStageName(GLenum type) {
 		switch (type) {
 			case GL_VERTEX_SHADER:
 				return "vertex";
@@ -224,7 +224,7 @@ namespace cbk::platform::opengl {
 			CBK_CORE_ASSERT(ShaderTypeFromString(type), "Invalid shader type specified!");
 			size_t nextLinePos = source.find_first_not_of("\r\n", eol);
 			pos = source.find(typeToken, nextLinePos);
-			shaderSources[ShaderTypeFromString(type)] = source.substr(nextLinePos, pos - nextLinePos);
+			shaderSources[shaderTypeFromString(type)] = source.substr(nextLinePos, pos - nextLinePos);
 		}
 		return shaderSources;
 	}
@@ -249,7 +249,7 @@ namespace cbk::platform::opengl {
 				std::vector<char> infoLog(maxLength);
 				glGetShaderInfoLog(shaderId, maxLength, &maxLength, infoLog.data());
 				glDeleteShader(shaderId);
-				CBK_CORE_ERROR("Shader '{0}' [{1}] compile error: {2}", m_Name, ShaderStageName(type), infoLog.data());
+				CBK_CORE_ERROR("Shader '{0}' [{1}] compile error: {2}", m_Name, shaderStageName(type), infoLog.data());
 				return;
 			}
 			shaderIds[shaderIndex++] = shaderId;

@@ -19,23 +19,23 @@ namespace cbk::common {
 
 		// Returns the logger for the engine app
 		[[nodiscard]] static std::shared_ptr<spdlog::logger>& getCoreLogger() {
-			return m_CoreLogger;
+			return s_MCoreLogger;
 		}
 
 		// Returns the logger for the client (game) app
 		[[nodiscard]] static std::shared_ptr<spdlog::logger>& getClientLogger() {
-			return m_ClientLogger;
+			return s_MClientLogger;
 		}
 
 		// Returns the logger for the asset converter
 		[[nodiscard]] static std::shared_ptr<spdlog::logger>& getAssetConverterLogger() {
-			return m_AssetConverterLogger;
+			return s_MAssetConverterLogger;
 		}
 
 	  private:
-		static std::shared_ptr<spdlog::logger> m_CoreLogger;
-		static std::shared_ptr<spdlog::logger> m_ClientLogger;
-		static std::shared_ptr<spdlog::logger> m_AssetConverterLogger;
+		static std::shared_ptr<spdlog::logger> s_MCoreLogger;
+		static std::shared_ptr<spdlog::logger> s_MClientLogger;
+		static std::shared_ptr<spdlog::logger> s_MAssetConverterLogger;
 	};
 
 } // namespace cbk::common

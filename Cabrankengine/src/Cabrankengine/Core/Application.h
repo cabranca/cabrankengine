@@ -19,10 +19,10 @@ namespace cbk {
 		virtual ~Application(); // Cannot define the destructor in the header because of the incomplete types (Window)
 
 		// Main Application running loop
-		void Run();
+		void run();
 
 		// Callback for the event system
-		void OnEvent(Event& e);
+		void onEvent(Event& e);
 
 		// Pushes a layer to the stack on top of the other layers (always under the overlays)
 		void pushLayer(Scope<Layer> layer);

@@ -60,8 +60,8 @@ class ExampleLayer : public Layer {
 	}
 
   private:
-	Entity m_SunEntity = INVALID_ENTITY;
-	Entity m_PointLight = INVALID_ENTITY;
+	Entity m_SunEntity = k_InvalidEntity;
+	Entity m_PointLight = k_InvalidEntity;
 };
 
 class Sandbox : public Application {

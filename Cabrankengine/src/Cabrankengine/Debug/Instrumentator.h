@@ -28,7 +28,7 @@ namespace cbk {
 	  public:
 		Instrumentor() : m_CurrentSession(nullptr), m_ProfileCount(0) {}
 
-		void BeginSession(const std::string& name, const std::string& filepath = "results.json") {
+		void beginSession(const std::string& name, const std::string& filepath = "results.json") {
 			std::string profilingDirString = "profiling";
 			// Extrae la carpeta del filepath
 			std::filesystem::path profilingDir(profilingDirString);
@@ -39,19 +39,19 @@ namespace cbk {
 			}
 
 			m_OutputStream.open(profilingDirString + "/" + filepath);
-			WriteHeader();
+			writeHeader();
 			m_CurrentSession = new InstrumentationSession{ name };
 		}
 
-		void EndSession() {
-			WriteFooter();
+		void endSession() {
+			writeFooter();
 			m_OutputStream.close();
 			delete m_CurrentSession;
 			m_CurrentSession = nullptr;
 			m_ProfileCount = 0;
 		}
 
-		void WriteProfile(const ProfileResult& result) {
+		void writeProfile(const ProfileResult& result) {
 			if (m_ProfileCount++ > 0)
 				m_OutputStream << ",";
 
@@ -71,19 +71,19 @@ namespace cbk {
 			m_OutputStream.flush();
 		}
 
-		void WriteHeader() {
+		void writeHeader() {
 			m_OutputStream << "{\"otherData\": {},\"traceEvents\":[";
 			m_OutputStream.flush();
 		}
 
-		void WriteFooter() {
+		void writeFooter() {
 			m_OutputStream << "]}";
 			m_OutputStream.flush();
 		}
 
-		[[nodiscard]] static Instrumentor& Get() {
-			static Instrumentor instance;
-			return instance;
+		[[nodiscard]] static Instrumentor& get() {
+			static Instrumentor s_Instance;
+			return s_Instance;
 		}
 	};
 
@@ -95,17 +95,17 @@ namespace cbk {
 
 		~InstrumentationTimer() {
 			if (!m_Stopped)
-				Stop();
+				stop();
 		}
 
-		void Stop() {
+		void stop() {
 			auto endTimepoint = std::chrono::high_resolution_clock::now();
 
 			long long start = std::chrono::time_point_cast<std::chrono::microseconds>(m_StartTimepoint).time_since_epoch().count();
 			long long end = std::chrono::time_point_cast<std::chrono::microseconds>(endTimepoint).time_since_epoch().count();
 
 			uint32_t threadID = static_cast<uint32_t>(std::hash<std::thread::id>{}(std::this_thread::get_id()) & 0xFFFFFFFF);
-			Instrumentor::Get().WriteProfile({ m_Name, start, end, threadID });
+			Instrumentor::get().writeProfile({ m_Name, start, end, threadID });
 
 			m_Stopped = true;
 		}
@@ -119,8 +119,8 @@ namespace cbk {
 
 #define CBK_PROFILE 1
 #if CBK_PROFILE
-#define CBK_PROFILE_BEGIN_SESSION(name, filepath) ::cbk::Instrumentor::Get().BeginSession(name, filepath)
-#define CBK_PROFILE_END_SESSION() ::cbk::Instrumentor::Get().EndSession()
+#define CBK_PROFILE_BEGIN_SESSION(name, filepath) ::cbk::Instrumentor::get().beginSession(name, filepath)
+#define CBK_PROFILE_END_SESSION() ::cbk::Instrumentor::get().endSession()
 #define CBK_PROFILE_SCOPE(name) ::cbk::InstrumentationTimer timer##__LINE__(name);
 #if defined(__GNUC__)
 #define CBK_PROFILE_FUNCTION() CBK_PROFILE_SCOPE(__PRETTY_FUNCTION__)

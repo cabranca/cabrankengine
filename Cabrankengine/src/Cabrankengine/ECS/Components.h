@@ -23,7 +23,7 @@ namespace cbk::ecs {
 		ProjectionType Type = ProjectionType::Perspective;
 		bool IsActive = true;
 
-		float FovY = cbk::math::PI / 4.f;
+		float FovY = cbk::math::k_Pi / 4.f;
 		float AspectRatio = 16.f / 9.f;
 		float Near = 0.1f;
 		float Far = 100.f;

@@ -44,7 +44,7 @@ namespace cbk::math {
 
 		[[nodiscard]] Quaternion normalize() const noexcept {
 			float len = length();
-			if (len < EPSILON)
+			if (len < k_Epsilon)
 				return Quaternion{};
 			return { w / len, x / len, y / len, z / len };
 		}

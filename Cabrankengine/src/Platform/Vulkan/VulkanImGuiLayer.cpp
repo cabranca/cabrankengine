@@ -19,7 +19,7 @@ namespace cbk {
 		// Font size in ImGui is expressed in pixels, so a fixed value tracks physical
 		// display density rather than resolution. This is the size intended for a
 		// 1.0-scale (~96 DPI) display; the monitor's content scale multiplies it.
-		constexpr float kBaseFontSize = 16.f;
+		constexpr float k_KBaseFontSize = 16.f;
 	} // namespace
 
 	ImGuiLayer::ImGuiLayer() : Layer("ImGuiLayer") {}
@@ -50,7 +50,7 @@ namespace cbk {
 
 		// ImGui 1.92 rasterizes glyphs on demand; the backend uploads the atlas
 		// during RenderDrawData, so no explicit Build()/font-texture call is needed.
-		io.FontDefault = io.Fonts->AddFontFromFileTTF("assets/fonts/ocraext.ttf", kBaseFontSize * dpiScale);
+		io.FontDefault = io.Fonts->AddFontFromFileTTF("assets/fonts/ocraext.ttf", k_KBaseFontSize * dpiScale);
 
 		ImGui::StyleColorsDark();
 
@@ -71,12 +71,12 @@ namespace cbk {
 
 		// ImGui shallow-copies InitInfo; pColorAttachmentFormats must outlive the
 		// Init call, so the format lives in a static.
-		static VkFormat imguiColorFormat = ctx->getImageFormat();
+		static VkFormat s_ImguiColorFormat = ctx->getImageFormat();
 		// The frame's vkCmdBeginRendering binds a depth attachment, so ImGui's pipeline
 		// must declare the matching depthAttachmentFormat even though it doesn't test depth.
 		VkPipelineRenderingCreateInfoKHR pipelineRenderingCI{ .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR,
 			                                                  .colorAttachmentCount = 1,
-			                                                  .pColorAttachmentFormats = &imguiColorFormat,
+			                                                  .pColorAttachmentFormats = &s_ImguiColorFormat,
 			                                                  .depthAttachmentFormat = ctx->getDepthFormat() };
 		ImGui_ImplVulkan_InitInfo initInfo{ .ApiVersion = VK_API_VERSION_1_3,
 			                                .Instance = ctx->getInstance(),
@@ -121,10 +121,10 @@ namespace cbk {
 		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), rendererAPI->getCommandBuffer());
 
 		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
-			GLFWwindow* backup_current_context = glfwGetCurrentContext();
+			GLFWwindow* backupCurrentContext = glfwGetCurrentContext();
 			ImGui::UpdatePlatformWindows();
 			ImGui::RenderPlatformWindowsDefault();
-			glfwMakeContextCurrent(backup_current_context);
+			glfwMakeContextCurrent(backupCurrentContext);
 		}
 	}
 } // namespace cbk

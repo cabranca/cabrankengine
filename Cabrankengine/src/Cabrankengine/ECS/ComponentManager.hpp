@@ -75,7 +75,7 @@ namespace cbk::ecs {
 		}
 
 	  private:
-		std::array<T, MAX_ENTITIES> m_Components{};         // The actual component array
+		std::array<T, k_MaxEntities> m_Components{};        // The actual component array
 		std::unordered_map<Entity, size_t> m_EntityToIndex; // Map from entity ID to the index of the component in the array
 		std::unordered_map<size_t, Entity> m_IndexToEntity; // Map from the index of the component in the array to the entity ID
 		size_t m_Size = 0;                                  // The current amount of valid components in the array

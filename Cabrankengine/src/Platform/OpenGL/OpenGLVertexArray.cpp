@@ -7,7 +7,7 @@ namespace cbk::platform::opengl {
 
 	using namespace rendering;
 
-	static GLenum ShaderDataType2OpenGLBaseType(ShaderDataType type) {
+	static GLenum shaderDataType2OpenGlBaseType(ShaderDataType type) {
 		switch (type) {
 			case ShaderDataType::Float:
 				return GL_FLOAT;
@@ -57,7 +57,7 @@ namespace cbk::platform::opengl {
 		uint32_t index = 0;
 		for (const auto& element: layout) {
 			glEnableVertexAttribArray(index);
-			glVertexAttribPointer(index, element.getComponentCount(), ShaderDataType2OpenGLBaseType(element.Type),
+			glVertexAttribPointer(index, element.getComponentCount(), shaderDataType2OpenGlBaseType(element.Type),
 			                      element.Normalized ? GL_TRUE : GL_FALSE, layout.getStride(),
 			                      reinterpret_cast<const void*>(static_cast<uintptr_t>(element.Offset)));
 			index++;
@@ -96,7 +96,7 @@ namespace cbk::platform::opengl {
 		uint32_t index = 0;
 		for (const auto& element: layout) {
 			glEnableVertexAttribArray(index);
-			glVertexAttribPointer(index, element.getComponentCount(), ShaderDataType2OpenGLBaseType(element.Type),
+			glVertexAttribPointer(index, element.getComponentCount(), shaderDataType2OpenGlBaseType(element.Type),
 			                      element.Normalized ? GL_TRUE : GL_FALSE, layout.getStride(),
 			                      reinterpret_cast<const void*>(static_cast<uintptr_t>(element.Offset)));
 			index++;

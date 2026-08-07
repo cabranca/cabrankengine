@@ -21,10 +21,10 @@ namespace cbk::rendering {
 	};
 
 	struct Renderer2DData {
-		static const uint32_t MaxQuads = 20000;
-		static const uint32_t MaxVertices = MaxQuads * 4;
-		static const uint32_t MaxIndices = MaxQuads * 6;
-		static const uint32_t MaxTextureSlots = 32;
+		static const uint32_t k_MaxQuads = 20000;
+		static const uint32_t k_MaxVertices = k_MaxQuads * 4;
+		static const uint32_t k_MaxIndices = k_MaxQuads * 6;
+		static const uint32_t k_MaxTextureSlots = 32;
 
 		Ref<GeometryDescriptor> QuadDesc;
 		Ref<Texture2D> WhiteTexture;
@@ -34,7 +34,7 @@ namespace cbk::rendering {
 		QuadVertex* QuadVertexBufferBase = nullptr;
 		QuadVertex* QuadVertexBufferPtr = nullptr;
 
-		std::array<Ref<Texture2D>, MaxTextureSlots> TextureSlots;
+		std::array<Ref<Texture2D>, k_MaxTextureSlots> TextureSlots;
 		uint32_t TextureSlotIndex = 1; // Slot 0 = White Texture
 
 		Vector3 QuadVertexPositions[4];
@@ -47,12 +47,12 @@ namespace cbk::rendering {
 	void Renderer2D::init() {
 		CBK_PROFILE_FUNCTION();
 
-		s_Data.QuadVertexBufferBase = new QuadVertex[s_Data.MaxVertices];
+		s_Data.QuadVertexBufferBase = new QuadVertex[s_Data.k_MaxVertices];
 
-		uint32_t* quadIndices = new uint32_t[s_Data.MaxIndices];
+		uint32_t* quadIndices = new uint32_t[s_Data.k_MaxIndices];
 
 		uint32_t offset = 0;
-		for (uint32_t i = 0; i < s_Data.MaxIndices; i += 6) {
+		for (uint32_t i = 0; i < s_Data.k_MaxIndices; i += 6) {
 			quadIndices[i + 0] = offset + 0;
 			quadIndices[i + 1] = offset + 1;
 			quadIndices[i + 2] = offset + 2;
@@ -64,7 +64,7 @@ namespace cbk::rendering {
 		}
 
 		s_Data.QuadDesc =
-		    GeometryDescriptor::create(s_Data.MaxVertices * sizeof(QuadVertex), quadIndices, s_Data.MaxIndices * sizeof(uint32_t),
+		    GeometryDescriptor::create(s_Data.k_MaxVertices * sizeof(QuadVertex), quadIndices, s_Data.k_MaxIndices * sizeof(uint32_t),
 		                               { { ShaderDataType::Float3, "pos" },
 		                                 { ShaderDataType::Float4, "col" },
 		                                 { ShaderDataType::Float2, "tex" },
@@ -154,7 +154,7 @@ namespace cbk::rendering {
 	void Renderer2D::drawQuad(const Vector3& position, const Vector2& size, const Vector4& color) {
 		CBK_PROFILE_FUNCTION();
 
-		if (s_Data.QuadIndexCount >= Renderer2DData::MaxIndices)
+		if (s_Data.QuadIndexCount >= Renderer2DData::k_MaxIndices)
 			flushAndReset();
 
 		constexpr float texIndex = 0.f;
@@ -204,7 +204,7 @@ namespace cbk::rendering {
 	                          const Vector4& tintColor) {
 		CBK_PROFILE_FUNCTION();
 
-		if (s_Data.QuadIndexCount >= Renderer2DData::MaxIndices)
+		if (s_Data.QuadIndexCount >= Renderer2DData::k_MaxIndices)
 			flushAndReset();
 
 		constexpr Vector4 color(1.f);
@@ -265,7 +265,7 @@ namespace cbk::rendering {
 	void Renderer2D::drawRotatedQuad(const Vector3& position, const Vector2& size, float rotation, const Vector4& color) {
 		CBK_PROFILE_FUNCTION();
 
-		if (s_Data.QuadIndexCount >= Renderer2DData::MaxIndices)
+		if (s_Data.QuadIndexCount >= Renderer2DData::k_MaxIndices)
 			flushAndReset();
 
 		constexpr float texIndex = 0.f;
@@ -315,7 +315,7 @@ namespace cbk::rendering {
 	                                 float tilingFactor, const Vector4& tintColor) {
 		CBK_PROFILE_FUNCTION();
 
-		if (s_Data.QuadIndexCount >= Renderer2DData::MaxIndices)
+		if (s_Data.QuadIndexCount >= Renderer2DData::k_MaxIndices)
 			flushAndReset();
 
 		constexpr Vector4 color(1.f);

@@ -22,10 +22,10 @@ namespace cbk::rendering {
 	};
 
 	struct TextRendererData {
-		static const uint32_t maxQuads = 20000;
-		static const uint32_t maxVertices = maxQuads * 4;
-		static const uint32_t maxIndices = maxQuads * 6;
-		static const uint32_t maxTextureSlots = 32;
+		static const uint32_t k_MaxQuads = 20000;
+		static const uint32_t k_MaxVertices = k_MaxQuads * 4;
+		static const uint32_t k_MaxIndices = k_MaxQuads * 6;
+		static const uint32_t k_MaxTextureSlots = 32;
 
 		Ref<GeometryDescriptor> textVertexDesc;
 		Ref<TextMaterial> textMaterial;
@@ -34,18 +34,18 @@ namespace cbk::rendering {
 		TextVertex* textVertexBufferBase = nullptr;
 		TextVertex* textVertexBufferPtr = nullptr;
 
-		std::array<Ref<Texture2D>, maxTextureSlots> textureSlots;
+		std::array<Ref<Texture2D>, k_MaxTextureSlots> textureSlots;
 		uint32_t textureSlotIndex = 0;
 	};
 
 	static TextRendererData s_Data;
 
 	void TextRenderer::init() {
-		s_Data.textVertexBufferBase = new TextVertex[s_Data.maxVertices];
-		uint32_t* quadIndices = new uint32_t[s_Data.maxIndices];
+		s_Data.textVertexBufferBase = new TextVertex[s_Data.k_MaxVertices];
+		uint32_t* quadIndices = new uint32_t[s_Data.k_MaxIndices];
 
 		uint32_t offset = 0;
-		for (uint32_t i = 0; i < s_Data.maxIndices; i += 6) {
+		for (uint32_t i = 0; i < s_Data.k_MaxIndices; i += 6) {
 			quadIndices[i + 0] = offset + 0;
 			quadIndices[i + 1] = offset + 1;
 			quadIndices[i + 2] = offset + 2;
@@ -58,7 +58,7 @@ namespace cbk::rendering {
 		}
 
 		s_Data.textVertexDesc =
-		    GeometryDescriptor::create(s_Data.maxVertices * sizeof(TextVertex), quadIndices, s_Data.maxIndices * sizeof(uint32_t),
+		    GeometryDescriptor::create(s_Data.k_MaxVertices * sizeof(TextVertex), quadIndices, s_Data.k_MaxIndices * sizeof(uint32_t),
 		                               { { ShaderDataType::Float3, "pos" },
 		                                 { ShaderDataType::Float4, "color" },
 		                                 { ShaderDataType::Float2, "texCoord" },
@@ -116,7 +116,7 @@ namespace cbk::rendering {
 		float y = position.y;
 
 		for (char c: text) {
-			if (s_Data.quadIndexCount >= s_Data.maxIndices)
+			if (s_Data.quadIndexCount >= s_Data.k_MaxIndices)
 				nextBatch();
 
 			Character ch = s_Characters.at(c);
@@ -137,7 +137,7 @@ namespace cbk::rendering {
 			}
 
 			if (textureIndex == -1.f) {
-				if (s_Data.textureSlotIndex >= s_Data.maxTextureSlots)
+				if (s_Data.textureSlotIndex >= s_Data.k_MaxTextureSlots)
 					nextBatch();
 
 				textureIndex = (float)s_Data.textureSlotIndex;

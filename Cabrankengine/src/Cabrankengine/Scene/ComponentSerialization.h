@@ -7,6 +7,11 @@
 #include <Cabrankengine/Renderer/Materials/PhongMaterial.h>
 
 // nlohmann ADL serialization — functions live in the same namespace as their types.
+//
+// to_json/from_json are nlohmann customization points found by ADL: the names are
+// fixed by the library, not by us. Renaming them to camelCase still compiles and
+// then silently stops serializing, so the naming check is off for this whole file.
+// NOLINTBEGIN(readability-identifier-naming)
 
 namespace cbk::math {
 
@@ -184,3 +189,5 @@ namespace cbk::ecs {
 	}
 
 } // namespace cbk::ecs
+
+// NOLINTEND(readability-identifier-naming)

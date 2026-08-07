@@ -8,9 +8,9 @@
 #include <Platform/OpenGL/OpenGLContext.h>
 
 namespace cbk {
-	static bool s_GLFWInitialized = false;
+	static bool s_SGlfwInitialized = false;
 
-	static void GLFWErrorCallback(int error, const char* description) {
+	static void glfwErrorCallback(int error, const char* description) {
 		CBK_CORE_ERROR("GLFW Error ({0}): {1}", error, description);
 	}
 
@@ -61,11 +61,11 @@ namespace cbk {
 
 		CBK_CORE_INFO("Creating window {0} ({1}, {2})", props.Title, props.Width, props.Height);
 
-		if (!s_GLFWInitialized) {
+		if (!s_SGlfwInitialized) {
 			int success = glfwInit();
 			CBK_CORE_ASSERT(success, "Could not initialize GLFW!");
-			glfwSetErrorCallback(GLFWErrorCallback);
-			s_GLFWInitialized = true;
+			glfwSetErrorCallback(glfwErrorCallback);
+			s_SGlfwInitialized = true;
 		}
 
 #ifdef CBK_RENDERER_VULKAN

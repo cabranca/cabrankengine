@@ -20,7 +20,7 @@ namespace cbk::rendering {
 		float MouseSensitivity = 0.1f;
 		float Roll = 0.f;
 		float RollSpeed = 45.f;
-		float FovY = math::PI / 4.f;
+		float FovY = math::k_Pi / 4.f;
 		float Near = 0.1f;
 		float Far = 100.f;
 		float AspectRatio = 16.f / 9.f;

@@ -44,11 +44,11 @@ namespace cbk::ecs {
 	  public:
 		// Registers a system of type T and returns a shared pointer to it
 		template <typename T>
-		std::shared_ptr<T> RegisterSystem() {
+		std::shared_ptr<T> registerSystem() {
 			const char* typeName = typeid(T).name();
 
 			if (m_Systems.contains(typeName)) {
-				CBK_CORE_ERROR("RegisterSystem: system {0} already registered", typeName);
+				CBK_CORE_ERROR("registerSystem: system {0} already registered", typeName);
 				return std::static_pointer_cast<T>(m_Systems.at(typeName));
 			}
 
@@ -72,11 +72,11 @@ namespace cbk::ecs {
 
 		// Sets the signature for the system of type T
 		template <typename T>
-		void SetSignature(Signature signature) {
+		void setSignature(Signature signature) {
 			const char* typeName = typeid(T).name();
 
 			if (!m_Systems.contains(typeName)) {
-				CBK_CORE_ERROR("SetSignature: system {0} not registered", typeName);
+				CBK_CORE_ERROR("setSignature: system {0} not registered", typeName);
 				return;
 			}
 
@@ -85,14 +85,14 @@ namespace cbk::ecs {
 		}
 
 		// This must be called after a call to EntityManager::destroyEntity()
-		void EntityDestroyed(Entity entity) {
+		void entityDestroyed(Entity entity) {
 			for (auto const& [_, system]: m_Systems) {
 				system->removeEntity(entity);
 			}
 		}
 
 		// This must be called after a call to EntityManager::setSignature()
-		void EntitySignatureChanged(Entity entity, Signature entitySignature) {
+		void entitySignatureChanged(Entity entity, Signature entitySignature) {
 			for (auto const& [type, system]: m_Systems) {
 				auto const& systemSignature = m_Signatures[type];
 

@@ -7,7 +7,7 @@
 namespace cbk::platform::opengl {
 
 #ifndef __EMSCRIPTEN__
-	static void GLAPIENTRY GLDebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei /*length*/,
+	static void GLAPIENTRY glDebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei /*length*/,
 	                                       const GLchar* message, const void* /*userParam*/) {
 		// Notification-level spam is mostly buffer-bind chatter; skip it.
 		if (severity == GL_DEBUG_SEVERITY_NOTIFICATION)
@@ -41,7 +41,7 @@ namespace cbk::platform::opengl {
 		// WebGL 2 has no equivalent — use checkGLError() at suspect call sites instead.
 		glEnable(GL_DEBUG_OUTPUT);
 		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-		glDebugMessageCallback(GLDebugCallback, nullptr);
+		glDebugMessageCallback(glDebugCallback, nullptr);
 		glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
 #endif
 	}

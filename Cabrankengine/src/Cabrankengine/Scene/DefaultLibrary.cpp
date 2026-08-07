@@ -129,17 +129,17 @@ namespace cbk::scene {
 		std::vector<float> vertices;
 		std::vector<uint32_t> indices;
 
-		constexpr unsigned int X_SEGMENTS = 64;
-		constexpr unsigned int Y_SEGMENTS = 64;
+		constexpr unsigned int xSegments = 64;
+		constexpr unsigned int ySegments = 64;
 
-		for (unsigned int x = 0; x <= X_SEGMENTS; x++) {
-			for (unsigned int y = 0; y <= Y_SEGMENTS; y++) {
-				float xSegment = (float)x / (float)X_SEGMENTS;
-				float ySegment = (float)y / (float)Y_SEGMENTS;
+		for (unsigned int x = 0; x <= xSegments; x++) {
+			for (unsigned int y = 0; y <= ySegments; y++) {
+				float xSegment = (float)x / (float)xSegments;
+				float ySegment = (float)y / (float)ySegments;
 
-				float xPos = cosf(xSegment * 2.f * math::PI) * sinf(ySegment * math::PI);
-				float yPos = cosf(ySegment * math::PI);
-				float zPos = sinf(xSegment * 2.f * math::PI) * sinf(ySegment * math::PI);
+				float xPos = cosf(xSegment * 2.f * math::k_Pi) * sinf(ySegment * math::k_Pi);
+				float yPos = cosf(ySegment * math::k_Pi);
+				float zPos = sinf(xSegment * 2.f * math::k_Pi) * sinf(ySegment * math::k_Pi);
 
 				vertices.push_back(xPos);
 				vertices.push_back(yPos);
@@ -155,17 +155,17 @@ namespace cbk::scene {
 		}
 
 		bool oddRow = false;
-		for (unsigned int y = 0; y < Y_SEGMENTS; ++y) {
+		for (unsigned int y = 0; y < ySegments; ++y) {
 			if (!oddRow) // even rows: y == 0, y == 2; and so on
 			{
-				for (unsigned int x = 0; x <= X_SEGMENTS; ++x) {
-					indices.push_back(y * (X_SEGMENTS + 1) + x);
-					indices.push_back((y + 1) * (X_SEGMENTS + 1) + x);
+				for (unsigned int x = 0; x <= xSegments; ++x) {
+					indices.push_back(y * (xSegments + 1) + x);
+					indices.push_back((y + 1) * (xSegments + 1) + x);
 				}
 			} else {
-				for (int x = X_SEGMENTS; x >= 0; --x) {
-					indices.push_back((y + 1) * (X_SEGMENTS + 1) + x);
-					indices.push_back(y * (X_SEGMENTS + 1) + x);
+				for (int x = xSegments; x >= 0; --x) {
+					indices.push_back((y + 1) * (xSegments + 1) + x);
+					indices.push_back(y * (xSegments + 1) + x);
 				}
 			}
 			oddRow = !oddRow;
@@ -177,15 +177,15 @@ namespace cbk::scene {
 		// Vamos a limpiar indices y generarlos como TRIANGLES estándar:
 
 		indices.clear(); // Reiniciamos para hacerlo compatible con GL_TRIANGLES genérico
-		for (unsigned int y = 0; y < Y_SEGMENTS; ++y) {
-			for (unsigned int x = 0; x < X_SEGMENTS; ++x) {
-				indices.push_back((y + 1) * (X_SEGMENTS + 1) + x);
-				indices.push_back(y * (X_SEGMENTS + 1) + x);
-				indices.push_back(y * (X_SEGMENTS + 1) + x + 1);
+		for (unsigned int y = 0; y < ySegments; ++y) {
+			for (unsigned int x = 0; x < xSegments; ++x) {
+				indices.push_back((y + 1) * (xSegments + 1) + x);
+				indices.push_back(y * (xSegments + 1) + x);
+				indices.push_back(y * (xSegments + 1) + x + 1);
 
-				indices.push_back((y + 1) * (X_SEGMENTS + 1) + x);
-				indices.push_back(y * (X_SEGMENTS + 1) + x + 1);
-				indices.push_back((y + 1) * (X_SEGMENTS + 1) + x + 1);
+				indices.push_back((y + 1) * (xSegments + 1) + x);
+				indices.push_back(y * (xSegments + 1) + x + 1);
+				indices.push_back((y + 1) * (xSegments + 1) + x + 1);
 			}
 		}
 

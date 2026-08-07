@@ -46,19 +46,19 @@ namespace cbk::math {
 	}
 
 	inline Mat4 rotateX(float angle) noexcept {
-		float angleInRadians = angle * PI / 180.f;
+		float angleInRadians = angle * k_Pi / 180.f;
 		return { 1.f, 0.f, 0.f, 0.f, 0.f, cosf(angleInRadians), sinf(angleInRadians), 0.f, 0.f, -sinf(angleInRadians), cosf(angleInRadians),
 			     0.f, 0.f, 0.f, 0.f, 1.f };
 	}
 
 	inline Mat4 rotateY(float angle) noexcept {
-		float angleInRadians = angle * PI / 180.f;
+		float angleInRadians = angle * k_Pi / 180.f;
 		return { cosf(angleInRadians), 0.f, -sinf(angleInRadians), 0.f, 0.f, 1.f, 0.f, 0.f,
 			     sinf(angleInRadians), 0.f, cosf(angleInRadians),  0.f, 0.f, 0.f, 0.f, 1.f };
 	}
 
 	inline Mat4 rotateZ(float angle) noexcept {
-		float angleInRadians = angle * PI / 180.f;
+		float angleInRadians = angle * k_Pi / 180.f;
 		return { cosf(angleInRadians),
 			     sinf(angleInRadians),
 			     0.f,

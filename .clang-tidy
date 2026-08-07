@@ -27,10 +27,13 @@ Checks: >
   readability-static-definition-in-anonymous-namespace,
   readability-identifier-naming
 
-# Only lint our own sources. clang-tidy uses POSIX extended regex here — no
-# lookahead — so this relies on vendor code living in <Module>/vendor/ rather
-# than under src/, which is already the layout.
-HeaderFilterRegex: '(Cabrankengine|Common|Sandbox|UnitTests|CBKAssetConverter|CBKBindings)/(src|include)/'
+# Only lint our own sources. These are matched against the path as clang-tidy
+# prints it, which is relative to the compile-DB "directory" field — so it is
+# often 'src/Cabrankengine/...', NOT 'Cabrankengine/src/...'. Anchoring on the
+# module name silently matches nothing. Vendor code (notably freetype) also has
+# a src/ directory, hence the separate exclude.
+HeaderFilterRegex: '(^|/)(src|include)/'
+ExcludeHeaderFilterRegex: '/vendor/'
 
 WarningsAsErrors: ''
 
@@ -54,16 +57,19 @@ CheckOptions:
     value: CamelCase
 
   # --- Functions ---
-  # NOTE: Application::Run() and OnEvent(), and SystemManager::EntityDestroyed()
-  # and EntitySignatureChanged(), are legacy PascalCase and will warn here.
-  # They are public API — leave them alone (see CLAUDE.md).
   - key: readability-identifier-naming.FunctionCase
     value: camelBack
   - key: readability-identifier-naming.MethodCase
     value: camelBack
 
   # --- Data members ---
-  # m_PascalCase private/protected, s_PascalCase statics, PascalCase public PODs.
+  # m_PascalCase private/protected, s_PascalCase static members.
+  #
+  # PublicMemberCase is deliberately NOT set. Two conventions coexist and both
+  # are correct: ECS components use PascalCase (CTransform::Position), while
+  # GPU-facing and on-disk layout structs use camelCase (position, texCoord,
+  # magic, width) so the field names line up with the shader source and the
+  # .cbkm/.cbkt binary layout. Enforcing either one flags ~120 correct fields.
   - key: readability-identifier-naming.PrivateMemberCase
     value: CamelCase
   - key: readability-identifier-naming.PrivateMemberPrefix
@@ -72,26 +78,46 @@ CheckOptions:
     value: CamelCase
   - key: readability-identifier-naming.ProtectedMemberPrefix
     value: 'm_'
-  - key: readability-identifier-naming.PublicMemberCase
-    value: CamelCase
   - key: readability-identifier-naming.ClassMemberCase
     value: CamelCase
   - key: readability-identifier-naming.ClassMemberPrefix
     value: 's_'
 
-  # --- Constants ---
-  # k_PascalCase is the current convention (k_MaxFramesInFlight). The older
-  # SCREAMING_CASE constants in ECS/Common.h (MAX_ENTITIES, MAX_COMPONENTS,
-  # INVALID_ENTITY) predate it and will warn — that drift is intentional to
-  # surface, not a reason to rename them without discussion.
+  # --- Statics at file scope ---
+  # s_Data, s_SceneUBO, s_GLFWInitialized. GlobalVariable must be set as well as
+  # StaticVariable: file-scope state declared inside an anonymous namespace is
+  # classified as a global, not a static, and without this rule it falls through
+  # to VariableCase and gets its s_ prefix stripped.
+  - key: readability-identifier-naming.StaticVariableCase
+    value: CamelCase
+  - key: readability-identifier-naming.StaticVariablePrefix
+    value: 's_'
+  - key: readability-identifier-naming.GlobalVariableCase
+    value: CamelCase
+  - key: readability-identifier-naming.GlobalVariablePrefix
+    value: 's_'
+
+  # --- Constants: k_PascalCase at namespace and class scope ---
+  # k_Pi, k_MaxQuads, k_MaxEntities, k_MaxFramesInFlight.
+  #
+  # LocalConstant deliberately gets camelBack and NO k_ prefix. A `const bool
+  # hasNormal` inside a function is a local variable that happens to be const,
+  # not a named constant; requiring k_ there renames ~60 correct identifiers
+  # (dstW, mipLevels, pixelCount) to something worse.
+  #
+  # ConstexprVariable* is deliberately NOT set: it outranks every other
+  # category, so setting it applies the k_ rule to those same locals and
+  # drowns the real findings.
   - key: readability-identifier-naming.GlobalConstantCase
     value: CamelCase
   - key: readability-identifier-naming.GlobalConstantPrefix
     value: 'k_'
-  - key: readability-identifier-naming.ConstexprVariableCase
+  - key: readability-identifier-naming.ClassConstantCase
     value: CamelCase
-  - key: readability-identifier-naming.ConstexprVariablePrefix
+  - key: readability-identifier-naming.ClassConstantPrefix
     value: 'k_'
+  - key: readability-identifier-naming.LocalConstantCase
+    value: camelBack
 
   # --- Locals and parameters ---
   - key: readability-identifier-naming.VariableCase

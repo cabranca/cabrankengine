@@ -28,7 +28,7 @@ namespace cbk::ecs {
 		void destroyEntity(Entity e) {
 			m_EntityManager->destroyEntity(e);
 			m_ComponentManager->entityDestroyed(e);
-			m_SystemManager->EntityDestroyed(e);
+			m_SystemManager->entityDestroyed(e);
 		}
 
 		// Returns the components signature for the given entity
@@ -56,7 +56,7 @@ namespace cbk::ecs {
 			signature.set(m_ComponentManager->getComponentType<T>(), true);
 			m_EntityManager->setSignature(e, signature);
 
-			m_SystemManager->EntitySignatureChanged(e, signature);
+			m_SystemManager->entitySignatureChanged(e, signature);
 		}
 
 		// Removes the component of type T from the given entity
@@ -68,7 +68,7 @@ namespace cbk::ecs {
 			signature.set(m_ComponentManager->getComponentType<T>(), false);
 			m_EntityManager->setSignature(e, signature);
 
-			m_SystemManager->EntitySignatureChanged(e, signature);
+			m_SystemManager->entitySignatureChanged(e, signature);
 		}
 
 		// Returns a reference to the component of type T associated with the given entity
@@ -96,7 +96,7 @@ namespace cbk::ecs {
 		// Registers a new system of type T
 		template <typename T>
 		std::shared_ptr<T> registerSystem() {
-			return m_SystemManager->RegisterSystem<T>();
+			return m_SystemManager->registerSystem<T>();
 		}
 
 		template <typename T>
@@ -107,16 +107,16 @@ namespace cbk::ecs {
 		// Sets the required component signature for a given system type T
 		template <typename T>
 		void setSystemSignature(Signature signature) {
-			m_SystemManager->SetSignature<T>(signature);
+			m_SystemManager->setSignature<T>(signature);
 		}
 
 		// Re-evaluates all existing entities against registered system signatures.
 		// Call this after registering systems on a registry that already has entities (e.g. after scene load).
 		void rebuildSystemMembership() {
-			for (Entity e = 0; e < MAX_ENTITIES; e++) {
+			for (Entity e = 0; e < k_MaxEntities; e++) {
 				Signature sig = m_EntityManager->getSignature(e);
 				if (sig.any())
-					m_SystemManager->EntitySignatureChanged(e, sig);
+					m_SystemManager->entitySignatureChanged(e, sig);
 			}
 		}
 

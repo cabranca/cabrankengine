@@ -37,8 +37,8 @@ TEST_CASE("EntityManager - create and destroy entities") {
 	Entity e2 = em.createEntity();
 
 	REQUIRE(e1 != e2);
-	REQUIRE(e1 < MAX_ENTITIES);
-	REQUIRE(e2 < MAX_ENTITIES);
+	REQUIRE(e1 < k_MaxEntities);
+	REQUIRE(e2 < k_MaxEntities);
 
 	Signature sig;
 	sig.set(0);
@@ -95,17 +95,17 @@ TEST_CASE("SystemManager - entity filtering by signature") {
 	cm.registerComponent<Position>();
 	cm.registerComponent<Velocity>();
 
-	auto moveSys = sm.RegisterSystem<MovementSystem>();
+	auto moveSys = sm.registerSystem<MovementSystem>();
 
 	Signature moveSig;
 	moveSig.set(cm.getComponentType<Position>());
 	moveSig.set(cm.getComponentType<Velocity>());
-	sm.SetSignature<MovementSystem>(moveSig);
+	sm.setSignature<MovementSystem>(moveSig);
 
 	// Entity with only Position
 	Entity e1 = em.createEntity();
 	em.setSignature(e1, Signature{}.set(cm.getComponentType<Position>()));
-	sm.EntitySignatureChanged(e1, em.getSignature(e1));
+	sm.entitySignatureChanged(e1, em.getSignature(e1));
 	REQUIRE(moveSys->getEntities().empty());
 
 	// Entity with Position + Velocity
@@ -114,13 +114,13 @@ TEST_CASE("SystemManager - entity filtering by signature") {
 	sig2.set(cm.getComponentType<Position>());
 	sig2.set(cm.getComponentType<Velocity>());
 	em.setSignature(e2, sig2);
-	sm.EntitySignatureChanged(e2, sig2);
+	sm.entitySignatureChanged(e2, sig2);
 	REQUIRE(moveSys->getEntities().contains(e2));
 
 	// Removing component should remove from system
 	sig2.reset(cm.getComponentType<Velocity>());
 	em.setSignature(e2, sig2);
-	sm.EntitySignatureChanged(e2, sig2);
+	sm.entitySignatureChanged(e2, sig2);
 	REQUIRE_FALSE(moveSys->getEntities().contains(e2));
 }
 

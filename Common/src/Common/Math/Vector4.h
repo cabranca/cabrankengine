@@ -61,7 +61,7 @@ namespace cbk::math {
 
 	inline bool Vector4::isNormalized() const noexcept {
 		float result = std::abs(lengthSquared() - 1.f);
-		return result < EPSILON;
+		return result < k_Epsilon;
 	}
 
 	inline constexpr bool Vector4::operator==(const Vector4& other) const noexcept {

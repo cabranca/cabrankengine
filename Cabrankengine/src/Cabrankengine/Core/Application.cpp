@@ -33,7 +33,7 @@ namespace cbk {
 		WindowProps props(configJson.at("window").at("title"), configJson.at("window").at("width"), configJson.at("window").at("height"));
 
 		m_Window = Window::create(props);
-		m_Window->setEventCallback(BIND_EVENT_FN(&Application::OnEvent, this));
+		m_Window->setEventCallback(BIND_EVENT_FN(&Application::onEvent, this));
 
 		// AudioEngine::init();
 
@@ -59,7 +59,7 @@ namespace cbk {
 		Renderer::shutdown();
 	}
 
-	void Application::Run() {
+	void Application::run() {
 		CBK_PROFILE_FUNCTION();
 
 #ifdef __EMSCRIPTEN__
@@ -105,7 +105,7 @@ namespace cbk {
 		app->m_Window->onUpdate();
 	}
 
-	void Application::OnEvent(Event& e) {
+	void Application::onEvent(Event& e) {
 		EventDispatcher dispatcher(e);
 		dispatcher.dispatch<WindowCloseEvent>(BIND_EVENT_FN(&Application::onWindowClose, this));
 		dispatcher.dispatch<WindowResizeEvent>(BIND_EVENT_FN(&Application::onWindowResize, this));
