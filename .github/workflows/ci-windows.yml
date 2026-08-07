@@ -11,6 +11,22 @@ on:
       - 'UnitTests/**'
       - 'CBKAssetConverter/**'
       - '.github/workflows/ci-windows.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'Cabrankengine/**'
+      - 'Common/**'
+      - 'Sandbox/**'
+      - 'UnitTests/**'
+      - 'CBKAssetConverter/**'
+      - '.github/workflows/ci-windows.yml'
+
+# Supersede in-flight runs when a PR branch is pushed again. Never cancels a
+# run on main, where every commit's result matters.
+concurrency:
+  group: ci-windows-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   # -----------------------------------------------------------------------

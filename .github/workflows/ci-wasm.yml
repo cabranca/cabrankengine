@@ -9,6 +9,20 @@ on:
       - 'Cabrankengine/src/**'
       - 'Common/**'
       - '.github/workflows/ci-wasm.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'CBKBindings/**'
+      - 'Cabrankengine/src/**'
+      - 'Common/**'
+      - '.github/workflows/ci-wasm.yml'
+
+# Supersede in-flight runs when a PR branch is pushed again. Never cancels a
+# run on main, where every commit's result matters.
+concurrency:
+  group: ci-wasm-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   # -----------------------------------------------------------------------
