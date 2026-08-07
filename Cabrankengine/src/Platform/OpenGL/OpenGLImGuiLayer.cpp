@@ -13,16 +13,16 @@ namespace cbk {
 
 	ImGuiLayer::ImGuiLayer() : Layer("ImGuiLayer") {}
 
-	void ImGuiLayer::onAttach()
-	{
+	void ImGuiLayer::onAttach() {
 		CBK_PROFILE_FUNCTION();
 
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
-		
-		ImGuiIO& io = ImGui::GetIO(); static_cast<void>(io); // TODO: wtf is this?
+
+		ImGuiIO& io = ImGui::GetIO();
+		static_cast<void>(io); // TODO: wtf is this?
 		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-		//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
+		// io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
 		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 		io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
@@ -40,8 +40,7 @@ namespace cbk {
 		ImGui_ImplOpenGL3_Init("#version 410");
 	}
 
-	void ImGuiLayer::onDetach()
-	{
+	void ImGuiLayer::onDetach() {
 		CBK_PROFILE_FUNCTION();
 
 		ImGui_ImplOpenGL3_Shutdown();
@@ -74,4 +73,4 @@ namespace cbk {
 			glfwMakeContextCurrent(backup_current_context);
 		}
 	}
-}
+} // namespace cbk

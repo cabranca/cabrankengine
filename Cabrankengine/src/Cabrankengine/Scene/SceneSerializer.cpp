@@ -81,9 +81,9 @@ namespace cbk::scene {
 	static Scene fromJson(const nlohmann::json& root) {
 		SceneMetadata meta;
 		const auto& m = root["metadata"];
-        m["name"].get_to(meta.Name);
-        m["background_color"].get_to(meta.BackgroundColor);
-        m["ambient_color"].get_to(meta.AmbientColor);
+		m["name"].get_to(meta.Name);
+		m["background_color"].get_to(meta.BackgroundColor);
+		m["ambient_color"].get_to(meta.AmbientColor);
 
 		Scene scene(std::move(meta));
 

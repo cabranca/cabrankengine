@@ -7,14 +7,14 @@ namespace cbk::scene {
 
 	void DefaultLibrary::init() {
 		setupTexture(s_WhiteTexture, 0xffffffff);
-        setupTexture(s_BlackTexture, 0xff000000);
-        setupTexture(s_FlatNormalTexture, 0xffff8080);
+		setupTexture(s_BlackTexture, 0xff000000);
+		setupTexture(s_FlatNormalTexture, 0xffff8080);
 
 		setupQuad();
-        setupCube();
-        setupSphere();
+		setupCube();
+		setupSphere();
 
-        setupBasicShaders();
+		setupBasicShaders();
 	}
 
 	void DefaultLibrary::shutdown() {
@@ -67,9 +67,9 @@ namespace cbk::scene {
 	}
 
 	void DefaultLibrary::setupTexture(Ref<Texture2D>& tex, uint32_t data) {
-        tex = Texture2D::create(s_Specs);
+		tex = Texture2D::create(s_Specs);
 		tex->setData(&data, sizeof(uint32_t));
-    }
+	}
 
 	void DefaultLibrary::setupQuad() {
 		std::array<float, (3 + 2) * 4> quadVertices = { -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 0.5f,  -0.5f, 0.0f, 1.0f, 0.0f,
@@ -83,54 +83,42 @@ namespace cbk::scene {
 	}
 
 	void DefaultLibrary::setupCube() {
-        std::array<float, (3+3+2)*24> cubeVertices = {
-            // Front Face (+Z)
-                  // Pos               // Normal            // UV
-             -0.5f, -0.5f,  0.5f,   0.0f,  0.0f,  1.0f,   0.0f, 0.0f ,
-              0.5f, -0.5f,  0.5f,   0.0f,  0.0f,  1.0f,   1.0f, 0.0f ,
-              0.5f,  0.5f,  0.5f,   0.0f,  0.0f,  1.0f,   1.0f, 1.0f ,
-             -0.5f,  0.5f,  0.5f,   0.0f,  0.0f,  1.0f,   0.0f, 1.0f ,
+		std::array<float, (3 + 3 + 2) * 24> cubeVertices = {
+			// Front Face (+Z)
+			// Pos               // Normal            // UV
+			-0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.5f, 0.5f, 0.5f, 0.0f, 0.0f,
+			1.0f, 1.0f, 1.0f, -0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,
 
-            // Right Face (+X)
-              0.5f, -0.5f,  0.5f,   1.0f,  0.0f,  0.0f,   0.0f, 0.0f ,
-              0.5f, -0.5f, -0.5f,   1.0f,  0.0f,  0.0f,   1.0f, 0.0f ,
-              0.5f,  0.5f, -0.5f,   1.0f,  0.0f,  0.0f,   1.0f, 1.0f ,
-              0.5f,  0.5f,  0.5f,   1.0f,  0.0f,  0.0f,   0.0f, 1.0f ,
+			// Right Face (+X)
+			0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.5f, 0.5f, -0.5f, 1.0f,
+			0.0f, 0.0f, 1.0f, 1.0f, 0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
 
-            // Back Face (-Z)
-              0.5f, -0.5f, -0.5f,   0.0f,  0.0f, -1.0f,   0.0f, 0.0f ,
-             -0.5f, -0.5f, -0.5f,   0.0f,  0.0f, -1.0f,   1.0f, 0.0f ,
-             -0.5f,  0.5f, -0.5f,   0.0f,  0.0f, -1.0f,   1.0f, 1.0f ,
-              0.5f,  0.5f, -0.5f,   0.0f,  0.0f, -1.0f,   0.0f, 1.0f ,
+			// Back Face (-Z)
+			0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, -0.5f, 0.5f, -0.5f, 0.0f,
+			0.0f, -1.0f, 1.0f, 1.0f, 0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f,
 
-            // Left Face (-X)
-             -0.5f, -0.5f, -0.5f,  -1.0f,  0.0f,  0.0f,   0.0f, 0.0f ,
-             -0.5f, -0.5f,  0.5f,  -1.0f,  0.0f,  0.0f,   1.0f, 0.0f ,
-             -0.5f,  0.5f,  0.5f,  -1.0f,  0.0f,  0.0f,   1.0f, 1.0f ,
-             -0.5f,  0.5f, -0.5f,  -1.0f,  0.0f,  0.0f,   0.0f, 1.0f ,
+			// Left Face (-X)
+			-0.5f, -0.5f, -0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -0.5f, -0.5f, 0.5f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f, -0.5f, 0.5f, 0.5f, -1.0f,
+			0.0f, 0.0f, 1.0f, 1.0f, -0.5f, 0.5f, -0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
 
-            // Top Face (+Y)
-             -0.5f,  0.5f,  0.5f,   0.0f,  1.0f,  0.0f,   0.0f, 0.0f ,
-              0.5f,  0.5f,  0.5f,   0.0f,  1.0f,  0.0f,   1.0f, 0.0f ,
-              0.5f,  0.5f, -0.5f,   0.0f,  1.0f,  0.0f,   1.0f, 1.0f ,
-             -0.5f,  0.5f, -0.5f,   0.0f,  1.0f,  0.0f,   0.0f, 1.0f ,
+			// Top Face (+Y)
+			-0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
+			0.0f, 1.0f, 1.0f, -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
 
-            // Bottom Face (-Y)
-             -0.5f, -0.5f, -0.5f,   0.0f, -1.0f,  0.0f,   0.0f, 0.0f ,
-              0.5f, -0.5f, -0.5f,   0.0f, -1.0f,  0.0f,   1.0f, 0.0f ,
-              0.5f, -0.5f,  0.5f,   0.0f, -1.0f,  0.0f,   1.0f, 1.0f ,
-             -0.5f, -0.5f,  0.5f,   0.0f, -1.0f,  0.0f,   0.0f, 1.0f 
-        };
+			// Bottom Face (-Y)
+			-0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.5f, -0.5f, 0.5f, 0.0f,
+			-1.0f, 0.0f, 1.0f, 1.0f, -0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f
+		};
 
-        // Indices (6 caras * 2 triangulos * 3 indices = 36 indices)
-        std::array<uint32_t, 36> cubeIndices = {
-            0,  1,  2,  2,  3,  0,  // Front
-            4,  5,  6,  6,  7,  4,  // Right
-            8,  9,  10, 10, 11, 8,  // Back
-            12, 13, 14, 14, 15, 12, // Left
-            16, 17, 18, 18, 19, 16, // Top
-            20, 21, 22, 22, 23, 20  // Bottom
-        };
+		// Indices (6 caras * 2 triangulos * 3 indices = 36 indices)
+		std::array<uint32_t, 36> cubeIndices = {
+			0,  1,  2,  2,  3,  0,  // Front
+			4,  5,  6,  6,  7,  4,  // Right
+			8,  9,  10, 10, 11, 8,  // Back
+			12, 13, 14, 14, 15, 12, // Left
+			16, 17, 18, 18, 19, 16, // Top
+			20, 21, 22, 22, 23, 20  // Bottom
+		};
 
 		s_CubeDesc = GeometryDescriptor::create(
 		    cubeVertices.data(), cubeVertices.size() * sizeof(float), cubeIndices.data(), cubeIndices.size() * sizeof(uint32_t),

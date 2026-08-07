@@ -3,8 +3,8 @@
 // Despite being obvious, this is a good practice to be able to give a clear error message if the platform is not supported.
 #if defined(CBK_PLATFORM_WINDOWS) || defined(CBK_PLATFORM_LINUX) || defined(CBK_PLATFORM_MACOS)
 
-// The "extern" keyword is optional here but it is a good practice to use it to clearly show that the function is defined outside of this file.
-// This expresion is similar to a forward declaration for functions.
+// The "extern" keyword is optional here but it is a good practice to use it to clearly show that the function is defined outside of this
+// file. This expresion is similar to a forward declaration for functions.
 extern cbk::Application* cbk::createApplication();
 
 int main(int argc, char** argv) {
@@ -35,5 +35,5 @@ int main(int argc, char** argv) {
 }
 
 #else
-	#error "Cabrankengine only supports Windows and Linux!"
+#error "Cabrankengine only supports Windows and Linux!"
 #endif

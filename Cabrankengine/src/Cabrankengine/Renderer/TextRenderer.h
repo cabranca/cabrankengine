@@ -8,10 +8,10 @@ namespace cbk::rendering {
 
 	/// Holds all state information relevant to a character as loaded using FreeType.
 	struct Character {
-		Ref<Texture2D> texture; // ID handle of the glyph texture
-		math::Vector2 size;     // Size of glyph
-		math::Vector2 bearing;  // Offset from baseline to left/top of glyph
-		unsigned int advance = 0;   // Horizontal offset to advance to next glyph
+		Ref<Texture2D> texture;   // ID handle of the glyph texture
+		math::Vector2 size;       // Size of glyph
+		math::Vector2 bearing;    // Offset from baseline to left/top of glyph
+		unsigned int advance = 0; // Horizontal offset to advance to next glyph
 	};
 
 	// A renderer class for rendering text displayed by a font loaded using the

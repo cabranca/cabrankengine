@@ -38,15 +38,15 @@ namespace cbk::platform::vk {
 
 		// 2) Build a Slang session targeting SPIR-V 1.4.
 		slang::createGlobalSession(m_SlangGlobalSession.writeRef());
-		auto slangTargets = std::to_array<slang::TargetDesc>(
-		    { { .format = SLANG_SPIRV, .profile = m_SlangGlobalSession->findProfile("spirv_1_4") } });
+		auto slangTargets =
+		    std::to_array<slang::TargetDesc>({ { .format = SLANG_SPIRV, .profile = m_SlangGlobalSession->findProfile("spirv_1_4") } });
 		auto slangOptions = std::to_array<slang::CompilerOptionEntry>(
 		    { { slang::CompilerOptionName::EmitSpirvDirectly, { slang::CompilerOptionValueKind::Int, 1 } } });
 		slang::SessionDesc slangSessionDesc{
-			.targets                 = slangTargets.data(),
-			.targetCount             = SlangInt(slangTargets.size()),
+			.targets = slangTargets.data(),
+			.targetCount = SlangInt(slangTargets.size()),
 			.defaultMatrixLayoutMode = SLANG_MATRIX_LAYOUT_COLUMN_MAJOR,
-			.compilerOptionEntries   = slangOptions.data(),
+			.compilerOptionEntries = slangOptions.data(),
 			.compilerOptionEntryCount = static_cast<uint32_t>(slangOptions.size()),
 		};
 
@@ -54,12 +54,11 @@ namespace cbk::platform::vk {
 		m_SlangGlobalSession->createSession(slangSessionDesc, slangSession.writeRef());
 
 		// 3) Load + compile the module. Diagnostics surface compilation errors.
-		Slang::ComPtr<ISlangBlob>     diagnostics;
-		Slang::ComPtr<slang::IModule> slangModule{ slangSession->loadModuleFromSourceString(
-			m_Name.c_str(), (filepath + ".slang").c_str(), source.c_str(), diagnostics.writeRef()) };
+		Slang::ComPtr<ISlangBlob> diagnostics;
+		Slang::ComPtr<slang::IModule> slangModule{ slangSession->loadModuleFromSourceString(m_Name.c_str(), (filepath + ".slang").c_str(),
+			                                                                                source.c_str(), diagnostics.writeRef()) };
 		if (!slangModule) {
-			CBK_CORE_ERROR("VulkanShader: failed to load slang module from {}.slang: {}", filepath,
-			               slangDiagnosticsToString(diagnostics));
+			CBK_CORE_ERROR("VulkanShader: failed to load slang module from {}.slang: {}", filepath, slangDiagnosticsToString(diagnostics));
 			return;
 		}
 
@@ -77,8 +76,8 @@ namespace cbk::platform::vk {
 
 		Slang::ComPtr<slang::IComponentType> composed;
 		diagnostics = nullptr;
-		auto slangResult                     = slangSession->createCompositeComponentType(
-            components.data(), static_cast<SlangInt>(components.size()), composed.writeRef(), diagnostics.writeRef());
+		auto slangResult = slangSession->createCompositeComponentType(components.data(), static_cast<SlangInt>(components.size()),
+		                                                              composed.writeRef(), diagnostics.writeRef());
 		if (SLANG_FAILED(slangResult)) {
 			CBK_CORE_ERROR("VulkanShader: composite component type failed for {}.slang: {}", filepath,
 			               slangDiagnosticsToString(diagnostics));
@@ -98,15 +97,14 @@ namespace cbk::platform::vk {
 		diagnostics = nullptr;
 		slangResult = linkedProgram->getTargetCode(0, spirv.writeRef(), diagnostics.writeRef());
 		if (SLANG_FAILED(slangResult) || !spirv || spirv->getBufferSize() == 0) {
-			CBK_CORE_ERROR("VulkanShader: SPIR-V emission failed for {}.slang: {}", filepath,
-			               slangDiagnosticsToString(diagnostics));
+			CBK_CORE_ERROR("VulkanShader: SPIR-V emission failed for {}.slang: {}", filepath, slangDiagnosticsToString(diagnostics));
 			return;
 		}
 
 		VkShaderModuleCreateInfo shaderModuleCI{
-			.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+			.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
 			.codeSize = spirv->getBufferSize(),
-			.pCode    = reinterpret_cast<const uint32_t*>(spirv->getBufferPointer()),
+			.pCode = reinterpret_cast<const uint32_t*>(spirv->getBufferPointer()),
 		};
 		VK_CHECK(vkCreateShaderModule(ctx->getLogicalDevice(), &shaderModuleCI, nullptr, &m_ShaderModule));
 	}

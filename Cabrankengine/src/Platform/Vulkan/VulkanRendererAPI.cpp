@@ -65,7 +65,7 @@ namespace cbk::platform::vk {
 
 		// Sets the UBO and SSBO current frame for when Renderer::beginFrame() is called.
 		setBufferObjectsCurrentFrame();
-		
+
 		resetAndBeginCmdBuffer();
 		setupInitialBarriers();
 		beginRecording();

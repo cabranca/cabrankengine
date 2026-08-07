@@ -31,7 +31,7 @@ namespace cbk::rendering {
 		Ref<ecs::TextRenderSystem> m_TextRenderSystem = nullptr;
 
 		EditorCamera m_EditorCamera;
-		bool         m_EditorMode = false;
+		bool m_EditorMode = false;
 
 		inline static RenderLayer* s_Instance = nullptr;
 

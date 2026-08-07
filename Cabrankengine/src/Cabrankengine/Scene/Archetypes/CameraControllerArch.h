@@ -11,7 +11,7 @@ namespace cbk::scene::arch {
 
 		ecs::CTransform& transform();
 		ecs::CCamera& camera();
-        ecs::CCameraController& controller();
+		ecs::CCameraController& controller();
 
 	  private:
 		ecs::Entity m_Entity;

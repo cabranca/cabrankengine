@@ -11,5 +11,4 @@ namespace cbk::ecs {
 	constexpr size_t MAX_COMPONENTS = 64;
 
 	using Signature = std::bitset<MAX_COMPONENTS>;
-}
-
+} // namespace cbk::ecs

@@ -21,9 +21,12 @@ namespace cbk::platform::opengl {
 
 	static const char* ShaderStageName(GLenum type) {
 		switch (type) {
-			case GL_VERTEX_SHADER:   return "vertex";
-			case GL_FRAGMENT_SHADER: return "fragment";
-			default:                 return "unknown";
+			case GL_VERTEX_SHADER:
+				return "vertex";
+			case GL_FRAGMENT_SHADER:
+				return "fragment";
+			default:
+				return "unknown";
 		}
 	}
 
@@ -42,8 +45,8 @@ namespace cbk::platform::opengl {
 		compile(shaderSources);
 	}
 
-	OpenGLShader::OpenGLShader(const std::string& name, const std::string& vertexSrc, const std::string& fragmentSrc) 
-		: m_RendererId(0), m_Name(name) {
+	OpenGLShader::OpenGLShader(const std::string& name, const std::string& vertexSrc, const std::string& fragmentSrc)
+	    : m_RendererId(0), m_Name(name) {
 		CBK_PROFILE_FUNCTION();
 
 		std::unordered_map<GLenum, std::string> sources;
@@ -200,8 +203,7 @@ namespace cbk::platform::opengl {
 			in.seekg(0, std::ios::beg);
 			in.read(&result[0], result.size());
 			in.close();
-		}
-		else {
+		} else {
 			CBK_CORE_ERROR("Could not open shader file: {0}", filepath);
 		}
 		return result;
@@ -234,7 +236,7 @@ namespace cbk::platform::opengl {
 		CBK_CORE_ASSERT(shaderSources.size() <= 2, "OpenGL only supports 2 shader types (vertex and fragment) at the moment!");
 		std::array<GLenum, 2> shaderIds;
 		int shaderIndex = 0;
-		for (const auto& [type, source] : shaderSources) {
+		for (const auto& [type, source]: shaderSources) {
 			GLenum shaderId = glCreateShader(type);
 			const char* src = source.c_str();
 			glShaderSource(shaderId, 1, &src, nullptr);
@@ -253,7 +255,7 @@ namespace cbk::platform::opengl {
 			shaderIds[shaderIndex++] = shaderId;
 		}
 
-		for (uint32_t shaderId : shaderIds) {
+		for (uint32_t shaderId: shaderIds) {
 			glAttachShader(program, shaderId);
 		}
 		glLinkProgram(program);
@@ -266,7 +268,7 @@ namespace cbk::platform::opengl {
 			std::vector<char> infoLog(maxLength);
 			glGetProgramInfoLog(program, maxLength, &maxLength, infoLog.data());
 			CBK_CORE_ERROR("Shader '{0}' link error: {1}", m_Name, infoLog.data());
-			for (uint32_t shaderId : shaderIds) {
+			for (uint32_t shaderId: shaderIds) {
 				glDetachShader(program, shaderId);
 				glDeleteShader(shaderId);
 			}
@@ -274,7 +276,7 @@ namespace cbk::platform::opengl {
 			return;
 		}
 
-		for (uint32_t shaderId : shaderIds) {
+		for (uint32_t shaderId: shaderIds) {
 			glDetachShader(program, shaderId);
 			glDeleteShader(shaderId);
 		}
@@ -289,4 +291,4 @@ namespace cbk::platform::opengl {
 			glUniformBlockBinding(m_RendererId, sceneIdx, 0);
 #endif
 	}
-}
+} // namespace cbk::platform::opengl

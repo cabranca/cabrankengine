@@ -15,9 +15,9 @@ namespace cbk::platform::vk {
 	// these helpers centralise the globals so the index convention lives in exactly
 	// one place instead of being duplicated across material classes.
 	namespace set_index {
-		constexpr uint32_t k_Scene    = 0; // scene globals UBO (view-proj, dir light, camera)
+		constexpr uint32_t k_Scene = 0;    // scene globals UBO (view-proj, dir light, camera)
 		constexpr uint32_t k_Material = 1; // per-material descriptor (textures)
-		constexpr uint32_t k_Light    = 2; // point-light SSBO
+		constexpr uint32_t k_Light = 2;    // point-light SSBO
 	} // namespace set_index
 
 	// Binds set 0 — the scene globals UBO owned by the Renderer. Every material

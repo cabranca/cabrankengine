@@ -32,14 +32,14 @@ namespace cbk::platform::vk {
 		}
 
 	  private:
-		std::array<VkBuffer, k_MaxFramesInFlight>          m_Buffers{};
-		std::array<VmaAllocation, k_MaxFramesInFlight>     m_Allocations{};
+		std::array<VkBuffer, k_MaxFramesInFlight> m_Buffers{};
+		std::array<VmaAllocation, k_MaxFramesInFlight> m_Allocations{};
 		std::array<VmaAllocationInfo, k_MaxFramesInFlight> m_AllocationInfos{};
-		VkDescriptorSetLayout                              m_DescriptorSetLayout{ VK_NULL_HANDLE };
-		VkDescriptorPool                                   m_DescriptorPool{ VK_NULL_HANDLE };
-		std::array<VkDescriptorSet, k_MaxFramesInFlight>   m_DescriptorSets{};
-		uint32_t                                           m_Size{ 0 };
-		uint32_t                                           m_CurrentFrame{ 0 };
+		VkDescriptorSetLayout m_DescriptorSetLayout{ VK_NULL_HANDLE };
+		VkDescriptorPool m_DescriptorPool{ VK_NULL_HANDLE };
+		std::array<VkDescriptorSet, k_MaxFramesInFlight> m_DescriptorSets{};
+		uint32_t m_Size{ 0 };
+		uint32_t m_CurrentFrame{ 0 };
 	};
 
 } // namespace cbk::platform::vk

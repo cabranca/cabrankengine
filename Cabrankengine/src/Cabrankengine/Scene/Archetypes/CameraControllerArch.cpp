@@ -26,7 +26,7 @@ namespace cbk::scene::arch {
 		return *reg->getComponent<CCamera>(m_Entity).value();
 	}
 
-    CCameraController& CameraControllerArch::controller() {
+	CCameraController& CameraControllerArch::controller() {
 		auto reg = Application::get().getRegistry();
 		return *reg->getComponent<CCameraController>(m_Entity).value();
 	}

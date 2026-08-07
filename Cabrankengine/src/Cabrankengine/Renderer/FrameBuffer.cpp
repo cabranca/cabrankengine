@@ -2,11 +2,11 @@
 #include "FrameBuffer.h"
 
 #ifdef CBK_RENDERER_METAL
-	#include <Platform/Metal/MetalFrameBuffer.h>
+#include <Platform/Metal/MetalFrameBuffer.h>
 #endif
 
 #ifdef CBK_RENDERER_OPENGL
-	#include <Platform/OpenGL/OpenGLFrameBuffer.h>
+#include <Platform/OpenGL/OpenGLFrameBuffer.h>
 #endif
 
 namespace cbk::rendering {
@@ -17,10 +17,10 @@ namespace cbk::rendering {
 #elif defined(CBK_RENDERER_METAL)
 		return createRef<platform::metal::MetalFrameBuffer>(spec);
 #elif defined(CBK_RENDERER_VULKAN)
-        return nullptr; // TODO: Vulkan FrameBuffer not yet implemented
+		return nullptr; // TODO: Vulkan FrameBuffer not yet implemented
 #else
 		CBK_CORE_ASSERT(false, "No renderer API defined!");
 		return nullptr;
 #endif
 	}
-}
+} // namespace cbk::rendering

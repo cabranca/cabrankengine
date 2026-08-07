@@ -4,9 +4,9 @@
 
 namespace cbk::math {
 
-    constexpr Mat4 zeroMat() noexcept;
+	constexpr Mat4 zeroMat() noexcept;
 	constexpr Mat4 identityMat() noexcept;
-    constexpr Mat4 scaleUniform(float uniform) noexcept;
+	constexpr Mat4 scaleUniform(float uniform) noexcept;
 	constexpr Mat4 scaleXYZ(const Vector3&) noexcept;
 	constexpr Mat4 translation(const Vector3&) noexcept;
 	Mat4 rotateX(float angle) noexcept;
@@ -22,12 +22,7 @@ namespace cbk::math {
 	}
 
 	inline constexpr Mat4 identityMat() noexcept {
-		return { 
-			1.f, 0.f, 0.f, 0.f, 
-			0.f, 1.f, 0.f, 0.f, 
-			0.f, 0.f, 1.f, 0.f, 
-			0.f, 0.f, 0.f, 1.f 
-		};
+		return { 1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 0.f, 1.f };
 	}
 
 	inline constexpr Mat4 scaleUniform(float uniform) noexcept {
@@ -50,23 +45,23 @@ namespace cbk::math {
 		return res;
 	}
 
-    inline Mat4 rotateX(float angle) noexcept {
+	inline Mat4 rotateX(float angle) noexcept {
 		float angleInRadians = angle * PI / 180.f;
 		return { 1.f, 0.f, 0.f, 0.f, 0.f, cosf(angleInRadians), sinf(angleInRadians), 0.f, 0.f, -sinf(angleInRadians), cosf(angleInRadians),
-			     0.f, 0.f, 0.f, 0.f, 1.f
-		};
+			     0.f, 0.f, 0.f, 0.f, 1.f };
 	}
 
 	inline Mat4 rotateY(float angle) noexcept {
 		float angleInRadians = angle * PI / 180.f;
 		return { cosf(angleInRadians), 0.f, -sinf(angleInRadians), 0.f, 0.f, 1.f, 0.f, 0.f,
-			     sinf(angleInRadians), 0.f, cosf(angleInRadians), 0.f, 0.f, 0.f, 0.f, 1.f
-		};
+			     sinf(angleInRadians), 0.f, cosf(angleInRadians),  0.f, 0.f, 0.f, 0.f, 1.f };
 	}
 
 	inline Mat4 rotateZ(float angle) noexcept {
 		float angleInRadians = angle * PI / 180.f;
-		return { cosf(angleInRadians), sinf(angleInRadians), 0.f,
+		return { cosf(angleInRadians),
+			     sinf(angleInRadians),
+			     0.f,
 			     0.f,
 			     -sinf(angleInRadians),
 			     cosf(angleInRadians),
@@ -78,8 +73,8 @@ namespace cbk::math {
 			     0.f,
 			     0.f,
 			     0.f,
-			     0.f, 1.f
-		};
+			     0.f,
+			     1.f };
 	}
 
 	inline Mat4 rotateXYZ(const Vector3& euler) noexcept {
@@ -119,7 +114,7 @@ namespace cbk::math {
 	}
 
 	// TODO: Make a Mat3 struct to call its transpose function to simplify this
-    inline Mat4 inverseAffine(const Mat4& m) noexcept {
+	inline Mat4 inverseAffine(const Mat4& m) noexcept {
 		// Transpose rotation part.
 		Mat4 inv{};
 		inv.elements[0] = Vector4{ m.elements[0].x, m.elements[1].x, m.elements[2].x, 0.f };

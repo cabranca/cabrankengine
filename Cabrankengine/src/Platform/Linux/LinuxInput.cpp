@@ -5,7 +5,7 @@
 
 namespace cbk {
 
-	Input* Input::s_Instance = new LinuxInput(); //TODO: who destroys this???
+	Input* Input::s_Instance = new LinuxInput(); // TODO: who destroys this???
 
 	bool LinuxInput::isKeyPressedImpl(KeyCode keyCode) {
 		auto window = static_cast<GLFWwindow*>(Application::get().getWindow().getNativeWindow());
@@ -23,7 +23,7 @@ namespace cbk {
 		auto window = static_cast<GLFWwindow*>(Application::get().getWindow().getNativeWindow());
 		double xPos, yPos;
 		glfwGetCursorPos(window, &xPos, &yPos);
-		return { static_cast<float>(xPos), static_cast<float>(yPos) }; //TODO: change every c-style cast to static_cast
+		return { static_cast<float>(xPos), static_cast<float>(yPos) }; // TODO: change every c-style cast to static_cast
 	}
 
 	float LinuxInput::getMouseXImpl() {
@@ -49,4 +49,4 @@ namespace cbk {
 			flag = GLFW_CURSOR_HIDDEN;
 		glfwSetInputMode(window, GLFW_CURSOR, flag);
 	}
-}
+} // namespace cbk

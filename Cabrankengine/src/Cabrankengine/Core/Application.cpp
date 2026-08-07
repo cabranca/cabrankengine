@@ -23,8 +23,7 @@ namespace cbk {
 	using namespace scene;
 	using namespace rendering;
 
-	Application::Application() : m_Running(true), m_LastFrameTime(0.0f)
-	{
+	Application::Application() : m_Running(true), m_LastFrameTime(0.0f) {
 		CBK_PROFILE_FUNCTION();
 		CBK_CORE_ASSERT(!s_Instance, "Application already exists!");
 		s_Instance = this;
@@ -36,7 +35,7 @@ namespace cbk {
 		m_Window = Window::create(props);
 		m_Window->setEventCallback(BIND_EVENT_FN(&Application::OnEvent, this));
 
-		//AudioEngine::init();
+		// AudioEngine::init();
 
 		Renderer::init();
 
@@ -60,24 +59,23 @@ namespace cbk {
 		Renderer::shutdown();
 	}
 
-	void Application::Run()
-	{
+	void Application::Run() {
 		CBK_PROFILE_FUNCTION();
 
 #ifdef __EMSCRIPTEN__
 		// Browser owns the main thread; surrender control via requestAnimationFrame.
 		emscripten_set_main_loop_arg(&Application::tick, this, 0, 1);
 #else
-		while (m_Running) tick(this);
+		while (m_Running)
+			tick(this);
 #endif
 	}
 
-	void Application::tick(void* arg)
-	{
+	void Application::tick(void* arg) {
 		Application* app = static_cast<Application*>(arg);
 		CBK_PROFILE_SCOPE("RunLoop");
 
-		float time = static_cast<float>(glfwGetTime()); // This should be in Platform::getTime() or similar
+		float time = static_cast<float>(glfwGetTime());  // This should be in Platform::getTime() or similar
 		Timestep timestep = time - app->m_LastFrameTime; // Calculate the time since the last frame
 		app->m_LastFrameTime = time;
 
@@ -85,7 +83,7 @@ namespace cbk {
 			CBK_PROFILE_SCOPE("LayerStack OnUpdate");
 			RenderCommand::beginFrame();
 
-			for (auto& layer : app->m_LayerStack)
+			for (auto& layer: app->m_LayerStack)
 				layer->onUpdate(timestep);
 		}
 
@@ -93,7 +91,7 @@ namespace cbk {
 		app->m_ImGuiLayer->begin();
 		{
 			CBK_PROFILE_SCOPE("LayerStack OnImGuiRender");
-			for (auto& layer : app->m_LayerStack)
+			for (auto& layer: app->m_LayerStack)
 				layer->onImGuiRender();
 		}
 		app->m_ImGuiLayer->end();
@@ -107,8 +105,7 @@ namespace cbk {
 		app->m_Window->onUpdate();
 	}
 
-	void Application::OnEvent(Event& e)
-	{
+	void Application::OnEvent(Event& e) {
 		EventDispatcher dispatcher(e);
 		dispatcher.dispatch<WindowCloseEvent>(BIND_EVENT_FN(&Application::onWindowClose, this));
 		dispatcher.dispatch<WindowResizeEvent>(BIND_EVENT_FN(&Application::onWindowResize, this));
@@ -137,14 +134,12 @@ namespace cbk {
 		m_LayerStack.popOverlay(layer);
 	}
 
-	bool Application::onWindowClose(WindowCloseEvent& e)
-	{
+	bool Application::onWindowClose(WindowCloseEvent& e) {
 		m_Running = false;
 		return true;
 	}
 
-	bool Application::onWindowResize(WindowResizeEvent& e)
-	{
+	bool Application::onWindowResize(WindowResizeEvent& e) {
 		CBK_PROFILE_FUNCTION();
 		if (e.getWidth() == 0 || e.getHeight() == 0) {
 			m_Minimized = true;
@@ -154,6 +149,4 @@ namespace cbk {
 		Renderer::onWindowResize(e.getWidth(), e.getHeight());
 		return true;
 	}
-}
-
-
+} // namespace cbk

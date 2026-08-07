@@ -24,14 +24,14 @@ namespace cbk::ecs {
 				Mat4 projectionMatrix;
 				float halfHeight = 0.f, halfWidth = 0.f;
 				switch (camera->Type) {
-				case ProjectionType::Orthographic:
-					halfHeight = camera->OrthoSize / 2.f;
-					halfWidth = halfHeight * camera->AspectRatio;
-					projectionMatrix = math::ortho(-halfWidth, halfWidth, -halfHeight, halfHeight, camera->Near, camera->Far);
-					break;
-				case ProjectionType::Perspective:
-					projectionMatrix = math::perspective(camera->FovY, camera->AspectRatio, camera->Near, camera->Far);
-					break;
+					case ProjectionType::Orthographic:
+						halfHeight = camera->OrthoSize / 2.f;
+						halfWidth = halfHeight * camera->AspectRatio;
+						projectionMatrix = math::ortho(-halfWidth, halfWidth, -halfHeight, halfHeight, camera->Near, camera->Far);
+						break;
+					case ProjectionType::Perspective:
+						projectionMatrix = math::perspective(camera->FovY, camera->AspectRatio, camera->Near, camera->Far);
+						break;
 				}
 				auto viewMatrix = inverseAffine(fromTransform(transform->Position, transform->Rotation, transform->Scale));
 				m_ViewProjectionMatrix = viewMatrix * projectionMatrix;
@@ -144,11 +144,11 @@ namespace cbk::ecs {
 	void ModelRenderSystem::update(Registry& reg, float dt) {
 		for (auto& e: m_Entities) {
 			auto transform = reg.getComponent<CTransform>(e).value();
-			auto model     = reg.getComponent<CModel>(e).value();
+			auto model = reg.getComponent<CModel>(e).value();
 			if (model->Res)
 				model->Res->draw(fromTransform(transform->Position, transform->Rotation, transform->Scale));
 			else
-			 	CBK_CORE_DEBUG("Entity with id {0} doesn't have a set resource", e);
+				CBK_CORE_DEBUG("Entity with id {0} doesn't have a set resource", e);
 		}
 	}
 
@@ -163,7 +163,7 @@ namespace cbk::ecs {
 		}
 	}
 
-	void initDefaultSystems(Registry &reg) {
+	void initDefaultSystems(Registry& reg) {
 		reg.registerSystem<CameraSystem>();
 		reg.registerSystem<CameraControllerSystem>();
 		reg.registerSystem<DirectionalLightSystem>();

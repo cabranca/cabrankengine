@@ -11,15 +11,15 @@
 
 namespace cbk::platform::vk {
 
-    void VulkanSwapchainManager::init(VulkanDeviceContext* ctx) {
+	void VulkanSwapchainManager::init(VulkanDeviceContext* ctx) {
 		m_Instance = ctx->getInstance();
 		m_Device = ctx->getLogicalDevice();
 		createSwapchain(ctx);
 		getSwapchainImages(ctx);
 		createDepthAttachment(ctx);
-    }
+	}
 
-    void VulkanSwapchainManager::shutdown() {
+	void VulkanSwapchainManager::shutdown() {
 		auto ctx = static_cast<VulkanDeviceContext*>(Application::get().getWindow().getContext());
 		for (size_t i = 0; i < m_DepthImages.size(); i++) {
 			vkDestroyImageView(ctx->getLogicalDevice(), m_DepthImageViews[i], nullptr);
@@ -27,9 +27,9 @@ namespace cbk::platform::vk {
 		}
 		for (auto i = 0; i < m_SwapchainImageViews.size(); i++)
 			vkDestroyImageView(ctx->getLogicalDevice(), m_SwapchainImageViews[i], nullptr);
-        vkDestroySwapchainKHR(m_Device, m_Swapchain, nullptr);
+		vkDestroySwapchainKHR(m_Device, m_Swapchain, nullptr);
 		vkDestroySurfaceKHR(m_Instance, m_Surface, nullptr);
-    }
+	}
 
 	void VulkanSwapchainManager::updateSwapchain() {
 		auto& window = cbk::Application::get().getWindow();
@@ -49,7 +49,7 @@ namespace cbk::platform::vk {
 
 		m_SwapchainCI.oldSwapchain = m_Swapchain;
 		m_SwapchainCI.imageExtent = { .width = static_cast<uint32_t>(window.getWidth()),
-			                            .height = static_cast<uint32_t>(window.getHeight()) };
+			                          .height = static_cast<uint32_t>(window.getHeight()) };
 		vkResult = vkCreateSwapchainKHR(ctx->getLogicalDevice(), &m_SwapchainCI, nullptr, &m_Swapchain);
 		if (vkResult != VK_SUCCESS) {
 			CBK_CORE_ERROR("VulkanRendererAPI: error creating swapchain ({})", static_cast<int>(vkResult));
@@ -71,7 +71,7 @@ namespace cbk::platform::vk {
 		createDepthAttachment(ctx);
 	}
 
-    void VulkanSwapchainManager::createSwapchain(VulkanDeviceContext* ctx) {
+	void VulkanSwapchainManager::createSwapchain(VulkanDeviceContext* ctx) {
 		auto& window = cbk::Application::get().getWindow();
 		auto glfwWindow = static_cast<GLFWwindow*>(window.getNativeWindow());
 		VK_CHECK(glfwCreateWindowSurface(m_Instance, glfwWindow, nullptr, &m_Surface));
@@ -84,16 +84,16 @@ namespace cbk::platform::vk {
 		}
 
 		VkSwapchainCreateInfoKHR swapchainCI{ .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
-			                                        .surface = m_Surface,
-			                                        .minImageCount = m_SurfaceCaps.minImageCount,
-			                                        .imageFormat = ctx->getImageFormat(),
-			                                        .imageColorSpace = ctx->getImageColorSpace(),
-			                                        .imageExtent{ .width = swapchainExtent.width, .height = swapchainExtent.height },
-			                                        .imageArrayLayers = 1,
-			                                        .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-			                                        .preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
-			                                        .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
-			                                        .presentMode = VK_PRESENT_MODE_FIFO_KHR };
+			                                  .surface = m_Surface,
+			                                  .minImageCount = m_SurfaceCaps.minImageCount,
+			                                  .imageFormat = ctx->getImageFormat(),
+			                                  .imageColorSpace = ctx->getImageColorSpace(),
+			                                  .imageExtent{ .width = swapchainExtent.width, .height = swapchainExtent.height },
+			                                  .imageArrayLayers = 1,
+			                                  .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+			                                  .preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
+			                                  .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
+			                                  .presentMode = VK_PRESENT_MODE_FIFO_KHR };
 		VK_CHECK(vkCreateSwapchainKHR(m_Device, &swapchainCI, nullptr, &m_Swapchain));
 	}
 
@@ -142,7 +142,7 @@ namespace cbk::platform::vk {
 
 	void VulkanSwapchainManager::createDepthAttachment(VulkanDeviceContext* ctx) {
 		auto& window = Application::get().getWindow();
-		VkImageCreateInfo depthImageCI {
+		VkImageCreateInfo depthImageCI{
 			.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
 			.imageType = VK_IMAGE_TYPE_2D,
 			.format = ctx->getDepthFormat(),
@@ -167,7 +167,8 @@ namespace cbk::platform::vk {
 				                               .image = m_DepthImages[i],
 				                               .viewType = VK_IMAGE_VIEW_TYPE_2D,
 				                               .format = ctx->getDepthFormat(),
-				                               .subresourceRange{ .aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT, .levelCount = 1, .layerCount = 1 } };
+				                               .subresourceRange{
+				                                   .aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT, .levelCount = 1, .layerCount = 1 } };
 			VK_CHECK(vkCreateImageView(m_Device, &depthViewCI, nullptr, &m_DepthImageViews[i]));
 		}
 	}

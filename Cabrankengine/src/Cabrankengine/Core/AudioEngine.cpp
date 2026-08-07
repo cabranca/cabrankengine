@@ -11,4 +11,4 @@ namespace cbk {
 	void AudioEngine::playAudio(const std::string& path, bool looped) {
 		CBK_PROFILE_FUNCTION();
 	}
-}
+} // namespace cbk

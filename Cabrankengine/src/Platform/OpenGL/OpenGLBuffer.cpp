@@ -101,8 +101,7 @@ namespace cbk::platform::opengl {
 			glDeleteBuffers(1, &m_RendererId);
 	}
 
-	OpenGLIndexBuffer::OpenGLIndexBuffer(OpenGLIndexBuffer&& other) noexcept
-	    : m_RendererId(other.m_RendererId), m_Count(other.m_Count) {
+	OpenGLIndexBuffer::OpenGLIndexBuffer(OpenGLIndexBuffer&& other) noexcept : m_RendererId(other.m_RendererId), m_Count(other.m_Count) {
 		other.m_RendererId = 0;
 		other.m_Count = 0;
 	}
@@ -130,4 +129,4 @@ namespace cbk::platform::opengl {
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
-}
+} // namespace cbk::platform::opengl

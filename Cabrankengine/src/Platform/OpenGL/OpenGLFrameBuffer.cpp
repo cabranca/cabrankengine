@@ -9,12 +9,18 @@ namespace cbk::platform::opengl {
 
 	static const char* FramebufferStatusName(GLenum status) {
 		switch (status) {
-			case GL_FRAMEBUFFER_COMPLETE:                      return "GL_FRAMEBUFFER_COMPLETE";
-			case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:         return "GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT";
-			case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT: return "GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT";
-			case GL_FRAMEBUFFER_UNSUPPORTED:                   return "GL_FRAMEBUFFER_UNSUPPORTED";
-			case GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE:        return "GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE";
-			default:                                           return "unknown";
+			case GL_FRAMEBUFFER_COMPLETE:
+				return "GL_FRAMEBUFFER_COMPLETE";
+			case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
+				return "GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT";
+			case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
+				return "GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT";
+			case GL_FRAMEBUFFER_UNSUPPORTED:
+				return "GL_FRAMEBUFFER_UNSUPPORTED";
+			case GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE:
+				return "GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE";
+			default:
+				return "unknown";
 		}
 	}
 
@@ -27,12 +33,12 @@ namespace cbk::platform::opengl {
 	}
 
 	void OpenGLFrameBuffer::bind() {
-        glBindFramebuffer(GL_FRAMEBUFFER, m_RendererID);
-    }
+		glBindFramebuffer(GL_FRAMEBUFFER, m_RendererID);
+	}
 
 	void OpenGLFrameBuffer::unbind() {
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    }
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	}
 
 	const rendering::FrameBufferSpecification& OpenGLFrameBuffer::getSpecification() const {
 		return m_Specs;

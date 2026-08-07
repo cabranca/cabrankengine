@@ -4,20 +4,20 @@
 #include <Cabrankengine/Renderer/RendererAPI.h>
 
 #ifdef CBK_RENDERER_OPENGL
-	#include <Platform/OpenGL/OpenGLPBRMaterial.h>
+#include <Platform/OpenGL/OpenGLPBRMaterial.h>
 #endif
 
 #ifdef CBK_RENDERER_VULKAN
-	#include <Platform/Vulkan/VulkanPBRMaterial.h>
+#include <Platform/Vulkan/VulkanPBRMaterial.h>
 #endif
 
 #ifdef CBK_RENDERER_METAL
-	#include <Platform/Metal/MetalPBRMaterial.h>
+#include <Platform/Metal/MetalPBRMaterial.h>
 #endif
 
 namespace cbk::rendering {
 
-    using namespace scene;
+	using namespace scene;
 
 	Ref<PBRMaterial> PBRMaterial::create() {
 #ifdef CBK_RENDERER_OPENGL
@@ -33,11 +33,11 @@ namespace cbk::rendering {
 	}
 
 	PBRMaterial::PBRMaterial() : Material(ShaderLibrary::get("PBR")), m_AlbedoColor(1.f), m_Metalness(0.f), m_Roughness(0.5f) {
-        m_AlbedoMap = DefaultLibrary::getWhiteTexture();
-        m_NormalMap = DefaultLibrary::getFlatNormalTexture();
-        m_MetalRoughMap = DefaultLibrary::getWhiteTexture();
-        m_AOMap = DefaultLibrary::getWhiteTexture();
-    }
+		m_AlbedoMap = DefaultLibrary::getWhiteTexture();
+		m_NormalMap = DefaultLibrary::getFlatNormalTexture();
+		m_MetalRoughMap = DefaultLibrary::getWhiteTexture();
+		m_AOMap = DefaultLibrary::getWhiteTexture();
+	}
 
 	void PBRMaterial::setAlbedoMap(const Ref<Texture2D>& tex) {
 		m_AlbedoMap = tex;
@@ -81,11 +81,20 @@ namespace cbk::rendering {
 
 	void PBRMaterial::applyTexture(common::TextureType type, const Ref<Texture2D>& texture) {
 		switch (type) {
-			case common::TextureType::Diffuse:        setAlbedoMap(texture);     break;
-			case common::TextureType::Normal:         setNormalMap(texture);     break;
-			case common::TextureType::MetalRoughness: setMetalRoughMap(texture); break;
-			case common::TextureType::AO:             setAOMap(texture);         break;
-			default: break;
+			case common::TextureType::Diffuse:
+				setAlbedoMap(texture);
+				break;
+			case common::TextureType::Normal:
+				setNormalMap(texture);
+				break;
+			case common::TextureType::MetalRoughness:
+				setMetalRoughMap(texture);
+				break;
+			case common::TextureType::AO:
+				setAOMap(texture);
+				break;
+			default:
+				break;
 		}
 	}
 
@@ -94,12 +103,23 @@ namespace cbk::rendering {
 		//   2 = Metalness, 3 = Roughness, 4 = BaseColorR, 5 = BaseColorG, 6 = BaseColorB
 		// BaseColor arrives one channel at a time; commit on the B channel.
 		switch (key) {
-			case 2: setMetalness(value); break;
-			case 3: setRoughness(value); break;
-			case 4: m_PendingBaseColorR = value; break;
-			case 5: m_PendingBaseColorG = value; break;
-			case 6: setAlbedoColor({ m_PendingBaseColorR, m_PendingBaseColorG, value }); break;
-			default: break;
+			case 2:
+				setMetalness(value);
+				break;
+			case 3:
+				setRoughness(value);
+				break;
+			case 4:
+				m_PendingBaseColorR = value;
+				break;
+			case 5:
+				m_PendingBaseColorG = value;
+				break;
+			case 6:
+				setAlbedoColor({ m_PendingBaseColorR, m_PendingBaseColorG, value });
+				break;
+			default:
+				break;
 		}
 	}
 

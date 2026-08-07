@@ -13,7 +13,6 @@
 #include <Platform/Vulkan/VulkanGeometryDescriptor.h>
 #endif
 
-
 namespace cbk::rendering {
 
 	Ref<GeometryDescriptor> GeometryDescriptor::create(const void* vertexData, size_t vertexDataSize, const void* indexData,

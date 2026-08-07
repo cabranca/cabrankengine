@@ -76,11 +76,11 @@ namespace cbk::platform::opengl {
 		glBindVertexArray(0);
 #endif
 	}
-	
+
 	OpenGLVertexArray::OpenGLVertexArray(size_t vertexDataSize, const void* indexData, size_t indexDataSize, const VertexLayout& layout)
-	: m_RendererId(), m_IndexBuffer(static_cast<const uint32_t*>(indexData), static_cast<uint32_t>(indexDataSize) / sizeof(uint32_t)) {
+	    : m_RendererId(), m_IndexBuffer(static_cast<const uint32_t*>(indexData), static_cast<uint32_t>(indexDataSize) / sizeof(uint32_t)) {
 		CBK_PROFILE_FUNCTION();
-		
+
 #ifdef CBK_OPENGL_ES
 		glGenVertexArrays(1, &m_RendererId);
 #else
@@ -130,7 +130,7 @@ namespace cbk::platform::opengl {
 
 	void OpenGLVertexArray::unbind() const {
 		CBK_PROFILE_FUNCTION();
-		
+
 		glBindVertexArray(0);
 	}
 

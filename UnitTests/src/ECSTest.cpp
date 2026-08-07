@@ -7,20 +7,24 @@ using namespace cbk::ecs;
 // --------------------------
 // Dummy components
 // --------------------------
-struct Position { float x, y; };
-struct Velocity { float dx, dy; };
+struct Position {
+	float x, y;
+};
+struct Velocity {
+	float dx, dy;
+};
 
 // Dummy system
 class MovementSystem : public ISystem {
-	public:
-		virtual void update(Registry& registry, float dt) override {
-			for (const auto& e : m_Entities) {
-				auto pos = registry.getComponent<Position>(e).value();
-				auto vel = registry.getComponent<Velocity>(e).value();
-				pos->x += vel->dx * dt;
-				pos->y += vel->dy * dt;
-			}
+  public:
+	virtual void update(Registry& registry, float dt) override {
+		for (const auto& e: m_Entities) {
+			auto pos = registry.getComponent<Position>(e).value();
+			auto vel = registry.getComponent<Velocity>(e).value();
+			pos->x += vel->dx * dt;
+			pos->y += vel->dy * dt;
 		}
+	}
 };
 
 // ============================================================
@@ -39,8 +43,7 @@ TEST_CASE("EntityManager - create and destroy entities") {
 	Signature sig;
 	sig.set(0);
 	em.setSignature(e1, sig);
-	
-	
+
 	sig = em.getSignature(e1);
 	REQUIRE(sig.test(0));
 

@@ -10,7 +10,6 @@
 #include "UniformBuffer.h"
 #include "TextRenderer.h"
 
-
 namespace cbk::rendering {
 
 	using namespace math;
@@ -26,10 +25,10 @@ namespace cbk::rendering {
 	};
 
 	struct AltSceneData {
-		Mat4 ViewProjectionMatrix; // 64 bytes
-		directionalLightData DirLight;   // 32 bytes (Offset 64)
-		math::Vector3 CameraPosition;    // 12 bytes (Offset 96) -> Reemplaza al uniform viewPos
-		float _Pad2 = 0.0f;              // 4 bytes (Offset 108 -> Total 112 bytes)
+		Mat4 ViewProjectionMatrix;     // 64 bytes
+		directionalLightData DirLight; // 32 bytes (Offset 64)
+		math::Vector3 CameraPosition;  // 12 bytes (Offset 96) -> Reemplaza al uniform viewPos
+		float _Pad2 = 0.0f;            // 4 bytes (Offset 108 -> Total 112 bytes)
 	};
 
 	static Ref<UniformBuffer> s_SceneUBO;
@@ -39,17 +38,17 @@ namespace cbk::rendering {
 	// vec4 = 16 bytes. scalar = 4 bytes.
 	// Structs align to largest member (16 bytes).
 	struct PointLightGPU {
-		float position[4];  // x, y, z, padding
-		float radiance[4];   // r, g, b, padding (o intensidad)
+		float position[4]; // x, y, z, padding
+		float radiance[4]; // r, g, b, padding (o intensidad)
 		float constant;
 		float linear;
 		float quadratic;
-		float padding;      // Para completar 48 bytes (múltiplo de 16)
+		float padding; // Para completar 48 bytes (múltiplo de 16)
 	};
 
 	struct LightBufferHeader {
 		int count;
-		int padding[3];     // Alinear a 16 bytes antes del array
+		int padding[3]; // Alinear a 16 bytes antes del array
 	};
 
 	// Upper bound on point lights uploaded per frame. The SSBO is sized for this
@@ -128,11 +127,10 @@ namespace cbk::rendering {
 	void Renderer::onWindowResize(uint32_t width, uint32_t height) {
 		RenderCommand::setViewport(0, 0, width, height);
 	}
-	
+
 	void Renderer::uploadLightEnvironment() {
 		size_t count = s_SceneData->lightEnvironment.PointLights.size();
-		CBK_CORE_ASSERT(count <= k_MaxPointLights,
-		                "Point-light count exceeds k_MaxPointLights — bump the cap or cull lights upstream");
+		CBK_CORE_ASSERT(count <= k_MaxPointLights, "Point-light count exceeds k_MaxPointLights — bump the cap or cull lights upstream");
 		LightBufferHeader header;
 		header.count = static_cast<int>(count);
 
@@ -143,12 +141,12 @@ namespace cbk::rendering {
 
 		PointLightGPU* currentLight = reinterpret_cast<PointLightGPU*>(bufferData.data() + sizeof(LightBufferHeader));
 
-		for (const auto& light : s_SceneData->lightEnvironment.PointLights) {
+		for (const auto& light: s_SceneData->lightEnvironment.PointLights) {
 			currentLight->position[0] = light.position.x;
 			currentLight->position[1] = light.position.y;
 			currentLight->position[2] = light.position.z;
 			currentLight->position[3] = 1.f;
-			
+
 			currentLight->radiance[0] = light.radiance.x;
 			currentLight->radiance[1] = light.radiance.y;
 			currentLight->radiance[2] = light.radiance.z;

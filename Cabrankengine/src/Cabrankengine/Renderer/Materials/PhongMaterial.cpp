@@ -5,15 +5,15 @@
 #include <Cabrankengine/Renderer/RendererAPI.h>
 
 #ifdef CBK_RENDERER_OPENGL
-	#include <Platform/OpenGL/OpenGLPhongMaterial.h>
+#include <Platform/OpenGL/OpenGLPhongMaterial.h>
 #endif
 
 #ifdef CBK_RENDERER_VULKAN
-	#include <Platform/Vulkan/VulkanPhongMaterial.h>
+#include <Platform/Vulkan/VulkanPhongMaterial.h>
 #endif
 
 #ifdef CBK_RENDERER_METAL
-	#include <Platform/Metal/MetalPhongMaterial.h>
+#include <Platform/Metal/MetalPhongMaterial.h>
 #endif
 
 namespace cbk::rendering {
@@ -34,7 +34,7 @@ namespace cbk::rendering {
 	PhongMaterial::PhongMaterial() : Material(ShaderLibrary::get("Phong")) {
 		// Default texture slots so Vulkan descriptor sets can be written immediately
 		// even before a model loader supplies real maps.
-		m_DiffuseMap  = scene::DefaultLibrary::getWhiteTexture();
+		m_DiffuseMap = scene::DefaultLibrary::getWhiteTexture();
 		m_SpecularMap = scene::DefaultLibrary::getWhiteTexture();
 	}
 
@@ -52,14 +52,20 @@ namespace cbk::rendering {
 
 	void PhongMaterial::applyTexture(common::TextureType type, const Ref<Texture2D>& texture) {
 		switch (type) {
-			case common::TextureType::Diffuse:  setDiffuseMap(texture); break;
-			case common::TextureType::Specular: setSpecularMap(texture); break;
-			default: break;
+			case common::TextureType::Diffuse:
+				setDiffuseMap(texture);
+				break;
+			case common::TextureType::Specular:
+				setSpecularMap(texture);
+				break;
+			default:
+				break;
 		}
 	}
 
 	void PhongMaterial::applyProperty(uint32_t key, float value) {
-		if (key == 1) setShininess(value); // 1 = Shininess (see Common/BinaryFormats.h property keys)
+		if (key == 1)
+			setShininess(value); // 1 = Shininess (see Common/BinaryFormats.h property keys)
 	}
 
 } // namespace cbk::rendering

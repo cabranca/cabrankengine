@@ -5,15 +5,15 @@
 #include <Cabrankengine/Renderer/RendererAPI.h>
 
 #ifdef CBK_RENDERER_OPENGL
-	#include <Platform/OpenGL/OpenGLTexture2DMaterial.h>
+#include <Platform/OpenGL/OpenGLTexture2DMaterial.h>
 #endif
 
 #ifdef CBK_RENDERER_VULKAN
-	#include <Platform/Vulkan/VulkanTexture2DMaterial.h>
+#include <Platform/Vulkan/VulkanTexture2DMaterial.h>
 #endif
 
 #ifdef CBK_RENDERER_METAL
-	#include <Platform/Metal/MetalTexture2DMaterial.h>
+#include <Platform/Metal/MetalTexture2DMaterial.h>
 #endif
 
 namespace cbk::rendering {

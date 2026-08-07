@@ -6,10 +6,8 @@ namespace cbk {
 
 	using MouseCode = uint8_t;
 
-	namespace Mouse
-	{
-		enum : MouseCode
-		{
+	namespace Mouse {
+		enum : MouseCode {
 			// From glfw3.h
 			Button0 = 0,
 			Button1 = 1,
@@ -26,4 +24,4 @@ namespace cbk {
 			ButtonMiddle = Button2
 		};
 	}
-}
+} // namespace cbk

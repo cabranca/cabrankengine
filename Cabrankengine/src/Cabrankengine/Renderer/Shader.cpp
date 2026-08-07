@@ -2,15 +2,15 @@
 #include "Shader.h"
 
 #ifdef CBK_RENDERER_METAL
-	#include <Platform/Metal/MetalShader.h>
+#include <Platform/Metal/MetalShader.h>
 #endif
 
 #ifdef CBK_RENDERER_OPENGL
-	#include <Platform/OpenGL/OpenGLShader.h>
+#include <Platform/OpenGL/OpenGLShader.h>
 #endif
 
 #ifdef CBK_RENDERER_VULKAN
-    #include <Platform/Vulkan/VulkanShader.h>
+#include <Platform/Vulkan/VulkanShader.h>
 #endif
 
 namespace cbk::rendering {
@@ -21,7 +21,7 @@ namespace cbk::rendering {
 #elif defined(CBK_RENDERER_METAL)
 		return createRef<platform::metal::MetalShader>(filepath);
 #elif defined(CBK_RENDERER_VULKAN)
-        return createRef<platform::vk::VulkanShader>(filepath);
+		return createRef<platform::vk::VulkanShader>(filepath);
 #else
 		CBK_CORE_ASSERT(false, "No renderer API defined!");
 		return nullptr;
@@ -34,7 +34,7 @@ namespace cbk::rendering {
 #elif defined(CBK_RENDERER_METAL)
 		return createRef<platform::metal::MetalShader>(name, vertexSrc, fragmentSrc);
 #elif defined(CBK_RENDERER_VULKAN)
-        return createRef<platform::vk::VulkanShader>(name, vertexSrc, fragmentSrc);
+		return createRef<platform::vk::VulkanShader>(name, vertexSrc, fragmentSrc);
 #else
 		CBK_CORE_ASSERT(false, "No renderer API defined!");
 		return nullptr;
@@ -66,5 +66,4 @@ namespace cbk::rendering {
 		CBK_CORE_ASSERT(s_Shaders.contains(name), "Shader not found!");
 		return s_Shaders[name];
 	}
-}
-
+} // namespace cbk::rendering

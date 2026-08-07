@@ -9,26 +9,25 @@ namespace cbk::ecs {
 	/// It also recycles the ids of the dead entities.
 	/// </summary>
 	class EntityManager {
-		public:
-			// Initializes the available entities
-			EntityManager();
+	  public:
+		// Initializes the available entities
+		EntityManager();
 
-			// Creates an entity and returns its ID
-			Entity createEntity();
+		// Creates an entity and returns its ID
+		Entity createEntity();
 
-			// Destroys the given entity and recycles its ID
-			void destroyEntity(Entity e);
+		// Destroys the given entity and recycles its ID
+		void destroyEntity(Entity e);
 
-			// Sets the whole components signature to the given entity
-			void setSignature(Entity e, Signature signature);
+		// Sets the whole components signature to the given entity
+		void setSignature(Entity e, Signature signature);
 
-			// Returns the components signature for the given entity
-			Signature getSignature(Entity e);
+		// Returns the components signature for the given entity
+		Signature getSignature(Entity e);
 
-		private:
-			std::queue<Entity> m_AvailableEntities{}; // Recycled queue of available IDs
-			std::array<Signature, MAX_ENTITIES> m_Signatures{}; // Array of signatures corresponding to the ids of their indexes.
-			uint32_t m_LivingEntityCount = 0; // Counter for the current living entities
+	  private:
+		std::queue<Entity> m_AvailableEntities{};           // Recycled queue of available IDs
+		std::array<Signature, MAX_ENTITIES> m_Signatures{}; // Array of signatures corresponding to the ids of their indexes.
+		uint32_t m_LivingEntityCount = 0;                   // Counter for the current living entities
 	};
-}
-
+} // namespace cbk::ecs

@@ -13,7 +13,7 @@ namespace cbk::platform::vk {
 		void shutdown();
 
 		void updateSwapchain();
-		
+
 		[[nodiscard]] uint32_t getMinImageCount() const;
 		[[nodiscard]] size_t getSwapchainImagesSize() const;
 		[[nodiscard]] VkSwapchainKHR* getSwapchain();
@@ -23,25 +23,25 @@ namespace cbk::platform::vk {
 		[[nodiscard]] VkImageView getDepthImageView(uint32_t index) const;
 
 	  private:
-        VkInstance m_Instance; // OWNED BY VULKANDEVICECONTEXT
-		VkDevice m_Device; // OWNED BY VULKANDEVICECONTEXT
+		VkInstance m_Instance; // OWNED BY VULKANDEVICECONTEXT
+		VkDevice m_Device;     // OWNED BY VULKANDEVICECONTEXT
 
-        // --- Swapchain ---
+		// --- Swapchain ---
 		VkSurfaceKHR m_Surface{ VK_NULL_HANDLE };
 		VkSurfaceCapabilitiesKHR m_SurfaceCaps{};
 		VkSwapchainCreateInfoKHR m_SwapchainCI{};
 		VkSwapchainKHR m_Swapchain{ VK_NULL_HANDLE };
 		uint32_t m_ImageCount{ 0 };
-		
-        // Color Buffer
-        std::vector<VkImage> m_SwapchainImages;
+
+		// Color Buffer
+		std::vector<VkImage> m_SwapchainImages;
 		std::vector<VkImageView> m_SwapchainImageViews;
 
 		// --- Depth Buffer ---
 		// One per swapchain image so depth doesn't race across frames in flight.
 		std::vector<VmaAllocation> m_DepthImageAllocations;
-		std::vector<VkImage>       m_DepthImages;
-		std::vector<VkImageView>   m_DepthImageViews;
+		std::vector<VkImage> m_DepthImages;
+		std::vector<VkImageView> m_DepthImageViews;
 
 		void createSwapchain(VulkanDeviceContext* ctx);
 		void getSwapchainImages(VulkanDeviceContext* ctx);

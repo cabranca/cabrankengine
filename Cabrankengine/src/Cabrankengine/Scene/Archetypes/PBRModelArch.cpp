@@ -10,13 +10,12 @@ namespace cbk::scene::arch {
 	using namespace ecs;
 
 	PBRModelArch::PBRModelArch(std::string_view path) {
-		auto& scene    = Application::get().getScene();
-		m_Entity       = scene.createEntity("PBR Model");
-		auto material  = rendering::PBRMaterial::create();
-		auto model     = Model::create(std::string{ path }, material);
+		auto& scene = Application::get().getScene();
+		m_Entity = scene.createEntity("PBR Model");
+		auto material = rendering::PBRMaterial::create();
+		auto model = Model::create(std::string{ path }, material);
 		scene.getRegistry()->addComponent(m_Entity, CTransform());
-		scene.getRegistry()->addComponent(
-		    m_Entity, CModel{ .Path = std::string{ path }, .Kind = common::MaterialKind::PBR, .Res = model });
+		scene.getRegistry()->addComponent(m_Entity, CModel{ .Path = std::string{ path }, .Kind = common::MaterialKind::PBR, .Res = model });
 	}
 
 	CTransform& PBRModelArch::transform() {

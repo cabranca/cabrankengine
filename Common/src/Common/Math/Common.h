@@ -10,6 +10,6 @@ namespace cbk::math {
 	inline constexpr float EPSILON = 1e-5f;
 
 	inline float radians(float degrees) {
-		return degrees * PI /180.f;
+		return degrees * PI / 180.f;
 	}
 } // namespace cbk::math

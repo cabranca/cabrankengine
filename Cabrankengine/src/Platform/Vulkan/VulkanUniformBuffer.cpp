@@ -12,19 +12,18 @@
 namespace cbk::platform::vk {
 
 	VulkanUniformBuffer::VulkanUniformBuffer(uint32_t size, uint32_t binding) : m_Size(size) {
-		auto ctx    = static_cast<VulkanDeviceContext*>(Application::get().getWindow().getContext());
+		auto ctx = static_cast<VulkanDeviceContext*>(Application::get().getWindow().getContext());
 		auto device = ctx->getLogicalDevice();
 
 		// 1) Per-slot persistently mapped host-visible buffer. Independent allocations
 		// so the GPU can read slot N-1 while the CPU writes slot N.
 		VkBufferCreateInfo bufferCI{
 			.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-			.size  = size,
+			.size = size,
 			.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 		};
 		VmaAllocationCreateInfo allocCI{
-			.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
-			         VMA_ALLOCATION_CREATE_HOST_ACCESS_ALLOW_TRANSFER_INSTEAD_BIT |
+			.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_ALLOW_TRANSFER_INSTEAD_BIT |
 			         VMA_ALLOCATION_CREATE_MAPPED_BIT,
 			.usage = VMA_MEMORY_USAGE_AUTO,
 		};
@@ -33,64 +32,64 @@ namespace cbk::platform::vk {
 
 		// 2) One-binding descriptor set layout, accessible to both stages.
 		VkDescriptorSetLayoutBinding layoutBinding{
-			.binding         = binding,
-			.descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+			.binding = binding,
+			.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 			.descriptorCount = 1,
-			.stageFlags      = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+			.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
 		};
 		VkDescriptorSetLayoutCreateInfo layoutCI{
-			.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
 			.bindingCount = 1,
-			.pBindings    = &layoutBinding,
+			.pBindings = &layoutBinding,
 		};
 		VK_CHECK(vkCreateDescriptorSetLayout(device, &layoutCI, nullptr, &m_DescriptorSetLayout));
 
 		// 3) Pool with k_MaxFramesInFlight descriptor sets, one per buffer.
 		VkDescriptorPoolSize poolSize{
-			.type            = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+			.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 			.descriptorCount = k_MaxFramesInFlight,
 		};
 		VkDescriptorPoolCreateInfo poolCI{
-			.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-			.maxSets       = k_MaxFramesInFlight,
+			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+			.maxSets = k_MaxFramesInFlight,
 			.poolSizeCount = 1,
-			.pPoolSizes    = &poolSize,
+			.pPoolSizes = &poolSize,
 		};
 		VK_CHECK(vkCreateDescriptorPool(device, &poolCI, nullptr, &m_DescriptorPool));
 
 		std::array<VkDescriptorSetLayout, k_MaxFramesInFlight> setLayouts;
 		setLayouts.fill(m_DescriptorSetLayout);
 		VkDescriptorSetAllocateInfo dsAllocCI{
-			.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-			.descriptorPool     = m_DescriptorPool,
+			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+			.descriptorPool = m_DescriptorPool,
 			.descriptorSetCount = k_MaxFramesInFlight,
-			.pSetLayouts        = setLayouts.data(),
+			.pSetLayouts = setLayouts.data(),
 		};
 		VK_CHECK(vkAllocateDescriptorSets(device, &dsAllocCI, m_DescriptorSets.data()));
 
 		// Point each descriptor set at its own buffer.
 		std::array<VkDescriptorBufferInfo, k_MaxFramesInFlight> bufferInfos{};
-		std::array<VkWriteDescriptorSet, k_MaxFramesInFlight>   writes{};
+		std::array<VkWriteDescriptorSet, k_MaxFramesInFlight> writes{};
 		for (uint32_t i = 0; i < k_MaxFramesInFlight; ++i) {
 			bufferInfos[i] = VkDescriptorBufferInfo{
 				.buffer = m_Buffers[i],
 				.offset = 0,
-				.range  = size,
+				.range = size,
 			};
 			writes[i] = VkWriteDescriptorSet{
-				.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-				.dstSet          = m_DescriptorSets[i],
-				.dstBinding      = binding,
+				.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+				.dstSet = m_DescriptorSets[i],
+				.dstBinding = binding,
 				.descriptorCount = 1,
-				.descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-				.pBufferInfo     = &bufferInfos[i],
+				.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+				.pBufferInfo = &bufferInfos[i],
 			};
 		}
 		vkUpdateDescriptorSets(device, k_MaxFramesInFlight, writes.data(), 0, nullptr);
 	}
 
 	VulkanUniformBuffer::~VulkanUniformBuffer() {
-		auto ctx    = static_cast<VulkanDeviceContext*>(Application::get().getWindow().getContext());
+		auto ctx = static_cast<VulkanDeviceContext*>(Application::get().getWindow().getContext());
 		auto device = ctx->getLogicalDevice();
 
 		// The descriptor pool and buffers may still be referenced by in-flight

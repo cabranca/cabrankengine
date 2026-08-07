@@ -42,7 +42,7 @@ namespace cbk::rendering {
 		Renderer2D::Statistics Stats;
 	};
 
-	static Renderer2DData s_Data;	
+	static Renderer2DData s_Data;
 
 	void Renderer2D::init() {
 		CBK_PROFILE_FUNCTION();
@@ -63,13 +63,13 @@ namespace cbk::rendering {
 			offset += 4;
 		}
 
-		s_Data.QuadDesc = GeometryDescriptor::create(s_Data.MaxVertices * sizeof(QuadVertex), quadIndices, s_Data.MaxIndices * sizeof(uint32_t), { 
-			{ ShaderDataType::Float3, "pos" }, 
-			{ ShaderDataType::Float4, "col" }, 
-			{ ShaderDataType::Float2, "tex" },
-			{ ShaderDataType::Float, "texIndex"},
-			{ ShaderDataType::Float, "tilingFactor"}
-		});
+		s_Data.QuadDesc =
+		    GeometryDescriptor::create(s_Data.MaxVertices * sizeof(QuadVertex), quadIndices, s_Data.MaxIndices * sizeof(uint32_t),
+		                               { { ShaderDataType::Float3, "pos" },
+		                                 { ShaderDataType::Float4, "col" },
+		                                 { ShaderDataType::Float2, "tex" },
+		                                 { ShaderDataType::Float, "texIndex" },
+		                                 { ShaderDataType::Float, "tilingFactor" } });
 		delete[] quadIndices;
 
 		s_Data.WhiteTexture = Texture2D::create(TextureSpecification());
@@ -83,9 +83,9 @@ namespace cbk::rendering {
 		s_Data.QuadMaterial = Texture2DMaterial::create();
 
 		s_Data.QuadVertexPositions[0] = { -0.5f, -0.5f, 0.0f };
-		s_Data.QuadVertexPositions[1] = {  0.5f, -0.5f, 0.0f };
-		s_Data.QuadVertexPositions[2] = {  0.5f,  0.5f, 0.0f };
-		s_Data.QuadVertexPositions[3] = { -0.5f,  0.5f, 0.0f };
+		s_Data.QuadVertexPositions[1] = { 0.5f, -0.5f, 0.0f };
+		s_Data.QuadVertexPositions[2] = { 0.5f, 0.5f, 0.0f };
+		s_Data.QuadVertexPositions[3] = { -0.5f, 0.5f, 0.0f };
 	}
 
 	void Renderer2D::shutdown() {
@@ -97,7 +97,7 @@ namespace cbk::rendering {
 		// s_Data is a program-scope static; its Ref<>s would otherwise destruct
 		// after the Vulkan device/allocator are gone. Release the GPU-backed
 		// resources here, while shutdown() still runs with a live device.
-		for (auto& slot : s_Data.TextureSlots)
+		for (auto& slot: s_Data.TextureSlots)
 			slot.reset();
 		s_Data.QuadMaterial.reset();
 		s_Data.WhiteTexture.reset();
@@ -121,7 +121,8 @@ namespace cbk::rendering {
 		if (s_Data.QuadIndexCount == 0)
 			return;
 
-		uint32_t dataSize = static_cast<uint32_t>(reinterpret_cast<uint8_t*>(s_Data.QuadVertexBufferPtr) - reinterpret_cast<uint8_t*>(s_Data.QuadVertexBufferBase));
+		uint32_t dataSize = static_cast<uint32_t>(reinterpret_cast<uint8_t*>(s_Data.QuadVertexBufferPtr) -
+		                                          reinterpret_cast<uint8_t*>(s_Data.QuadVertexBufferBase));
 		s_Data.QuadDesc->setData(s_Data.QuadVertexBufferBase, dataSize);
 
 		flush();
@@ -140,7 +141,7 @@ namespace cbk::rendering {
 
 	void Renderer2D::flushAndReset() {
 		endScene();
-		
+
 		s_Data.QuadIndexCount = 0;
 		s_Data.QuadVertexBufferPtr = s_Data.QuadVertexBufferBase;
 		s_Data.TextureSlotIndex = 1;
@@ -194,11 +195,13 @@ namespace cbk::rendering {
 		s_Data.Stats.QuadCount++;
 	}
 
-	void Renderer2D::drawQuad(const Vector2& position, const Vector2& size, const Ref<Texture2D>& texture, float tilingFactor, const Vector4& tintColor) {
+	void Renderer2D::drawQuad(const Vector2& position, const Vector2& size, const Ref<Texture2D>& texture, float tilingFactor,
+	                          const Vector4& tintColor) {
 		drawQuad(Vector3(position.x, position.y, 0.0f), size, texture, tilingFactor, tintColor);
 	}
 
-	void Renderer2D::drawQuad(const Vector3& position, const Vector2& size, const Ref<Texture2D>& texture, float tilingFactor, const Vector4& tintColor) {
+	void Renderer2D::drawQuad(const Vector3& position, const Vector2& size, const Ref<Texture2D>& texture, float tilingFactor,
+	                          const Vector4& tintColor) {
 		CBK_PROFILE_FUNCTION();
 
 		if (s_Data.QuadIndexCount >= Renderer2DData::MaxIndices)
@@ -268,7 +271,7 @@ namespace cbk::rendering {
 		constexpr float texIndex = 0.f;
 		constexpr float tilingFactor = 1.f;
 
-		Mat4 transform = math::scaleXYZ({size.x, size.y, 1.f}) * rotateZ(rotation) * math::translation(position);
+		Mat4 transform = math::scaleXYZ({ size.x, size.y, 1.f }) * rotateZ(rotation) * math::translation(position);
 
 		s_Data.QuadVertexBufferPtr->Position = s_Data.QuadVertexPositions[0] * transform;
 		s_Data.QuadVertexBufferPtr->Color = color;
@@ -303,11 +306,13 @@ namespace cbk::rendering {
 		s_Data.Stats.QuadCount++;
 	}
 
-	void Renderer2D::drawRotatedQuad(const Vector2& position, const Vector2& size, float rotation, const Ref<Texture2D>& texture, float tilingFactor, const Vector4& tintColor) {
+	void Renderer2D::drawRotatedQuad(const Vector2& position, const Vector2& size, float rotation, const Ref<Texture2D>& texture,
+	                                 float tilingFactor, const Vector4& tintColor) {
 		drawRotatedQuad(Vector3(position.x, position.y, 0.0f), size, rotation, texture, tilingFactor, tintColor);
 	}
 
-	void Renderer2D::drawRotatedQuad(const Vector3& position, const Vector2& size, float rotation, const Ref<Texture2D>& texture, float tilingFactor, const Vector4& tintColor) {
+	void Renderer2D::drawRotatedQuad(const Vector3& position, const Vector2& size, float rotation, const Ref<Texture2D>& texture,
+	                                 float tilingFactor, const Vector4& tintColor) {
 		CBK_PROFILE_FUNCTION();
 
 		if (s_Data.QuadIndexCount >= Renderer2DData::MaxIndices)
@@ -364,13 +369,11 @@ namespace cbk::rendering {
 		s_Data.Stats.QuadCount++;
 	}
 
-	Renderer2D::Statistics Renderer2D::getStats()
-	{
+	Renderer2D::Statistics Renderer2D::getStats() {
 		return s_Data.Stats;
 	}
 
-	void Renderer2D::resetStats()
-	{
+	void Renderer2D::resetStats() {
 		memset(&s_Data.Stats, 0, sizeof(Statistics));
 	}
-}
+} // namespace cbk::rendering

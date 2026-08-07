@@ -24,16 +24,16 @@ namespace cbk::rendering {
 	void RenderLayer::onUpdate(Timestep dt) {
 		RenderCommand::setClearColor(m_Scene->getMetadata().BackgroundColor);
 
-		Mat4    vp;
+		Mat4 vp;
 		Vector3 camPos;
 		if (m_EditorMode) {
 			m_EditorCamera.update(dt);
-			vp     = m_EditorCamera.getViewProjectionMatrix();
+			vp = m_EditorCamera.getViewProjectionMatrix();
 			camPos = m_EditorCamera.getWorldPosition();
 		} else {
 			m_CameraControllerSystem->update(*m_Scene->getRegistry(), dt);
 			m_CameraSystem->update(*m_Scene->getRegistry(), dt);
-			vp     = m_CameraSystem->getViewProjectionMatrix();
+			vp = m_CameraSystem->getViewProjectionMatrix();
 			camPos = m_CameraSystem->getCameraWorldPosition();
 		}
 
@@ -42,12 +42,12 @@ namespace cbk::rendering {
 		Renderer2D::endScene();
 
 		LightEnvironment lights;
-		for (auto e : m_DirLightSystem->getEntities()) {
+		for (auto e: m_DirLightSystem->getEntities()) {
 			auto dl = m_Scene->getRegistry()->getComponent<ecs::CDirectionalLight>(e).value();
 			lights.DirLight = { dl->Direction, dl->Radiance };
 			break;
 		}
-		for (auto e : m_PointLightSystem->getEntities()) {
+		for (auto e: m_PointLightSystem->getEntities()) {
 			auto transform = m_Scene->getRegistry()->getComponent<ecs::CTransform>(e).value();
 			auto pl = m_Scene->getRegistry()->getComponent<ecs::CPointLight>(e).value();
 			lights.PointLights.push_back({ transform->Position, pl->Radiance, pl->Constant, pl->Linear, pl->Quadratic });

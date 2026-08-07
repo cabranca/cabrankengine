@@ -9,14 +9,11 @@ namespace cbk::platform::metal {
 		invalidate();
 	}
 
-	MetalFrameBuffer::~MetalFrameBuffer() {
-	}
+	MetalFrameBuffer::~MetalFrameBuffer() {}
 
-	void MetalFrameBuffer::bind() {
-    }
+	void MetalFrameBuffer::bind() {}
 
-	void MetalFrameBuffer::unbind() {
-    }
+	void MetalFrameBuffer::unbind() {}
 
 	const rendering::FrameBufferSpecification& MetalFrameBuffer::getSpecification() const {
 		return m_Specs;
@@ -29,6 +26,5 @@ namespace cbk::platform::metal {
 	void MetalFrameBuffer::invalidate() {
 		if (m_RendererID) {
 		}
-
 	}
 } // namespace cbk::platform::metal

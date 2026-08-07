@@ -10,7 +10,7 @@ namespace cbk::scene::arch {
 		PBRModelArch(std::string_view path);
 
 		ecs::CTransform& transform();
-		ecs::CModel&     model();
+		ecs::CModel& model();
 
 	  private:
 		ecs::Entity m_Entity;

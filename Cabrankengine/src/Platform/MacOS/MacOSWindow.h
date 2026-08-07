@@ -6,60 +6,67 @@ struct GLFWwindow; // Forward declaration of the GLFWwindow struct
 
 namespace cbk {
 
-    namespace rendering {
-        class GraphicsContext; // Forward declaration of the GraphicsContext class
-    }
+	namespace rendering {
+		class GraphicsContext; // Forward declaration of the GraphicsContext class
+	}
 
-    class MacOSWindow : public Window {
-        public:
-            MacOSWindow(const WindowProps& props);
-            ~MacOSWindow();
+	class MacOSWindow : public Window {
+	  public:
+		MacOSWindow(const WindowProps& props);
+		~MacOSWindow();
 
-            // Callback for the window update
-            void onUpdate() override;
+		// Callback for the window update
+		void onUpdate() override;
 
-            // Returns the window width
-            int getWidth() const override { return m_Data.Width; }
-        
-            // Returns the window height
-            int getHeight() const override { return m_Data.Height; }
+		// Returns the window width
+		int getWidth() const override {
+			return m_Data.Width;
+		}
 
-            // Sets the callback function for the event polling
-            void setEventCallback(const EventCallbackFn& callback) override { m_Data.EventCallback = callback; }
-        
-            // Sets whether VSync is enabled or not
-            void setVSync(bool enabled) override;
-        
-            // Returns whether VSync is enabled or not
-            bool isVSync() const override;
+		// Returns the window height
+		int getHeight() const override {
+			return m_Data.Height;
+		}
 
-            rendering::GraphicsContext* getContext() const override;
+		// Sets the callback function for the event polling
+		void setEventCallback(const EventCallbackFn& callback) override {
+			m_Data.EventCallback = callback;
+		}
 
-            // Returns the Windows specific window.
-		    // TODO: I think it must be marked override
-		    void* getNativeWindow() const override { return m_Window; }
+		// Sets whether VSync is enabled or not
+		void setVSync(bool enabled) override;
 
+		// Returns whether VSync is enabled or not
+		bool isVSync() const override;
 
-        private:
-            // Initialize the window from the given properties
-            void init(const WindowProps& props);
-        
-            // Shutsdown GLFW correctly to destroy the window
-            void shutdown();
+		rendering::GraphicsContext* getContext() const override;
 
-            GLFWwindow* m_Window; // Actual window object
-		    Scope<rendering::GraphicsContext> m_Context; // Graphics context for rendering
+		// Returns the Windows specific window.
+		// TODO: I think it must be marked override
+		void* getNativeWindow() const override {
+			return m_Window;
+		}
 
-            // Data of the window to work with GLFW
-            struct WindowData {
-                std::string Title;
-                int Width, Height;
-                bool VSync;
+	  private:
+		// Initialize the window from the given properties
+		void init(const WindowProps& props);
 
-                EventCallbackFn EventCallback;
-            };
+		// Shutsdown GLFW correctly to destroy the window
+		void shutdown();
 
-            WindowData m_Data; // Current window datas
-    };
+		GLFWwindow* m_Window;                        // Actual window object
+		Scope<rendering::GraphicsContext> m_Context; // Graphics context for rendering
 
-}
+		// Data of the window to work with GLFW
+		struct WindowData {
+			std::string Title;
+			int Width, Height;
+			bool VSync;
+
+			EventCallbackFn EventCallback;
+		};
+
+		WindowData m_Data; // Current window datas
+	};
+
+} // namespace cbk

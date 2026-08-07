@@ -2,15 +2,15 @@
 #include "StorageBuffer.h"
 
 #ifdef CBK_RENDERER_METAL
-	#include <Platform/Metal/MetalStorageBuffer.h>
+#include <Platform/Metal/MetalStorageBuffer.h>
 #endif
 
 #if defined(CBK_RENDERER_OPENGL) && !defined(CBK_OPENGL_ES)
-	#include <Platform/OpenGL/OpenGLStorageBuffer.h>
+#include <Platform/OpenGL/OpenGLStorageBuffer.h>
 #endif
 
 #ifdef CBK_RENDERER_VULKAN
-	#include <Platform/Vulkan/VulkanStorageBuffer.h>
+#include <Platform/Vulkan/VulkanStorageBuffer.h>
 #endif
 
 namespace cbk::rendering {

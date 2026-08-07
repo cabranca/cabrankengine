@@ -7,16 +7,16 @@
 namespace cbk::math {
 
 	// Primary template — intentionally undefined; only specializations below are valid
-	template<typename VecType>
+	template <typename VecType>
 	struct VecTraits;
 
-	template<>
+	template <>
 	struct VecTraits<Vector2> {
 		static constexpr int Dimensions = 2;
 		using OrientationType = float;
 	};
 
-	template<>
+	template <>
 	struct VecTraits<Vector3> {
 		static constexpr int Dimensions = 3;
 		using OrientationType = Quaternion;

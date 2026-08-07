@@ -18,12 +18,12 @@ namespace cbk::scene {
 		reg.registerComponent<CText>();
 	}
 
-	Scene::Scene() { 
-		registerBuiltInComponents(m_Registry); 
+	Scene::Scene() {
+		registerBuiltInComponents(m_Registry);
 	}
 
-	Scene::Scene(SceneMetadata metadata) : m_Metadata(std::move(metadata)) { 
-		registerBuiltInComponents(m_Registry); 
+	Scene::Scene(SceneMetadata metadata) : m_Metadata(std::move(metadata)) {
+		registerBuiltInComponents(m_Registry);
 	}
 
 	Entity Scene::createEntity(const std::string& name) {

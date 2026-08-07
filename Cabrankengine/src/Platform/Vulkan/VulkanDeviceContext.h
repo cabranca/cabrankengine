@@ -17,10 +17,10 @@ namespace cbk::platform::vk {
 		[[nodiscard]] VkPhysicalDevice getPhysicalDevice() const;
 		[[nodiscard]] VkQueue getDeviceQueue() const;
 		[[nodiscard]] VmaAllocator getAllocator() const;
-        [[nodiscard]] uint32_t getQueueFamily() const;
+		[[nodiscard]] uint32_t getQueueFamily() const;
 		[[nodiscard]] VkFormat getImageFormat() const;
 		[[nodiscard]] VkColorSpaceKHR getImageColorSpace() const;
-        [[nodiscard]] VkFormat getDepthFormat() const;
+		[[nodiscard]] VkFormat getDepthFormat() const;
 
 		void selectSurfaceFormat(VkSurfaceKHR surface);
 

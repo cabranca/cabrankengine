@@ -13,20 +13,20 @@ using namespace cbk::scene;
 using namespace cbk::scene::arch;
 
 namespace {
-	constexpr int   GRID_X       = 100;
-	constexpr int   GRID_Y       = 100;
-	constexpr float QUAD_SIZE    = 14.f;
+	constexpr int GRID_X = 100;
+	constexpr int GRID_Y = 100;
+	constexpr float QUAD_SIZE = 14.f;
 	constexpr float QUAD_SPACING = 16.f;
 
 	struct QuadInstance {
 		Entity Id;
-		float  PhaseOffset; // staggers rotation/color per quad
+		float PhaseOffset; // staggers rotation/color per quad
 	};
 
 	std::vector<QuadInstance> s_Quads;
-	Ref<Texture2D>            s_SharedTexture;
-	float                     s_Time = 0.f;
-}
+	Ref<Texture2D> s_SharedTexture;
+	float s_Time = 0.f;
+} // namespace
 
 Sandbox2D::Sandbox2D() : Layer("Sandbox2D") {}
 
@@ -36,7 +36,7 @@ void Sandbox2D::onAttach() {
 	Application::get().getWindow().setVSync(false);
 
 	CameraArch camera(ProjectionType::Orthographic);
-	camera.camera().Far  = 1.f;
+	camera.camera().Far = 1.f;
 	camera.camera().Near = -1.f;
 	camera.camera().OrthoSize = (GRID_Y + 4) * QUAD_SPACING;
 
@@ -56,14 +56,14 @@ void Sandbox2D::onAttach() {
 		for (int x = 0; x < GRID_X; ++x) {
 			Entity e = scene.createEntity("Quad");
 			reg->addComponent(e, CTransform{
-				.Position = { originX + x * QUAD_SPACING, originY + y * QUAD_SPACING, 0.f },
-				.Scale    = { QUAD_SIZE, QUAD_SIZE, 0.f },
-			});
+			                         .Position = { originX + x * QUAD_SPACING, originY + y * QUAD_SPACING, 0.f },
+			                         .Scale = { QUAD_SIZE, QUAD_SIZE, 0.f },
+			                     });
 			reg->addComponent(e, CSprite{
-				.Path    = "assets/textures/container2.cbkt",
-				.Texture = s_SharedTexture,
-				.Tint    = Vector4(1.f),
-			});
+			                         .Path = "assets/textures/container2.cbkt",
+			                         .Texture = s_SharedTexture,
+			                         .Tint = Vector4(1.f),
+			                     });
 
 			const float phase = (static_cast<float>(x) + static_cast<float>(y)) * 6.f;
 			s_Quads.push_back({ .Id = e, .PhaseOffset = phase });
@@ -75,7 +75,7 @@ void Sandbox2D::onDetach() {
 	CBK_PROFILE_FUNCTION();
 
 	auto* reg = Application::get().getRegistry();
-	for (const auto& q : s_Quads)
+	for (const auto& q: s_Quads)
 		reg->destroyEntity(q.Id);
 
 	s_Quads.clear();
@@ -89,21 +89,19 @@ void Sandbox2D::onUpdate(cbk::Timestep delta) {
 
 	auto* reg = Application::get().getRegistry();
 
-	for (const auto& q : s_Quads) {
+	for (const auto& q: s_Quads) {
 		auto transform = reg->getComponent<CTransform>(q.Id).value();
-		auto sprite    = reg->getComponent<CSprite>(q.Id).value();
+		auto sprite = reg->getComponent<CSprite>(q.Id).value();
 
 		// Rotation.z is fed straight into MatrixFactory::rotateZ, which interprets
 		// its argument as DEGREES — so this gives 30°/sec spin staggered per quad.
 		transform->Rotation.z = s_Time * 30.f + q.PhaseOffset;
 
 		const float t = s_Time + q.PhaseOffset * (PI / 180.f);
-		sprite->Tint = Vector4(
-			0.5f + 0.5f * std::sin(t),
-			0.5f + 0.5f * std::sin(t + 2.094f), // +120°
-			0.5f + 0.5f * std::sin(t + 4.188f), // +240°
-			1.f
-		);
+		sprite->Tint = Vector4(0.5f + 0.5f * std::sin(t),
+		                       0.5f + 0.5f * std::sin(t + 2.094f), // +120°
+		                       0.5f + 0.5f * std::sin(t + 4.188f), // +240°
+		                       1.f);
 	}
 }
 

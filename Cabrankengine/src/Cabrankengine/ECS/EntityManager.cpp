@@ -50,4 +50,4 @@ namespace cbk::ecs {
 		}
 		return m_Signatures[e];
 	}
-}
+} // namespace cbk::ecs

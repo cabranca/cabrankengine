@@ -22,8 +22,7 @@ namespace cbk::ac {
 		// Box-filter downscale of an interleaved 8-bit image from (srcW, srcH) to
 		// (dstW, dstH). Used both for the optional max-dimension cap and for the
 		// per-level downsample when building the mip chain.
-		std::vector<uint8_t> boxDownscale(const uint8_t* src, int srcW, int srcH,
-		                                  int dstW, int dstH, int channels) {
+		std::vector<uint8_t> boxDownscale(const uint8_t* src, int srcW, int srcH, int dstW, int dstH, int channels) {
 			std::vector<uint8_t> dst(static_cast<size_t>(dstW) * dstH * channels);
 			for (int y = 0; y < dstH; y++) {
 				const int sy0 = y * srcH / dstH;
@@ -38,8 +37,7 @@ namespace cbk::ac {
 								sum += src[(static_cast<size_t>(sy) * srcW + sx) * channels + c];
 								n++;
 							}
-						dst[(static_cast<size_t>(y) * dstW + x) * channels + c] =
-						    static_cast<uint8_t>(sum / n);
+						dst[(static_cast<size_t>(y) * dstW + x) * channels + c] = static_cast<uint8_t>(sum / n);
 					}
 				}
 			}
@@ -48,13 +46,11 @@ namespace cbk::ac {
 
 		// Cap to maxDim using the same box filter. Returns {} when no resize was
 		// needed; otherwise width/height are updated in place.
-		std::vector<uint8_t> downscaleToFit(const uint8_t* src, int& width, int& height,
-		                                    int channels, uint32_t maxDim) {
+		std::vector<uint8_t> downscaleToFit(const uint8_t* src, int& width, int& height, int channels, uint32_t maxDim) {
 			if (maxDim == 0 || (width <= static_cast<int>(maxDim) && height <= static_cast<int>(maxDim)))
 				return {};
 
-			const float scale = std::min(static_cast<float>(maxDim) / width,
-			                             static_cast<float>(maxDim) / height);
+			const float scale = std::min(static_cast<float>(maxDim) / width, static_cast<float>(maxDim) / height);
 			const int dstW = std::max(1, static_cast<int>(width * scale));
 			const int dstH = std::max(1, static_cast<int>(height * scale));
 
@@ -73,8 +69,7 @@ namespace cbk::ac {
 		// mip i (offsets.back() == total size). Each successive level is a 2x box
 		// downsample of the previous level, with dimensions clamped to >= 1 so
 		// non-power-of-two textures terminate at 1x1.
-		std::vector<uint8_t> generateMipChain(const uint8_t* level0, int width, int height,
-		                                      int channels, std::vector<uint32_t>& offsets) {
+		std::vector<uint8_t> generateMipChain(const uint8_t* level0, int width, int height, int channels, std::vector<uint32_t>& offsets) {
 			const uint32_t levels = mipLevelCountFor(width, height);
 			offsets.clear();
 			offsets.reserve(levels + 1);
@@ -98,8 +93,7 @@ namespace cbk::ac {
 			for (uint32_t i = 1; i < levels; i++) {
 				const int curW = std::max(1, prevW / 2);
 				const int curH = std::max(1, prevH / 2);
-				auto downsampled = boxDownscale(chain.data() + offsets[i - 1], prevW, prevH,
-				                                curW, curH, channels);
+				auto downsampled = boxDownscale(chain.data() + offsets[i - 1], prevW, prevH, curW, curH, channels);
 				std::memcpy(chain.data() + offsets[i], downsampled.data(), downsampled.size());
 				prevW = curW;
 				prevH = curH;
@@ -107,8 +101,7 @@ namespace cbk::ac {
 			return chain;
 		}
 
-		bool writeCbkt(const std::filesystem::path& outputPath, int width, int height, int channels,
-		               const uint8_t* level0Pixels) {
+		bool writeCbkt(const std::filesystem::path& outputPath, int width, int height, int channels, const uint8_t* level0Pixels) {
 			std::vector<uint32_t> offsets;
 			auto chain = generateMipChain(level0Pixels, width, height, channels, offsets);
 			const uint32_t mipLevels = static_cast<uint32_t>(offsets.size() - 1);
@@ -116,9 +109,8 @@ namespace cbk::ac {
 
 			int compressedCapacity = LZ4_compressBound(uncompressedSize);
 			std::vector<char> compressedData(compressedCapacity);
-			int compressedSize = LZ4_compress_default(reinterpret_cast<const char*>(chain.data()),
-			                                          compressedData.data(),
-			                                          uncompressedSize, compressedCapacity);
+			int compressedSize = LZ4_compress_default(reinterpret_cast<const char*>(chain.data()), compressedData.data(), uncompressedSize,
+			                                          compressedCapacity);
 			if (compressedSize <= 0) {
 				CBK_AC_ERROR("LZ4 compression failed for: {}", outputPath.string());
 				return false;
@@ -161,14 +153,13 @@ namespace cbk::ac {
 		outputPath.replace_extension(".cbkt");
 
 		if (writeCbkt(outputPath, width, height, channels, pixels))
-			CBK_AC_INFO("Converted: {} -> {} ({}x{}, {} channels, {} mips)", path, outputPath.string(),
-			             width, height, channels, mipLevelCountFor(width, height));
+			CBK_AC_INFO("Converted: {} -> {} ({}x{}, {} channels, {} mips)", path, outputPath.string(), width, height, channels,
+			            mipLevelCountFor(width, height));
 
 		stbi_image_free(data);
 	}
 
-	void TextureConverter::packMetalRough(std::string_view metalPath, std::string_view roughPath,
-	                                      std::string_view outputPath) {
+	void TextureConverter::packMetalRough(std::string_view metalPath, std::string_view roughPath, std::string_view outputPath) {
 		int mw, mh, mc;
 		stbi_set_flip_vertically_on_load(1);
 		stbi_uc* metalData = stbi_load(metalPath.data(), &mw, &mh, &mc, 1);
@@ -187,8 +178,7 @@ namespace cbk::ac {
 
 		int width = mw, height = mh;
 		if (rw != mw || rh != mh) {
-			CBK_AC_WARN("Metal ({}x{}) and Rough ({}x{}) dimensions differ, using metal size",
-			             mw, mh, rw, rh);
+			CBK_AC_WARN("Metal ({}x{}) and Rough ({}x{}) dimensions differ, using metal size", mw, mh, rw, rh);
 		}
 
 		const uint32_t pixelCount = static_cast<uint32_t>(width) * height;
@@ -198,9 +188,9 @@ namespace cbk::ac {
 		for (uint32_t i = 0; i < pixelCount; i++) {
 			uint8_t metal = metalData[i];
 			uint8_t rough = (i < static_cast<uint32_t>(rw * rh)) ? roughData[i] : 0;
-			packed[i * 3 + 0] = 0;       // R = unused
-			packed[i * 3 + 1] = rough;   // G = roughness
-			packed[i * 3 + 2] = metal;   // B = metalness
+			packed[i * 3 + 0] = 0;     // R = unused
+			packed[i * 3 + 1] = rough; // G = roughness
+			packed[i * 3 + 2] = metal; // B = metalness
 		}
 
 		stbi_image_free(metalData);
@@ -210,7 +200,7 @@ namespace cbk::ac {
 		const uint8_t* pixels = resized.empty() ? packed.data() : resized.data();
 
 		if (writeCbkt(outputPath, width, height, channels, pixels))
-			CBK_AC_INFO("Packed MetalRough: {} + {} -> {} ({}x{}, {} mips)", metalPath, roughPath,
-			             outputPath, width, height, mipLevelCountFor(width, height));
+			CBK_AC_INFO("Packed MetalRough: {} + {} -> {} ({}x{}, {} mips)", metalPath, roughPath, outputPath, width, height,
+			            mipLevelCountFor(width, height));
 	}
 } // namespace cbk::ac

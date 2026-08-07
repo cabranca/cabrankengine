@@ -36,8 +36,7 @@ namespace cbk::ac {
 		std::vector<PropertyRef> properties;
 	};
 
-	static void collectMeshes(aiNode* node, const aiMatrix4x4& parentT,
-	                          const aiScene* scene, std::vector<CollectedMesh>& meshes) {
+	static void collectMeshes(aiNode* node, const aiMatrix4x4& parentT, const aiScene* scene, std::vector<CollectedMesh>& meshes) {
 		const aiMatrix4x4 t = parentT * node->mTransformation;
 		aiMatrix3x3 nT(t);
 		nT.Inverse().Transpose();
@@ -83,9 +82,8 @@ namespace cbk::ac {
 
 	// Collects the textures of a single material. convertedFiles is a model-wide
 	// set so the same source image is only written to .cbkt once, even when shared.
-	static void collectMaterialTextures(aiMaterial* mat, const std::string& modelDir,
-	                                     std::vector<TextureRef>& textures,
-	                                     std::vector<std::string>& convertedFiles) {
+	static void collectMaterialTextures(aiMaterial* mat, const std::string& modelDir, std::vector<TextureRef>& textures,
+	                                    std::vector<std::string>& convertedFiles) {
 		auto convertOnce = [&](const std::string& srcPath) {
 			if (std::ranges::find(convertedFiles, srcPath) != convertedFiles.end())
 				return;
@@ -137,8 +135,11 @@ namespace cbk::ac {
 			return;
 
 		std::string diffuseRel;
-		for (const auto& tex : textures) {
-			if (tex.type == TT::Diffuse) { diffuseRel = tex.relativePath; break; }
+		for (const auto& tex: textures) {
+			if (tex.type == TT::Diffuse) {
+				diffuseRel = tex.relativePath;
+				break;
+			}
 		}
 		if (diffuseRel.empty())
 			return;
@@ -156,7 +157,7 @@ namespace cbk::ac {
 			return;
 
 		auto findTexture = [&](const std::string& suffix) -> std::string {
-			for (const char* ext : { ".tga", ".png", ".jpg", ".jpeg", ".TGA", ".PNG", ".JPG" }) {
+			for (const char* ext: { ".tga", ".png", ".jpg", ".jpeg", ".TGA", ".PNG", ".JPG" }) {
 				std::string candidate = modelDir + "/" + basePrefix + suffix + ext;
 				if (std::filesystem::exists(candidate))
 					return candidate;
@@ -223,9 +224,7 @@ namespace cbk::ac {
 
 	void ModelConverter::convert(std::string_view path) {
 		Assimp::Importer importer;
-		const aiScene* scene = importer.ReadFile(
-		    path.data(),
-		    aiProcess_Triangulate | aiProcess_FlipUVs);
+		const aiScene* scene = importer.ReadFile(path.data(), aiProcess_Triangulate | aiProcess_FlipUVs);
 
 		if (!scene || (scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) || !scene->mRootNode) {
 			CBK_AC_ERROR("Failed to load model: {} - {}", path, importer.GetErrorString());
@@ -255,50 +254,37 @@ namespace cbk::ac {
 		}
 
 		// Header
-		ModelHeader header{
-			.numMeshes = static_cast<uint32_t>(meshes.size()),
-			.numMaterials = static_cast<uint32_t>(materials.size())
-		};
+		ModelHeader header{ .numMeshes = static_cast<uint32_t>(meshes.size()), .numMaterials = static_cast<uint32_t>(materials.size()) };
 		out.write(reinterpret_cast<const char*>(&header), sizeof(header));
 
 		// Material table
-		for (const auto& mat : materials) {
-			MaterialHeader mh{
-				.numTextures = static_cast<uint32_t>(mat.textures.size()),
-				.numProperties = static_cast<uint32_t>(mat.properties.size())
-			};
+		for (const auto& mat: materials) {
+			MaterialHeader mh{ .numTextures = static_cast<uint32_t>(mat.textures.size()),
+				               .numProperties = static_cast<uint32_t>(mat.properties.size()) };
 			out.write(reinterpret_cast<const char*>(&mh), sizeof(mh));
 
-			for (const auto& tex : mat.textures) {
-				TextureEntry entry{
-					.type = tex.type,
-					.pathLength = static_cast<uint32_t>(tex.relativePath.size())
-				};
+			for (const auto& tex: mat.textures) {
+				TextureEntry entry{ .type = tex.type, .pathLength = static_cast<uint32_t>(tex.relativePath.size()) };
 				out.write(reinterpret_cast<const char*>(&entry), sizeof(entry));
 				out.write(tex.relativePath.data(), entry.pathLength);
 			}
 
-			for (const auto& prop : mat.properties) {
+			for (const auto& prop: mat.properties) {
 				PropertyEntry entry{ .key = prop.key, .value = prop.value };
 				out.write(reinterpret_cast<const char*>(&entry), sizeof(entry));
 			}
 		}
 
 		// Mesh data
-		for (const auto& mesh : meshes) {
-			MeshHeader mh{
-				.numVertices = static_cast<uint32_t>(mesh.vertices.size()),
-				.numIndices = static_cast<uint32_t>(mesh.indices.size()),
-				.materialIndex = mesh.materialIndex
-			};
+		for (const auto& mesh: meshes) {
+			MeshHeader mh{ .numVertices = static_cast<uint32_t>(mesh.vertices.size()),
+				           .numIndices = static_cast<uint32_t>(mesh.indices.size()),
+				           .materialIndex = mesh.materialIndex };
 			out.write(reinterpret_cast<const char*>(&mh), sizeof(mh));
-			out.write(reinterpret_cast<const char*>(mesh.vertices.data()),
-			          mesh.vertices.size() * sizeof(Vertex));
-			out.write(reinterpret_cast<const char*>(mesh.indices.data()),
-			          mesh.indices.size() * sizeof(uint32_t));
+			out.write(reinterpret_cast<const char*>(mesh.vertices.data()), mesh.vertices.size() * sizeof(Vertex));
+			out.write(reinterpret_cast<const char*>(mesh.indices.data()), mesh.indices.size() * sizeof(uint32_t));
 		}
 
-		CBK_AC_INFO("Converted model: {} -> {} ({} meshes, {} materials)",
-		             path, outputPath.string(), meshes.size(), materials.size());
+		CBK_AC_INFO("Converted model: {} -> {} ({} meshes, {} materials)", path, outputPath.string(), meshes.size(), materials.size());
 	}
 } // namespace cbk::ac

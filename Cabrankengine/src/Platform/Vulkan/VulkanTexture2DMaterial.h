@@ -39,17 +39,17 @@ namespace cbk::platform::vk {
 
 	  private:
 		static void initSharedResourcesIfNeeded();
-		void        updateDescriptorSet() const;
+		void updateDescriptorSet() const;
 
-		static bool                  s_Initialized;
+		static bool s_Initialized;
 		static VkDescriptorSetLayout s_DescriptorSetLayout;
-		static VkDescriptorPool      s_DescriptorPool;
-		static VkPipelineLayout      s_PipelineLayout;
-		static VkPipeline            s_Pipeline;
+		static VkDescriptorPool s_DescriptorPool;
+		static VkPipelineLayout s_PipelineLayout;
+		static VkPipeline s_Pipeline;
 
 		std::array<Ref<rendering::Texture2D>, k_MaxTextureSlots> m_TextureSlots{};
-		VkDescriptorSet                                          m_DescriptorSet{ VK_NULL_HANDLE };
-		mutable bool                                             m_DescriptorDirty{ true };
+		VkDescriptorSet m_DescriptorSet{ VK_NULL_HANDLE };
+		mutable bool m_DescriptorDirty{ true };
 	};
 
 } // namespace cbk::platform::vk

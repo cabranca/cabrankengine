@@ -14,7 +14,7 @@ namespace cbk::rendering {
 	struct PointLight {
 		math::Vector3 position;
 		math::Vector3 radiance{ 1.f };
-		
+
 		// Standard Attenuation
 		float constant{ 1.f };
 		float linear{ 0.09f };

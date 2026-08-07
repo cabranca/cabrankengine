@@ -11,12 +11,11 @@ namespace cbk::platform::vk {
 	  public:
 		VulkanGeometryDescriptor(const void* vertexData, size_t vertexDataSize, const void* indexData, size_t indexDataSize,
 		                         const rendering::VertexLayout& layout);
-		VulkanGeometryDescriptor(size_t vertexDataSize, const void* indexData, size_t indexDataSize,
-		                         const rendering::VertexLayout& layout);
+		VulkanGeometryDescriptor(size_t vertexDataSize, const void* indexData, size_t indexDataSize, const rendering::VertexLayout& layout);
 
 		~VulkanGeometryDescriptor();
 		void shutdown();
-		
+
 		void setData(const void* data, uint32_t size) override;
 
 		uint32_t getIndexCount() const override;

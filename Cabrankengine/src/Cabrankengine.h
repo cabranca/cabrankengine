@@ -25,7 +25,6 @@
 
 #include <Common/Math/MatrixFactory.h>
 
-
 // --- Renderer ---
 #include <Cabrankengine/Renderer/Materials/PBRMaterial.h>
 #include <Cabrankengine/Renderer/Materials/PhongMaterial.h>

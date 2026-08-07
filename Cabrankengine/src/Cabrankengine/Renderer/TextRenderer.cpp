@@ -79,7 +79,7 @@ namespace cbk::rendering {
 		// s_Data and s_Characters are program-scope statics; their Ref<>s would
 		// otherwise destruct after the Vulkan device/allocator are gone. Release the
 		// GPU-backed resources (glyph textures included) while the device is live.
-		for (auto& slot : s_Data.textureSlots)
+		for (auto& slot: s_Data.textureSlots)
 			slot.reset();
 		s_Data.textMaterial.reset();
 		s_Data.textVertexDesc.reset();
@@ -197,7 +197,8 @@ namespace cbk::rendering {
 			// A texture for each letter. Ideally we'd use a TextureAtlas
 			auto charTexture = Texture2D::create(face);
 
-			Character character = { charTexture, Vector2(static_cast<float>(face->glyph->bitmap.width), static_cast<float>(face->glyph->bitmap.rows)),
+			Character character = { charTexture,
+				                    Vector2(static_cast<float>(face->glyph->bitmap.width), static_cast<float>(face->glyph->bitmap.rows)),
 				                    Vector2(static_cast<float>(face->glyph->bitmap_left), static_cast<float>(face->glyph->bitmap_top)),
 				                    static_cast<unsigned int>(face->glyph->advance.x) };
 			s_Characters.emplace(c, character);

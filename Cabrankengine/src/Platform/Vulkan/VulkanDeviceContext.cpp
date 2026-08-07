@@ -33,25 +33,25 @@ namespace cbk::platform::vk {
 		vkDestroyInstance(m_Instance, nullptr);
 	}
 
-    VkInstance VulkanDeviceContext::getInstance() const {
-        return m_Instance;
-    }
+	VkInstance VulkanDeviceContext::getInstance() const {
+		return m_Instance;
+	}
 
-    VkDevice VulkanDeviceContext::getLogicalDevice() const {
-        return m_LogicalDevice;
-    }
+	VkDevice VulkanDeviceContext::getLogicalDevice() const {
+		return m_LogicalDevice;
+	}
 
-    VkPhysicalDevice VulkanDeviceContext::getPhysicalDevice() const {
-        return m_PhysicalDevice;
-    }
+	VkPhysicalDevice VulkanDeviceContext::getPhysicalDevice() const {
+		return m_PhysicalDevice;
+	}
 
 	VkQueue VulkanDeviceContext::getDeviceQueue() const {
 		return m_DeviceQueue;
 	}
 
 	VmaAllocator VulkanDeviceContext::getAllocator() const {
-        return m_Allocator;
-    }
+		return m_Allocator;
+	}
 
 	uint32_t VulkanDeviceContext::getQueueFamily() const {
 		return m_QueueFamilyIndex;
@@ -72,8 +72,8 @@ namespace cbk::platform::vk {
 		vkGetPhysicalDeviceSurfaceFormatsKHR(m_PhysicalDevice, surface, &count, formats.data());
 
 		constexpr VkFormat preferred[] = { VK_FORMAT_B8G8R8A8_SRGB, VK_FORMAT_R8G8B8A8_SRGB };
-		for (VkFormat pref : preferred) {
-			for (auto& f : formats) {
+		for (VkFormat pref: preferred) {
+			for (auto& f: formats) {
 				if (f.format == pref && f.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
 					m_SurfaceFormat = f;
 					return;
@@ -81,7 +81,8 @@ namespace cbk::platform::vk {
 			}
 		}
 		m_SurfaceFormat = formats[0];
-		CBK_CORE_WARN("VulkanDeviceContext: preferred sRGB surface format unavailable, falling back to format {}", static_cast<int>(m_SurfaceFormat.format));
+		CBK_CORE_WARN("VulkanDeviceContext: preferred sRGB surface format unavailable, falling back to format {}",
+		              static_cast<int>(m_SurfaceFormat.format));
 	}
 
 	VkFormat VulkanDeviceContext::getDepthFormat() const {
@@ -90,9 +91,8 @@ namespace cbk::platform::vk {
 
 #ifdef CBK_DEBUG
 	static VKAPI_ATTR VkBool32 VKAPI_CALL vulkanDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT severity,
-	                                                         VkDebugUtilsMessageTypeFlagsEXT /*type*/,
-	                                                         const VkDebugUtilsMessengerCallbackDataEXT* data,
-	                                                         void* /*userData*/) {
+	                                                          VkDebugUtilsMessageTypeFlagsEXT /*type*/,
+	                                                          const VkDebugUtilsMessengerCallbackDataEXT* data, void* /*userData*/) {
 		if (severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
 			CBK_CORE_ERROR("[Vulkan] {}", data->pMessage);
 		else if (severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
@@ -106,16 +106,16 @@ namespace cbk::platform::vk {
 
 	static VkDebugUtilsMessengerCreateInfoEXT makeDebugMessengerCI() {
 		return VkDebugUtilsMessengerCreateInfoEXT{
-			.sType           = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
+			.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
 			.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT,
-			.messageType     = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
-			               | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT,
+			.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+			               VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT,
 			.pfnUserCallback = vulkanDebugCallback,
 		};
 	}
 #endif
 
-    void VulkanDeviceContext::createVulkanInstance() {
+	void VulkanDeviceContext::createVulkanInstance() {
 		VkApplicationInfo appInfo{ .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
 			                       .pApplicationName = "Cabrankengine",
 			                       .apiVersion = VK_API_VERSION_1_3 };
@@ -146,22 +146,23 @@ namespace cbk::platform::vk {
 		auto messengerCI = makeDebugMessengerCI();
 		VkResult vkResult = vkCreateDebugUtilsMessengerEXT(m_Instance, &messengerCI, nullptr, &m_DebugMessenger);
 		if (vkResult != VK_SUCCESS)
-			CBK_CORE_WARN("vkCreateDebugUtilsMessengerEXT failed ({}); validation messages will not be reported", static_cast<int>(vkResult));
+			CBK_CORE_WARN("vkCreateDebugUtilsMessengerEXT failed ({}); validation messages will not be reported",
+			              static_cast<int>(vkResult));
 #endif
 	}
 
 	void VulkanDeviceContext::createVulkanDevice() {
-        std::vector<VkPhysicalDevice> devices;
+		std::vector<VkPhysicalDevice> devices;
 		uint32_t deviceCount{ 0 };
-        uint32_t deviceIndex{ 0 };
+		uint32_t deviceIndex{ 0 };
 		VK_CHECK(vkEnumeratePhysicalDevices(m_Instance, &deviceCount, nullptr));
 		devices.resize(deviceCount);
 		VK_CHECK(vkEnumeratePhysicalDevices(m_Instance, &deviceCount, devices.data()));
-        m_PhysicalDevice = devices[deviceIndex];
+		m_PhysicalDevice = devices[deviceIndex];
 
 		VkPhysicalDeviceProperties2 deviceProperties{ .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2 };
 		vkGetPhysicalDeviceProperties2(m_PhysicalDevice, &deviceProperties);
-        CBK_CORE_INFO("Vulkan Info:");
+		CBK_CORE_INFO("Vulkan Info:");
 		CBK_CORE_INFO("  Device: {0}", deviceProperties.properties.deviceName);
 
 		uint32_t queueFamilyCount{ 0 };
@@ -236,4 +237,4 @@ namespace cbk::platform::vk {
 		}
 		CBK_CORE_ASSERT(m_DepthFormat != VK_FORMAT_UNDEFINED, "Depth Format is undefined");
 	}
-}
+} // namespace cbk::platform::vk

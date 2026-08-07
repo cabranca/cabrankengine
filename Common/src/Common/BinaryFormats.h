@@ -37,7 +37,7 @@ namespace cbk::common {
 	};
 
 	enum class TextureType : uint32_t {
-		Diffuse = 1,        // Diffuse / Albedo (BaseColor)
+		Diffuse = 1, // Diffuse / Albedo (BaseColor)
 		Specular = 2,
 		Normal = 3,
 		MetalRoughness = 4, // packed: B=metal, G=roughness
@@ -47,7 +47,7 @@ namespace cbk::common {
 	// Tags a model component so the loader knows which material factory to invoke.
 	// Stored alongside the model path in CModel; serialized to JSON.
 	enum class MaterialKind : uint32_t {
-		PBR   = 0,
+		PBR = 0,
 		Phong = 1,
 	};
 
@@ -86,7 +86,7 @@ namespace cbk::common {
 		uint32_t numVertices;
 		uint32_t numIndices;
 		uint32_t materialIndex; // index into the model's material table
-		// followed by Vertex[numVertices] then uint32_t[numIndices]
+		                        // followed by Vertex[numVertices] then uint32_t[numIndices]
 	};
 
 } // namespace cbk::common

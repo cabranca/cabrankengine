@@ -26,8 +26,9 @@ namespace cbk::platform::vk {
 		memcpy(((char*)m_VBufferAllocInfo.pMappedData) + vertexDataSize, indexData, indexDataSize);
 	}
 
-    VulkanGeometryDescriptor::VulkanGeometryDescriptor(size_t vertexDataSize, const void* indexData,
-	                                                   size_t indexDataSize, const rendering::VertexLayout& layout) : m_VBSize(vertexDataSize), m_IndexCount(indexDataSize / sizeof(uint32_t)) {
+	VulkanGeometryDescriptor::VulkanGeometryDescriptor(size_t vertexDataSize, const void* indexData, size_t indexDataSize,
+	                                                   const rendering::VertexLayout& layout)
+	    : m_VBSize(vertexDataSize), m_IndexCount(indexDataSize / sizeof(uint32_t)) {
 
 		VmaAllocator allocator = static_cast<VulkanDeviceContext*>(Application::get().getWindow().getContext())->getAllocator();
 		VkBufferCreateInfo bufferCI{ .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
@@ -61,8 +62,8 @@ namespace cbk::platform::vk {
 	}
 
 	const VkBuffer* VulkanGeometryDescriptor::getBuffer() const {
-        return &m_VBuffer;
-    }
+		return &m_VBuffer;
+	}
 
 	void VulkanGeometryDescriptor::bindBuffers(VkCommandBuffer cb) {
 		VkDeviceSize vOffset{ 0 };

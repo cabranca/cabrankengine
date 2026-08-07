@@ -4,8 +4,8 @@
 
 namespace MTL {
 	class Buffer;
-    class RenderCommandEncoder;
-}
+	class RenderCommandEncoder;
+} // namespace MTL
 
 namespace cbk::platform::metal {
 
