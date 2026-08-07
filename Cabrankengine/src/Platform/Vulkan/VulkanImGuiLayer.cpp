@@ -15,6 +15,13 @@
 
 namespace cbk {
 
+	namespace {
+		// Font size in ImGui is expressed in pixels, so a fixed value tracks physical
+		// display density rather than resolution. This is the size intended for a
+		// 1.0-scale (~96 DPI) display; the monitor's content scale multiplies it.
+		constexpr float kBaseFontSize = 16.f;
+	} // namespace
+
 	ImGuiLayer::ImGuiLayer() : Layer("ImGuiLayer") {}
 
 	void ImGuiLayer::onAttach() {
@@ -30,15 +37,33 @@ namespace cbk {
 		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 		io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
+		// Keeps fonts and window sizes following whichever monitor a viewport lands on.
+		io.ConfigDpiScaleFonts = true;
+		io.ConfigDpiScaleViewports = true;
+
+		auto window = static_cast<GLFWwindow*>(Application::get().getWindow().getNativeWindow());
+
+		// Reports 1.0 on macOS (handled via FramebufferScale) and on X11 sessions that
+		// leave Xft.dpi unset, in which case scaling falls back to style.FontScaleMain.
+		const float dpiScale = ImGui_ImplGlfw_GetContentScaleForWindow(window);
+		CBK_CORE_INFO("ImGui display content scale: {0}", dpiScale);
+
+		// ImGui 1.92 rasterizes glyphs on demand; the backend uploads the atlas
+		// during RenderDrawData, so no explicit Build()/font-texture call is needed.
+		io.FontDefault = io.Fonts->AddFontFromFileTTF("assets/fonts/ocraext.ttf", kBaseFontSize * dpiScale);
+
 		ImGui::StyleColorsDark();
 
+		// Fonts alone leave padding and scrollbars at 1.0-scale sizes, which still reads
+		// as a cramped UI on a high-DPI display.
 		ImGuiStyle& style = ImGui::GetStyle();
+		style.ScaleAllSizes(dpiScale);
+
 		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
 			style.WindowRounding = 0.f;
 			style.Colors[ImGuiCol_WindowBg].w = 1.f;
 		}
 
-		auto window = static_cast<GLFWwindow*>(Application::get().getWindow().getNativeWindow());
 		auto ctx = static_cast<platform::vk::VulkanDeviceContext*>(Application::get().getWindow().getContext());
 
 		ImGui_ImplGlfw_InitForVulkan(window, true);
