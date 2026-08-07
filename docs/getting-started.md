@@ -52,7 +52,13 @@ Add the `export` to your shell profile so it persists across sessions. Premake w
 premake5 gmake --renderer=opengl
 ```
 
-`--renderer` is a **generate-time** flag, not a build flag: switching backends means re-running Premake *and* `make clean`, or stale objects from the other backend linger in `bin-int/`.
+`--renderer` is a **generate-time** flag, not a build flag. Switching backends requires wiping the build tree — `make clean` is not enough, because it leaves the previous backend's objects inside the static libs and the link then fails with undefined references to that backend's SDK:
+
+```bash
+rm -rf bin bin-int
+premake5 gmake --renderer=opengl
+make config=release -j$(nproc)
+```
 
 ---
 

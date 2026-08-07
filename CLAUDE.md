@@ -15,7 +15,13 @@ make config=debug Sandbox                            # single target
 make help                                            # list targets and configs
 ```
 
-`--renderer=opengl|vulkan` is a **generate-time** flag on `premake5`, not a build flag. Switching backends means re-running `premake5` *and* `make clean` — stale objects from the other backend linger in `bin-int/`. On a machine with no Vulkan SDK, use `./premake5 gmake --renderer=opengl`.
+`--renderer=opengl|vulkan` is a **generate-time** flag on `premake5`, not a build flag. Switching backends requires wiping the build tree outright:
+
+```bash
+rm -rf bin bin-int && ./premake5 gmake --renderer=opengl && make config=release -j$(nproc)
+```
+
+`make clean` is **not** enough — it leaves the previous backend's objects in the static libs, and the link then fails with undefined references to that backend's SDK (e.g. `slang_createGlobalSession2` when switching Vulkan → OpenGL). On a machine with no Vulkan SDK, use `--renderer=opengl`.
 
 Build output is in-source: `bin/<Config>-<system>-<arch>/<Project>/<Project>`.
 
@@ -67,7 +73,8 @@ On Vulkan and Metal the backend `RendererAPI` owns only the frame lifecycle and 
 - Use `cbk::Ref<T>` / `createRef` and `cbk::Scope<T>` / `createScope` (`Core/Core.h:56-70`), not `std::make_shared` / `std::make_unique`.
 - Logging: `CBK_CORE_*` (engine), `CBK_APP_*` (game), `CBK_AC_*` (converter), fmt-style. Asserts: `CBK_CORE_ASSERT(cond, msg)` and friends are **debug-only** and compile to nothing in Release — never put side effects inside one. Wrap Vulkan calls in `VK_CHECK`.
 - Naming: `m_PascalCase` members, `s_PascalCase` statics, `k_PascalCase` constants, `camelCase` methods — but **public POD/struct members are PascalCase** (`CTransform::Position`). ECS components take a `C` prefix, systems a `System` suffix, archetype builders an `Arch` suffix.
-- `Application::Run()` and `Application::OnEvent()` are legacy PascalCase. Leave them alone; they are the public API.
+- Naming is enforced by `readability-identifier-naming` in `.clang-tidy`, and the tree is currently clean against it. Two deliberate exceptions carry `NOLINT` with a reason: nlohmann's `to_json`/`from_json` ADL hooks in `Scene/ComponentSerialization.h` (renaming them compiles and silently breaks serialization), and the named direction constants `Vector3::Up`, `Zero`, etc.
+- Public struct members have no single rule: ECS components use PascalCase, while GPU-facing and on-disk layout structs use camelCase so field names match the shader source and the `.cbkm`/`.cbkt` layout. `PublicMemberCase` is intentionally unset — do not add it.
 - Every `.cpp` under `Cabrankengine/` begins with `#include <pch.h>` as its literal first line (Windows force-includes it, Linux/macOS do not).
 - Includes: `<...>` for cross-module paths rooted at `src`, `"..."` for same-directory siblings. `SortIncludes: false` — the grouping is hand-maintained, so do not reorder.
 - Exceptions are effectively unused (one `try/catch` repo-wide, around JSON parsing); handle errors by log-and-return, `std::optional`, or abort. RTTI **is** required — `typeid` keys the ECS component storage and `dynamic_cast` drives material recording, so never build with `-fno-rtti`.

@@ -37,10 +37,10 @@ Platform/           OS-specific and backend-specific implementations
 
 ## Application & Layer Stack
 
-The entry point is `cbk::createApplication()`, defined by the game. Calling `Application::Run()` starts the frame loop. (`Run()` and `OnEvent()` are PascalCase for historical reasons — every other method on the engine is `camelCase`.)
+The entry point is `cbk::createApplication()`, defined by the game. Calling `Application::run()` starts the frame loop.
 
 ```
-Application::Run()
+Application::run()
   └─> LayerStack::onUpdate(dt)
       ├─> Layer 0 ::onUpdate()      ← game logic, entity mutations
       ├─> Layer 1 ::onUpdate()
@@ -77,10 +77,10 @@ The ECS is the primary data model. All game objects are entities; all state live
 ### Concepts
 
 ```
-Entity    uint32_t handle, max 20 000 concurrent (MAX_ENTITIES in ECS/Common.h),
+Entity    uint32_t handle, max 20 000 concurrent (k_MaxEntities in ECS/Common.h),
           IDs recycled via queue
 Signature std::bitset<64> — one bit per registered component type
-          (MAX_COMPONENTS = 64)
+          (k_MaxComponents = 64)
 ```
 
 ### Three Managers
@@ -110,7 +110,7 @@ Registry
 
 ### System Membership
 
-When a component is added or removed, `SystemManager::EntitySignatureChanged` runs automatically. If the entity's new signature satisfies a system's required signature, the entity is added to that system's entity set. It is removed when it no longer satisfies the signature.
+When a component is added or removed, `SystemManager::entitySignatureChanged` runs automatically. If the entity's new signature satisfies a system's required signature, the entity is added to that system's entity set. It is removed when it no longer satisfies the signature.
 
 ### Design Pattern: Systems Share Data Through Components
 

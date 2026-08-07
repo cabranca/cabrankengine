@@ -71,10 +71,11 @@ There is no renderer test target — verification is building and running the Sa
 make config=debug -j$(nproc)
 cd bin/Debug-linux-x86_64/Sandbox && ./Sandbox
 
-make clean && ./premake5 gmake --renderer=opengl   # backend switch needs BOTH
+rm -rf bin bin-int                   # switching backends: wipe, do not `make clean`
+./premake5 gmake --renderer=opengl
 make config=debug -j$(nproc)
 ```
 
-The `make clean` is not optional when switching backends — stale objects from the previous backend linger in `bin-int/` and produce link errors that look like missing symbols.
+`make clean` is **not** sufficient when switching backends: it leaves the previous backend's objects inside the static libs, and the link fails with undefined references to that backend's SDK (e.g. `slang_createGlobalSession2` when going Vulkan → OpenGL). Only `rm -rf bin bin-int` clears it.
 
 Metal cannot be verified without a Mac. If you could not build it, say the Metal path is unverified rather than reporting it as done.
