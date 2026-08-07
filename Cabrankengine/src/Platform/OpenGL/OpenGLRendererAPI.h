@@ -23,6 +23,8 @@ namespace cbk::platform::opengl {
 		virtual void drawIndexed(const Ref<rendering::Material>& material, const Ref<rendering::GeometryDescriptor>& vertexArray,
 		                         const math::Mat4& transform, uint32_t indexCount = 0) override;
 
+		void endScenePass() override;
+
 		virtual void endFrame() override;
 
 		// Sets the viewport dimensions for rendering.
@@ -32,5 +34,7 @@ namespace cbk::platform::opengl {
 		static API getAPI() {
 			return API::OpenGL;
 		}
+
+		[[nodiscard]] uint64_t getFinalFrame() const override;
 	};
 } // namespace cbk::platform::opengl

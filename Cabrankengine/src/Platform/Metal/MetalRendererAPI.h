@@ -34,6 +34,8 @@ namespace cbk::platform::metal {
 		void drawIndexed(const Ref<rendering::Material>& material, const Ref<rendering::GeometryDescriptor>& vertexArray,
 		                 const math::Mat4& transform, uint32_t indexCount = 0) override;
 
+		void endScenePass() override;
+
 		void endFrame() override;
 
 		// Sets the viewport dimensions for rendering.
@@ -43,6 +45,8 @@ namespace cbk::platform::metal {
 		[[nodiscard]] static API getAPI() {
 			return API::Metal;
 		}
+
+		[[nodiscard]] uint64_t getFinalFrame() const override;
 
 		// Per-frame handles exposed for ImGui's Metal backend (NewFrame / RenderDrawData).
 		[[nodiscard]] MTL::RenderPassDescriptor* getRenderPassDescriptor() const;

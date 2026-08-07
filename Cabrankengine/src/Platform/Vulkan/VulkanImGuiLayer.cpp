@@ -46,7 +46,6 @@ namespace cbk {
 		// Reports 1.0 on macOS (handled via FramebufferScale) and on X11 sessions that
 		// leave Xft.dpi unset, in which case scaling falls back to style.FontScaleMain.
 		const float dpiScale = ImGui_ImplGlfw_GetContentScaleForWindow(window);
-		CBK_CORE_INFO("ImGui display content scale: {0}", dpiScale);
 
 		// ImGui 1.92 rasterizes glyphs on demand; the backend uploads the atlas
 		// during RenderDrawData, so no explicit Build()/font-texture call is needed.
@@ -72,24 +71,28 @@ namespace cbk {
 		// ImGui shallow-copies InitInfo; pColorAttachmentFormats must outlive the
 		// Init call, so the format lives in a static.
 		static VkFormat s_ImguiColorFormat = ctx->getImageFormat();
-		// The frame's vkCmdBeginRendering binds a depth attachment, so ImGui's pipeline
-		// must declare the matching depthAttachmentFormat even though it doesn't test depth.
+		// ImGui draws in the UI pass, which VulkanRendererAPI::endScenePass() opens against
+		// the swapchain image with no depth attachment. Under dynamic rendering the pipeline
+		// has to declare exactly that, so the depth format is UNDEFINED rather than the
+		// scene pass's — a mismatch here is invalid on every ImGui draw.
 		VkPipelineRenderingCreateInfoKHR pipelineRenderingCI{ .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR,
 			                                                  .colorAttachmentCount = 1,
 			                                                  .pColorAttachmentFormats = &s_ImguiColorFormat,
-			                                                  .depthAttachmentFormat = ctx->getDepthFormat() };
+			                                                  .depthAttachmentFormat = VK_FORMAT_UNDEFINED };
+
+		ImGui_ImplVulkan_PipelineInfo pipelineInfo{ .PipelineRenderingCreateInfo = pipelineRenderingCI };
+
 		ImGui_ImplVulkan_InitInfo initInfo{ .ApiVersion = VK_API_VERSION_1_3,
 			                                .Instance = ctx->getInstance(),
 			                                .PhysicalDevice = ctx->getPhysicalDevice(),
 			                                .Device = ctx->getLogicalDevice(),
 			                                .QueueFamily = ctx->getQueueFamily(),
 			                                .Queue = ctx->getDeviceQueue(),
+			                                .DescriptorPoolSize = 1000,
 			                                .MinImageCount = rendererAPI->getMinImageCount(),
 			                                .ImageCount = rendererAPI->getImageCount(),
-			                                .MSAASamples = VK_SAMPLE_COUNT_1_BIT,
-			                                .DescriptorPoolSize = 1000,
-			                                .UseDynamicRendering = true,
-			                                .PipelineRenderingCreateInfo = pipelineRenderingCI };
+			                                .PipelineInfoMain = pipelineInfo,
+			                                .UseDynamicRendering = true };
 		ImGui_ImplVulkan_Init(&initInfo);
 	}
 

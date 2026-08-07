@@ -88,6 +88,7 @@ namespace cbk {
 		}
 
 #ifndef __EMSCRIPTEN__
+		RenderCommand::endScenePass();
 		app->m_ImGuiLayer->begin();
 		{
 			CBK_PROFILE_SCOPE("LayerStack OnImGuiRender");

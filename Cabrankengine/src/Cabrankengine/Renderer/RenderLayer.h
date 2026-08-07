@@ -14,6 +14,7 @@ namespace cbk::rendering {
 		void onAttach() override;
 		void onUpdate(Timestep dt) override;
 		void onEvent(Event& event) override;
+		void onImGuiRender() override;
 
 		static void setScene(scene::Scene* scene);
 		static void setEditorMode(bool editorMode);

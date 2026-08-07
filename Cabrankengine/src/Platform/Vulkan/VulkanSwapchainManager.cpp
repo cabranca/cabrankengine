@@ -95,6 +95,10 @@ namespace cbk::platform::vk {
 			                                  .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
 			                                  .presentMode = VK_PRESENT_MODE_FIFO_KHR };
 		VK_CHECK(vkCreateSwapchainKHR(m_Device, &swapchainCI, nullptr, &m_Swapchain));
+
+		// updateSwapchain() rebuilds from this, patching only oldSwapchain and the extent.
+		// Without keeping it, recreation runs off a zeroed struct and fails on every resize.
+		m_SwapchainCI = swapchainCI;
 	}
 
 	void VulkanSwapchainManager::getSwapchainImages(VulkanDeviceContext* ctx) {

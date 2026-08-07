@@ -29,11 +29,15 @@ namespace cbk::rendering {
 		static void drawIndexed(const Ref<Material>& material, const Ref<GeometryDescriptor>& desc,
 		                        const math::Mat4& transform = math::identityMat(), uint32_t indexCount = 0);
 
+		static void endScenePass();
+
 		static void endFrame();
 
 		static void setViewport(uint32_t x, uint32_t y, uint32_t width, uint32_t height);
 
 		[[nodiscard]] static RendererAPI* getRendererAPI();
+
+		[[nodiscard]] static uint64_t getFinalFrame();
 
 	  private:
 		static Scope<RendererAPI> s_RendererAPI; // This is a pointer to the RendererAPI instance that will be used for rendering commands.

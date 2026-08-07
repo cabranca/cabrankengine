@@ -56,6 +56,10 @@ namespace cbk::rendering {
 		s_RendererAPI->drawIndexed(material, desc, transform, indexCount);
 	}
 
+	void RenderCommand::endScenePass() {
+		s_RendererAPI->endScenePass();
+	}
+
 	void RenderCommand::endFrame() {
 		s_RendererAPI->endFrame();
 	}
@@ -66,5 +70,9 @@ namespace cbk::rendering {
 
 	RendererAPI* RenderCommand::getRendererAPI() {
 		return s_RendererAPI.get();
+	}
+
+	uint64_t RenderCommand::getFinalFrame() {
+		return s_RendererAPI->getFinalFrame();
 	}
 } // namespace cbk::rendering

@@ -52,6 +52,12 @@ namespace cbk::platform::opengl {
 		glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, nullptr);
 	}
 
+	void OpenGLRendererAPI::endScenePass() {
+		// Nothing to split: the scene is drawn straight into the default framebuffer, so
+		// ImGui simply keeps drawing into the same one. Rendering the scene offscreen here
+		// would mean an FBO and a colour texture to hand back from getFinalFrame().
+	}
+
 	void OpenGLRendererAPI::endFrame() {
 		// Once-per-frame GL error drain. On desktop this is redundant with the debug callback,
 		// but keeping it here surfaces WebGL 2 errors (which has no debug callback) at a fixed
@@ -64,5 +70,10 @@ namespace cbk::platform::opengl {
 
 	void OpenGLRendererAPI::setViewport(uint32_t x, uint32_t y, uint32_t width, uint32_t height) {
 		glViewport(x, y, width, height);
+	}
+
+	uint64_t OpenGLRendererAPI::getFinalFrame() const {
+		// No offscreen target — see endScenePass().
+		return 0;
 	}
 } // namespace cbk::platform::opengl

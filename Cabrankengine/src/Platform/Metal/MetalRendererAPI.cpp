@@ -171,6 +171,12 @@ namespace cbk::platform::metal {
 
 	void MetalRendererAPI::setViewport(uint32_t x, uint32_t y, uint32_t width, uint32_t height) {}
 
+	void MetalRendererAPI::endScenePass() {
+		// Nothing to split: ImGui draws into the same encoder the scene used, which is held
+		// open until endFrame(). Rendering the scene offscreen here would mean a second
+		// encoder against an off-screen MTLTexture to hand back from getFinalFrame().
+	}
+
 	void MetalRendererAPI::endFrame() {
 		if (m_ActiveEncoder) {
 			m_ActiveEncoder->endEncoding();
@@ -210,5 +216,10 @@ namespace cbk::platform::metal {
 
 	MTL::RenderCommandEncoder* MetalRendererAPI::getCommandEncoder() const {
 		return m_ActiveEncoder;
+	}
+
+	uint64_t MetalRendererAPI::getFinalFrame() const {
+		// No offscreen target — see endScenePass().
+		return 0;
 	}
 } // namespace cbk::platform::metal

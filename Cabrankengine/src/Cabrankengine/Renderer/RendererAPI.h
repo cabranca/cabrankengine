@@ -35,6 +35,12 @@ namespace cbk::rendering {
 		virtual void drawIndexed(const Ref<Material>& material, const Ref<GeometryDescriptor>& vertexArray, const math::Mat4& transform,
 		                         uint32_t indexCount = 0) = 0;
 
+		// Closes the pass scene geometry is drawn into and opens the one the UI is drawn
+		// into. Backends that render straight to the backbuffer leave this empty; backends
+		// that render the scene offscreen (so it can be displayed inside an ImGui window)
+		// use it to end the offscreen pass and transition its result to a sampleable state.
+		virtual void endScenePass() = 0;
+
 		virtual void endFrame() = 0;
 
 		// Sets the viewport dimensions for rendering.
@@ -44,6 +50,11 @@ namespace cbk::rendering {
 		[[nodiscard]] static API getAPI() {
 			return s_API;
 		}
+
+		// Backend handle for the texture the scene was rendered into, in a form ImGui can
+		// consume as an ImTextureID. Returns 0 (ImTextureID_Invalid) on backends that render
+		// straight to the backbuffer and therefore have no such texture.
+		[[nodiscard]] virtual uint64_t getFinalFrame() const = 0;
 
 	  private:
 		static API s_API; // Static variable that holds the current rendering API being used.

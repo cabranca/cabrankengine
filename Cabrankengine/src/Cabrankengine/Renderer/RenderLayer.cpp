@@ -1,6 +1,8 @@
 #include <pch.h>
 #include "RenderLayer.h"
 
+#include <imgui.h>
+
 #include <Cabrankengine/ECS/Components.h>
 
 #include "Renderer.h"
@@ -65,6 +67,20 @@ namespace cbk::rendering {
 	void RenderLayer::onEvent(Event& event) {
 		EventDispatcher dispatcher(event);
 		dispatcher.dispatch<WindowResizeEvent>(BIND_EVENT_FN(&RenderLayer::onWindowResize, this));
+	}
+
+	void RenderLayer::onImGuiRender() {
+		// Backends that render straight to the backbuffer have no texture to show here.
+		const auto finalFrame = static_cast<ImTextureID>(RenderCommand::getFinalFrame());
+		if (finalFrame == ImTextureID_Invalid)
+			return;
+
+		ImGui::Begin("Viewport");
+		// The scene is rendered at the window's aspect ratio and then stretched into
+		// whatever size the panel happens to be. Sizing the render target to the panel
+		// instead is the real fix, and needs the target recreated when the panel resizes.
+		ImGui::Image(finalFrame, ImGui::GetContentRegionAvail());
+		ImGui::End();
 	}
 
 	void RenderLayer::setScene(Scene* scene) {
