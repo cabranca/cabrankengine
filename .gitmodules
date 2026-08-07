@@ -7,9 +7,6 @@
 [submodule "Cabrankengine/vendor/imgui"]
 	path = Cabrankengine/vendor/imgui
 	url = https://github.com/cabranca/imgui
-[submodule "Cabrankengine/vendor/glm"]
-	path = Cabrankengine/vendor/glm
-	url = https://github.com/g-truc/glm
 [submodule "Cabrankengine/vendor/json"]
 	path = Cabrankengine/vendor/json
 	url = https://github.com/nlohmann/json

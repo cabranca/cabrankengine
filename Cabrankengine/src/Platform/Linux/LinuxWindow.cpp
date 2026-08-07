@@ -1,11 +1,11 @@
 #include "LinuxWindow.h"
+
+#include <GLFW/glfw3.h>
+
 #include <Cabrankengine/Core/Logger.h>
 #include <Cabrankengine/Events/MouseEvent.h>
 #include <Cabrankengine/Events/ApplicationEvent.h>
 #include <Cabrankengine/Events/KeyEvent.h>
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-#include <Platform/OpenGL/OpenGLContext.h>
 
 namespace cbk {
 	static bool s_SGlfwInitialized = false;
