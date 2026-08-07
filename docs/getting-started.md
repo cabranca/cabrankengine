@@ -49,8 +49,10 @@ Add the `export` to your shell profile so it persists across sessions. Premake w
 **Fallback to OpenGL:** if you don't have a Vulkan-capable driver, pass `--renderer=opengl` to Premake instead:
 
 ```bash
-premake5 gmake2 --renderer=opengl
+premake5 gmake --renderer=opengl
 ```
+
+`--renderer` is a **generate-time** flag, not a build flag: switching backends means re-running Premake *and* `make clean`, or stale objects from the other backend linger in `bin-int/`.
 
 ---
 
@@ -58,7 +60,7 @@ premake5 gmake2 --renderer=opengl
 
 ```bash
 # Generate Makefiles (Vulkan backend by default)
-premake5 gmake2
+premake5 gmake
 
 # Build everything in debug mode
 make

@@ -170,21 +170,21 @@ struct CSprite {
 };
 ```
 
-### CPhongModel / CPBRModel
+### CModel
 
-3D mesh with Phong or PBR materials respectively.
+A 3D mesh. Phong and PBR are not separate component types — one `CModel` carries a
+`MaterialKind` tag that tells the loader which material factory to invoke.
 
 ```cpp
-struct CPhongModel {
-    std::string Path;    // path to a .cbkm file
-    Ref<scene::Model<rendering::PhongMaterial>> Res;
-};
-
-struct CPBRModel {
-    std::string Path;    // path to a .cbkm file
-    Ref<scene::Model<rendering::PBRMaterial>> Res;
+struct CModel {
+    std::string          Path;                              // path to a .cbkm file
+    common::MaterialKind Kind = common::MaterialKind::PBR;   // PBR or Phong
+    Ref<scene::Model>    Res;
 };
 ```
+
+`MaterialKind` is defined in `Common/src/Common/BinaryFormats.h` and is serialized to
+JSON alongside the path.
 
 ### CText
 
@@ -319,7 +319,7 @@ bg.sprite().TilingFactor = 2.f;
 
 ### PhongModelArch
 
-A 3D entity with `CTransform + CPhongModel`.
+A 3D entity with `CTransform + CModel`, where `CModel::Kind` is set to `MaterialKind::Phong`.
 
 ```cpp
 PhongModelArch backpack{ "assets/models/backpack/backpack.cbkm" };
@@ -328,7 +328,7 @@ backpack.transform().Position = { 0.f, 0.f, -3.f };
 
 ### PBRModelArch
 
-A 3D entity with `CTransform + CPBRModel`.
+A 3D entity with `CTransform + CModel`, where `CModel::Kind` is set to `MaterialKind::PBR`.
 
 ```cpp
 PBRModelArch gun{ "assets/models/gun/Cerberus_LP.cbkm" };
@@ -391,10 +391,15 @@ CBK_CORE_INFO("Renderer initialized: {}", rendererName);
 CBK_CORE_WARN("Asset not found: {}", path);
 CBK_CORE_ERROR("Fatal: {}", message);
 
-// Game-side (prefix CBK_*)
-CBK_INFO("Player health: {}", health);
-CBK_WARN("Out of ammo");
+// Game-side (prefix CBK_APP_*)
+CBK_APP_INFO("Player health: {}", health);
+CBK_APP_WARN("Out of ammo");
+
+// CBKAssetConverter-side (prefix CBK_AC_*)
+CBK_AC_ERROR("Unsupported file format: {}", ext);
 ```
+
+Each family has `TRACE`, `DEBUG`, `INFO`, `WARN`, `ERROR`, and `FATAL` levels.
 
 Logs go to stdout and a file. Backed by [spdlog](https://github.com/gabime/spdlog).
 
@@ -402,9 +407,11 @@ Logs go to stdout and a file. Backed by [spdlog](https://github.com/gabime/spdlo
 
 ## Assertions
 
-Debug-only; triggers a platform breakpoint in debug builds, no-ops in release.
+Debug-only; triggers a platform breakpoint in debug builds, no-ops in release. Because
+they compile to nothing in release, never put a side effect inside one.
 
 ```cpp
-CBK_CORE_ASSERT(ptr != nullptr, "Expected valid pointer");
-CBK_ASSERT(index < size, "Index out of range");
+CBK_CORE_ASSERT(ptr != nullptr, "Expected valid pointer");   // engine
+CBK_APP_ASSERT(index < size, "Index out of range");          // game
+CBK_AC_ASSERT(header.magic == k_ModelMagic, "Bad .cbkm");    // asset converter
 ```

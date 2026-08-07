@@ -13,15 +13,15 @@ Cabrankengine/src/Cabrankengine/
 ├── Renderer/       RendererAPI abstraction, Renderer2D, Materials (Phong/PBR)
 ├── Scene/          Camera, Model loading, SceneSerializer, Transform
 │   └── Archetypes/ Entity builder templates (Sprite, PhongModel, PBRModel, Text, Camera, Lights)
-├── Math/           Vector2/3/4, Mat4, Quaternion, MatrixFactory
 ├── Events/         Event types and dispatcher
 ├── ImGui/          ImGui layer
 ├── Debug/          Profiling instrumentation
 └── Config/         Compile-time configuration
 
-Common/src/Common/
-├── Logger.h        spdlog wrapper (CBK_CORE_* and CBK_* macros)
-├── Assertion.h     CBK_ASSERT / CBK_CORE_ASSERT
+Common/src/Common/          shared by the engine AND CBKAssetConverter
+├── Math/           Vector2/3/4, Mat4, Quaternion, MatrixFactory (column-major)
+├── Logger.h        spdlog wrapper (CBK_CORE_*, CBK_APP_*, CBK_AC_* macros)
+├── Assertion.h     CBK_CORE_ASSERT / CBK_APP_ASSERT / CBK_AC_ASSERT
 └── BinaryFormats.h Shared structs for .cbkm / .cbkt binary files
 
 Platform/           OS-specific and backend-specific implementations
@@ -37,10 +37,10 @@ Platform/           OS-specific and backend-specific implementations
 
 ## Application & Layer Stack
 
-The entry point is `cbk::createApplication()`, defined by the game. Calling `Application::run()` starts the frame loop.
+The entry point is `cbk::createApplication()`, defined by the game. Calling `Application::Run()` starts the frame loop. (`Run()` and `OnEvent()` are PascalCase for historical reasons — every other method on the engine is `camelCase`.)
 
 ```
-Application::run()
+Application::Run()
   └─> LayerStack::onUpdate(dt)
       ├─> Layer 0 ::onUpdate()      ← game logic, entity mutations
       ├─> Layer 1 ::onUpdate()
@@ -77,8 +77,10 @@ The ECS is the primary data model. All game objects are entities; all state live
 ### Concepts
 
 ```
-Entity    uint32_t handle, max 10 000 concurrent, IDs recycled via queue
+Entity    uint32_t handle, max 20 000 concurrent (MAX_ENTITIES in ECS/Common.h),
+          IDs recycled via queue
 Signature std::bitset<64> — one bit per registered component type
+          (MAX_COMPONENTS = 64)
 ```
 
 ### Three Managers
@@ -200,7 +202,7 @@ Custom systems added by game layers run in their layer's `onUpdate`, which runs 
 
 ## Events
 
-Events flow from the Window through the Application to the LayerStack, propagating top-to-bottom (overlays first). Each layer calls `e.Handled = true` to stop propagation.
+Events flow from the Window through the Application to the LayerStack, propagating top-to-bottom (overlays first). A layer calls `e.setHandled()` to stop propagation — `m_Handled` is private, and `handled()` reads it. Returning `true` from a dispatched callback sets it for you.
 
 Event categories: Application (WindowResize, WindowClose), Key, Mouse, MouseButton.
 
@@ -226,6 +228,10 @@ void MyLayer::onEvent(Event& e) {
 | Component | `C` prefix — `CTransform`, `CSprite`, `CCamera` |
 | System | `System` suffix — `CameraSystem`, `SpriteRenderSystem` |
 | Private member | `m_` prefix — `m_Registry`, `m_LayerStack` |
-| Shared pointer alias | `Ref<T>` = `std::shared_ptr<T>` |
-| Logging | `CBK_CORE_INFO(...)`, `CBK_WARN(...)` |
+| Static member | `s_` prefix — `s_Instance`, `s_Shaders` |
+| Constant | `k_` prefix — `k_MaxFramesInFlight` |
+| Public POD member | PascalCase, no prefix — `CTransform::Position` |
+| Method | `camelCase` — `createEntity`, `pushLayer` |
+| Smart pointer aliases | `Ref<T>` = `std::shared_ptr<T>`, `Scope<T>` = `std::unique_ptr<T>` — use `createRef` / `createScope` |
+| Logging | `CBK_CORE_*` (engine), `CBK_APP_*` (game), `CBK_AC_*` (converter) — e.g. `CBK_CORE_INFO(...)`, `CBK_APP_WARN(...)` |
 | Assertion | `CBK_CORE_ASSERT(cond, msg)` (debug-only, triggers breakpoint) |

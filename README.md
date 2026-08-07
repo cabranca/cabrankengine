@@ -30,7 +30,7 @@ A 2D/3D game engine written in C++23, built from scratch as a learning project a
 
 ## Features
 
-- **Entity Component System** — Registry-based ECS with typed component arrays, signature-filtered systems, and up to 10 000 concurrent entities
+- **Entity Component System** — Registry-based ECS with typed component arrays, signature-filtered systems, and up to 20 000 concurrent entities
 - **Vulkan renderer** — dynamic-rendering backend (no render passes), per-material pipelines and self-recording materials; default on Linux
 - **OpenGL 4.5 backend** — fallback renderer, default on Windows
 - **2D batch renderer** — sprites, tiling, tint; all quads submitted in a single draw call
