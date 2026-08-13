@@ -41,6 +41,7 @@ namespace cbk::platform::vk {
 
 		VkDescriptorSet m_DescriptorSet{ VK_NULL_HANDLE };
 		mutable bool m_DescriptorDirty{ true };
+		static inline VkSampleCountFlagBits s_MSAA = VK_SAMPLE_COUNT_1_BIT;
 	};
 
 } // namespace cbk::platform::vk

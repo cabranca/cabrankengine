@@ -28,9 +28,10 @@ namespace cbk::platform::vk {
 	VkPipeline VulkanPhongMaterial::s_Pipeline = VK_NULL_HANDLE;
 
 	VulkanPhongMaterial::VulkanPhongMaterial() : PhongMaterial() {
-		initSharedResourcesIfNeeded();
-
+		
 		auto ctx = &VulkanRendererAPI::getContext();
+		s_MSAA = ctx->getMSAA();
+		initSharedResourcesIfNeeded();
 		VkDescriptorSetAllocateInfo dsAllocInfo = {
 			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
 			.descriptorPool = s_DescriptorPool,
@@ -210,7 +211,7 @@ namespace cbk::platform::vk {
 		};
 		VkPipelineMultisampleStateCreateInfo multisample{
 			.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
-			.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
+			.rasterizationSamples = s_MSAA,
 		};
 		VkPipelineDepthStencilStateCreateInfo depthStencil{
 			.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,

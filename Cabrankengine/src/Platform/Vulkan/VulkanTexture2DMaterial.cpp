@@ -38,9 +38,10 @@ namespace cbk::platform::vk {
 	VkPipeline VulkanTexture2DMaterial::s_Pipeline = VK_NULL_HANDLE;
 
 	VulkanTexture2DMaterial::VulkanTexture2DMaterial() : Texture2DMaterial() {
-		initSharedResourcesIfNeeded();
-
+		
 		auto ctx = &VulkanRendererAPI::getContext();
+		s_MSAA = ctx->getMSAA();
+		initSharedResourcesIfNeeded();
 		VkDescriptorSetAllocateInfo dsAllocInfo = {
 			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
 			.descriptorPool = s_DescriptorPool,
@@ -208,7 +209,7 @@ namespace cbk::platform::vk {
 		};
 		VkPipelineMultisampleStateCreateInfo multisample{
 			.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
-			.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
+			.rasterizationSamples = s_MSAA,
 		};
 		// 2D batches submit in draw order and rely on painter's algorithm rather
 		// than depth — disable depth so per-frame interleaving with 3D doesn't
