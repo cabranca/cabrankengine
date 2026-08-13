@@ -5,6 +5,8 @@
 #include <Common/Math/Mat4.h>
 #include <Common/Math/Vector4.h>
 
+#include <Cabrankengine/Core/Window.h>
+
 namespace cbk::rendering {
 
 	class GeometryDescriptor; // Forward declaration of VertexArray class.
@@ -18,7 +20,7 @@ namespace cbk::rendering {
 		virtual ~RendererAPI() = default;
 
 		// Initializes the renderer API. This method should be called before any rendering operations.
-		virtual void init() = 0;
+		virtual void init(const Window& window) = 0;
 
 		virtual void shutdown() = 0;
 

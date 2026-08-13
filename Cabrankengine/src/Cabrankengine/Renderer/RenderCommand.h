@@ -12,7 +12,7 @@ namespace cbk::rendering {
 	class RenderCommand {
 	  public:
 		// Initializes the RendererAPI. This should be called once at the start of the application.
-		static void init();
+		static void init(const Window& window);
 
 		static void shutdown();
 

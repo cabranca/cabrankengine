@@ -31,27 +31,13 @@ namespace cbk {
 	}
 
 	void LinuxWindow::setVSync(bool enabled) {
-#if defined(CBK_RENDERER_OPENGL) && !defined(__EMSCRIPTEN__)
-		// The browser drives presentation through requestAnimationFrame, so swap
-		// intervals are meaningless on web. Worse, GLFW's emscripten compat layer
-		// routes glfwSwapInterval through emscripten_set_main_loop_timing, which
-		// warns if the main loop has not yet been registered (we register it in
-		// Application::Run, after Window construction).
-		if (enabled)
-			glfwSwapInterval(1);
-		else
-			glfwSwapInterval(0);
-#endif
+		// TODO: handle this
 		// Vulkan: vsync is the swapchain present mode (FIFO_KHR), not a GLFW knob.
 		m_Data.VSync = enabled;
 	}
 
 	bool LinuxWindow::isVSync() const {
 		return m_Data.VSync;
-	}
-
-	rendering::GraphicsContext* LinuxWindow::getContext() const {
-		return m_Context.get();
 	}
 
 	void LinuxWindow::init(const WindowProps& props) {
@@ -68,15 +54,10 @@ namespace cbk {
 			s_SGlfwInitialized = true;
 		}
 
-#ifdef CBK_RENDERER_VULKAN
 		// Vulkan owns the surface, so GLFW must not create an OpenGL context.
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-#endif
 
 		m_Window = glfwCreateWindow(props.Width, props.Height, m_Data.Title.c_str(), nullptr, nullptr);
-
-		m_Context = rendering::GraphicsContext::create();
-		m_Context->init();
 
 		glfwSetWindowUserPointer(m_Window, &m_Data);
 		setVSync(true);
@@ -156,10 +137,6 @@ namespace cbk {
 	}
 
 	void LinuxWindow::shutdown() {
-		// Tear down the graphics backend (Vulkan device/allocator/instance, or no-op
-		// for OpenGL) before the surface/window goes away.
-		if (m_Context)
-			m_Context->shutdown();
 		glfwDestroyWindow(m_Window);
 	}
 

@@ -3,17 +3,15 @@
 
 #include <cstring>
 
-#include <Cabrankengine/Core/Application.h>
-#include <Cabrankengine/Core/Window.h>
-
 #include "VkCheck.h"
 #include "VulkanDeviceContext.h"
+#include "VulkanRendererAPI.h"
 
 namespace cbk::platform::vk {
 
 	VulkanUniformBuffer::VulkanUniformBuffer(uint32_t size, uint32_t binding) : m_Size(size) {
-		auto ctx = static_cast<VulkanDeviceContext*>(Application::get().getWindow().getContext());
-		auto device = ctx->getLogicalDevice();
+		auto ctx = &VulkanRendererAPI::getContext();
+		auto device = ctx->getDevice();
 
 		// 1) Per-slot persistently mapped host-visible buffer. Independent allocations
 		// so the GPU can read slot N-1 while the CPU writes slot N.
@@ -89,8 +87,8 @@ namespace cbk::platform::vk {
 	}
 
 	VulkanUniformBuffer::~VulkanUniformBuffer() {
-		auto ctx = static_cast<VulkanDeviceContext*>(Application::get().getWindow().getContext());
-		auto device = ctx->getLogicalDevice();
+		auto ctx = &VulkanRendererAPI::getContext();
+		auto device = ctx->getDevice();
 
 		// The descriptor pool and buffers may still be referenced by in-flight
 		// command buffers from the final frame(s). Wait for the GPU to drain

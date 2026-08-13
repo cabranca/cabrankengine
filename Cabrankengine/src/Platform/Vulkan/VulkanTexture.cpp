@@ -5,11 +5,9 @@
 #include FT_FREETYPE_H
 #include <lz4.h>
 
-#include <Cabrankengine/Core/Application.h>
-#include <Cabrankengine/Core/Window.h>
-
 #include "VkCheck.h"
 #include "VulkanDeviceContext.h"
+#include "VulkanRendererAPI.h"
 
 namespace cbk::platform::vk {
 
@@ -169,7 +167,7 @@ namespace cbk::platform::vk {
 
 	void VulkanTexture::uploadPixels(VkFormat format, const void* data, VkDeviceSize dataSize, const std::vector<MipLevel>& mips) {
 		CBK_CORE_ASSERT(!mips.empty(), "VulkanTexture::uploadPixels(): mip list must not be empty");
-		auto ctx = static_cast<VulkanDeviceContext*>(Application::get().getWindow().getContext());
+		auto ctx = &VulkanRendererAPI::getContext();
 		const uint32_t mipLevels = static_cast<uint32_t>(mips.size());
 
 		VkImageCreateInfo texImgCI{ .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
@@ -190,7 +188,7 @@ namespace cbk::platform::vk {
 			                            .format = texImgCI.format,
 			                            .subresourceRange = {
 			                                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .levelCount = mipLevels, .layerCount = 1 } };
-		VK_CHECK(vkCreateImageView(ctx->getLogicalDevice(), &texVewCI, nullptr, &m_Texture.view));
+		VK_CHECK(vkCreateImageView(ctx->getDevice(), &texVewCI, nullptr, &m_Texture.view));
 
 		// Upload
 		VkBuffer imgSrcBuffer{};
@@ -206,17 +204,17 @@ namespace cbk::platform::vk {
 		memcpy(imgSrcAllocInfo.pMappedData, data, dataSize);
 		VkFenceCreateInfo fenceOneTimeCI{ .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
 		VkFence fenceOneTime{};
-		VK_CHECK(vkCreateFence(ctx->getLogicalDevice(), &fenceOneTimeCI, nullptr, &fenceOneTime));
+		VK_CHECK(vkCreateFence(ctx->getDevice(), &fenceOneTimeCI, nullptr, &fenceOneTime));
 		VkCommandPool commandPool{ VK_NULL_HANDLE };
 		VkCommandPoolCreateInfo commandPoolCI{ .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
 			                                   .flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT,
 			                                   .queueFamilyIndex = ctx->getQueueFamily() };
-		VK_CHECK(vkCreateCommandPool(ctx->getLogicalDevice(), &commandPoolCI, nullptr, &commandPool));
+		VK_CHECK(vkCreateCommandPool(ctx->getDevice(), &commandPoolCI, nullptr, &commandPool));
 		VkCommandBuffer cbOneTime{};
 		VkCommandBufferAllocateInfo cbOneTimeAI{ .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
 			                                     .commandPool = commandPool,
 			                                     .commandBufferCount = 1 };
-		VK_CHECK(vkAllocateCommandBuffers(ctx->getLogicalDevice(), &cbOneTimeAI, &cbOneTime));
+		VK_CHECK(vkAllocateCommandBuffers(ctx->getDevice(), &cbOneTimeAI, &cbOneTime));
 		VkCommandBufferBeginInfo cbOneTimeBI{ .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
 			                                  .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT };
 		VK_CHECK(vkBeginCommandBuffer(cbOneTime, &cbOneTimeBI));
@@ -260,11 +258,11 @@ namespace cbk::platform::vk {
 		vkCmdPipelineBarrier2(cbOneTime, &barrierTexInfo);
 		VK_CHECK(vkEndCommandBuffer(cbOneTime));
 		VkSubmitInfo oneTimeSI{ .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO, .commandBufferCount = 1, .pCommandBuffers = &cbOneTime };
-		VK_CHECK(vkQueueSubmit(ctx->getDeviceQueue(), 1, &oneTimeSI, fenceOneTime));
-		VK_CHECK(vkWaitForFences(ctx->getLogicalDevice(), 1, &fenceOneTime, VK_TRUE, UINT64_MAX));
-		vkDestroyFence(ctx->getLogicalDevice(), fenceOneTime, nullptr);
+		VK_CHECK(vkQueueSubmit(ctx->getQueue().getQueue(), 1, &oneTimeSI, fenceOneTime));
+		VK_CHECK(vkWaitForFences(ctx->getDevice(), 1, &fenceOneTime, VK_TRUE, UINT64_MAX));
+		vkDestroyFence(ctx->getDevice(), fenceOneTime, nullptr);
 		vmaDestroyBuffer(ctx->getAllocator(), imgSrcBuffer, imgSrcAllocation);
-		vkDestroyCommandPool(ctx->getLogicalDevice(), commandPool, nullptr);
+		vkDestroyCommandPool(ctx->getDevice(), commandPool, nullptr);
 
 		// Sampler — trilinear filtering across the full mip chain plus anisotropic
 		// filtering. VK_LOD_CLAMP_NONE lets the implementation pick any mip in the
@@ -282,7 +280,7 @@ namespace cbk::platform::vk {
 			.maxAnisotropy = std::min(16.0f, devProps.limits.maxSamplerAnisotropy),
 			.maxLod = VK_LOD_CLAMP_NONE,
 		};
-		VK_CHECK(vkCreateSampler(ctx->getLogicalDevice(), &samplerCI, nullptr, &m_Texture.sampler));
+		VK_CHECK(vkCreateSampler(ctx->getDevice(), &samplerCI, nullptr, &m_Texture.sampler));
 		m_TexDescriptorInfo = VkDescriptorImageInfo{ .sampler = m_Texture.sampler,
 			                                         .imageView = m_Texture.view,
 			                                         .imageLayout = VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL };
@@ -291,11 +289,11 @@ namespace cbk::platform::vk {
 	}
 
 	VulkanTexture::~VulkanTexture() {
-		auto ctx = static_cast<VulkanDeviceContext*>(Application::get().getWindow().getContext());
+		auto ctx = &VulkanRendererAPI::getContext();
 		if (m_Texture.view != VK_NULL_HANDLE)
-			vkDestroyImageView(ctx->getLogicalDevice(), m_Texture.view, nullptr);
+			vkDestroyImageView(ctx->getDevice(), m_Texture.view, nullptr);
 		if (m_Texture.sampler != VK_NULL_HANDLE)
-			vkDestroySampler(ctx->getLogicalDevice(), m_Texture.sampler, nullptr);
+			vkDestroySampler(ctx->getDevice(), m_Texture.sampler, nullptr);
 		if (m_Texture.image != VK_NULL_HANDLE)
 			vmaDestroyImage(ctx->getAllocator(), m_Texture.image, m_Texture.allocation);
 	}

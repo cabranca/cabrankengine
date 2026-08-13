@@ -3,14 +3,13 @@
 
 #include <array>
 
-#include <Cabrankengine/Core/Application.h>
-#include <Cabrankengine/Core/Window.h>
 #include <Common/Math/Mat4.h>
 #include <Cabrankengine/Renderer/Renderer.h>
 #include <Cabrankengine/Renderer/Shader.h>
 
 #include "VulkanDescriptorBinding.h"
 #include "VulkanDeviceContext.h"
+#include "VulkanRendererAPI.h"
 #include "VulkanShader.h"
 #include "VulkanTexture.h"
 #include "VulkanUniformBuffer.h"
@@ -41,14 +40,14 @@ namespace cbk::platform::vk {
 	VulkanTexture2DMaterial::VulkanTexture2DMaterial() : Texture2DMaterial() {
 		initSharedResourcesIfNeeded();
 
-		auto ctx = static_cast<VulkanDeviceContext*>(Application::get().getWindow().getContext());
+		auto ctx = &VulkanRendererAPI::getContext();
 		VkDescriptorSetAllocateInfo dsAllocInfo = {
 			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
 			.descriptorPool = s_DescriptorPool,
 			.descriptorSetCount = 1,
 			.pSetLayouts = &s_DescriptorSetLayout,
 		};
-		auto vkResult = vkAllocateDescriptorSets(ctx->getLogicalDevice(), &dsAllocInfo, &m_DescriptorSet);
+		auto vkResult = vkAllocateDescriptorSets(ctx->getDevice(), &dsAllocInfo, &m_DescriptorSet);
 		if (vkResult != VK_SUCCESS) {
 			CBK_CORE_ERROR("VulkanTexture2DMaterial: vkAllocateDescriptorSets failed ({})", static_cast<int>(vkResult));
 		}
@@ -84,7 +83,7 @@ namespace cbk::platform::vk {
 		// for unused slots — the shader still indexes them so they must be valid.
 		CBK_CORE_ASSERT(m_TextureSlots[0], "VulkanTexture2DMaterial: slot 0 must be populated before flush");
 
-		auto ctx = static_cast<VulkanDeviceContext*>(Application::get().getWindow().getContext());
+		auto ctx = &VulkanRendererAPI::getContext();
 
 		std::array<VkDescriptorImageInfo, k_MaxTextureSlots> imageInfos{};
 		const auto& fallback = m_TextureSlots[0];
@@ -102,7 +101,7 @@ namespace cbk::platform::vk {
 			.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
 			.pImageInfo = imageInfos.data(),
 		};
-		vkUpdateDescriptorSets(ctx->getLogicalDevice(), 1, &write, 0, nullptr);
+		vkUpdateDescriptorSets(ctx->getDevice(), 1, &write, 0, nullptr);
 		m_DescriptorDirty = false;
 	}
 
@@ -111,8 +110,8 @@ namespace cbk::platform::vk {
 			return;
 		s_Initialized = true;
 
-		auto ctx = static_cast<VulkanDeviceContext*>(Application::get().getWindow().getContext());
-		auto device = ctx->getLogicalDevice();
+		auto ctx = &VulkanRendererAPI::getContext();
+		auto device = ctx->getDevice();
 
 		// 1) Material descriptor set layout — one binding with a 32-sampler array.
 		VkDescriptorSetLayoutBinding binding{
@@ -275,8 +274,8 @@ namespace cbk::platform::vk {
 	void VulkanTexture2DMaterial::destroySharedResources() {
 		if (!s_Initialized)
 			return;
-		auto ctx = static_cast<VulkanDeviceContext*>(Application::get().getWindow().getContext());
-		auto device = ctx->getLogicalDevice();
+		auto ctx = &VulkanRendererAPI::getContext();
+		auto device = ctx->getDevice();
 		if (s_Pipeline != VK_NULL_HANDLE)
 			vkDestroyPipeline(device, s_Pipeline, nullptr);
 		if (s_PipelineLayout != VK_NULL_HANDLE)

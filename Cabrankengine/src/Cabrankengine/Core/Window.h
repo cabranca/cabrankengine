@@ -2,8 +2,6 @@
 
 #include <pch.h>
 
-#include <Cabrankengine/Renderer/GraphicsContext.h>
-
 namespace cbk {
 
 	class Event; // Forward declaration of the Event class
@@ -46,8 +44,6 @@ namespace cbk {
 
 		// Returns the platform specific window implementation.
 		[[nodiscard]] virtual void* getNativeWindow() const = 0;
-
-		[[nodiscard]] virtual rendering::GraphicsContext* getContext() const = 0;
 
 		// Only access to window creation (singleton pattern?)
 		[[nodiscard]] static Scope<Window> create(const WindowProps& props = WindowProps());

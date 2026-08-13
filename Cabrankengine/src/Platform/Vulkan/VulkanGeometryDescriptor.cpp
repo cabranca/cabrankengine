@@ -1,11 +1,9 @@
 #include <pch.h>
 #include "VulkanGeometryDescriptor.h"
 
-#include <Cabrankengine/Core/Application.h>
-#include <Cabrankengine/Core/Window.h>
-
 #include "VkCheck.h"
 #include "VulkanDeviceContext.h"
+#include "VulkanRendererAPI.h"
 
 namespace cbk::platform::vk {
 
@@ -13,7 +11,7 @@ namespace cbk::platform::vk {
 	                                                   size_t indexDataSize, const rendering::VertexLayout& layout)
 	    : m_VBSize(vertexDataSize), m_IndexCount(indexDataSize / sizeof(uint32_t)) {
 
-		VmaAllocator allocator = static_cast<VulkanDeviceContext*>(Application::get().getWindow().getContext())->getAllocator();
+		VmaAllocator allocator = VulkanRendererAPI::getContext().getAllocator();
 		VkBufferCreateInfo bufferCI{ .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
 			                         .size = vertexDataSize + indexDataSize,
 			                         .usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT };
@@ -30,7 +28,7 @@ namespace cbk::platform::vk {
 	                                                   const rendering::VertexLayout& layout)
 	    : m_VBSize(vertexDataSize), m_IndexCount(indexDataSize / sizeof(uint32_t)) {
 
-		VmaAllocator allocator = static_cast<VulkanDeviceContext*>(Application::get().getWindow().getContext())->getAllocator();
+		VmaAllocator allocator = VulkanRendererAPI::getContext().getAllocator();
 		VkBufferCreateInfo bufferCI{ .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
 			                         .size = vertexDataSize + indexDataSize,
 			                         .usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT };
@@ -49,7 +47,7 @@ namespace cbk::platform::vk {
 	void VulkanGeometryDescriptor::shutdown() {
 		if (m_VBuffer == VK_NULL_HANDLE)
 			return;
-		VmaAllocator allocator = static_cast<VulkanDeviceContext*>(Application::get().getWindow().getContext())->getAllocator();
+		VmaAllocator allocator = VulkanRendererAPI::getContext().getAllocator();
 		vmaDestroyBuffer(allocator, m_VBuffer, m_VBufferAllocation);
 	}
 

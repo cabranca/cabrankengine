@@ -3,8 +3,6 @@
 
 #include <array>
 
-#include <Cabrankengine/Core/Application.h>
-#include <Cabrankengine/Core/Window.h>
 #include <Cabrankengine/Renderer/GeometryDescriptor.h>
 #include <Cabrankengine/Renderer/Renderer.h>
 #include <Cabrankengine/Renderer/Shader.h>
@@ -12,6 +10,7 @@
 #include "VkCheck.h"
 #include "VulkanDescriptorBinding.h"
 #include "VulkanDeviceContext.h"
+#include "VulkanRendererAPI.h"
 #include "VulkanShader.h"
 #include "VulkanTexture.h"
 #include "VulkanUniformBuffer.h"
@@ -31,14 +30,14 @@ namespace cbk::platform::vk {
 	VulkanPhongMaterial::VulkanPhongMaterial() : PhongMaterial() {
 		initSharedResourcesIfNeeded();
 
-		auto ctx = static_cast<VulkanDeviceContext*>(Application::get().getWindow().getContext());
+		auto ctx = &VulkanRendererAPI::getContext();
 		VkDescriptorSetAllocateInfo dsAllocInfo = {
 			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
 			.descriptorPool = s_DescriptorPool,
 			.descriptorSetCount = 1,
 			.pSetLayouts = &s_DescriptorSetLayout,
 		};
-		VK_CHECK(vkAllocateDescriptorSets(ctx->getLogicalDevice(), &dsAllocInfo, &m_DescriptorSet));
+		VK_CHECK(vkAllocateDescriptorSets(ctx->getDevice(), &dsAllocInfo, &m_DescriptorSet));
 	}
 
 	VulkanPhongMaterial::~VulkanPhongMaterial() {
@@ -65,7 +64,7 @@ namespace cbk::platform::vk {
 	}
 
 	void VulkanPhongMaterial::updateDescriptorSet() const {
-		auto ctx = static_cast<VulkanDeviceContext*>(Application::get().getWindow().getContext());
+		auto ctx = &VulkanRendererAPI::getContext();
 
 		// 1. Get the textures' descriptorsImageInfo
 		if (!m_DiffuseMap || !m_SpecularMap) {
@@ -93,7 +92,7 @@ namespace cbk::platform::vk {
 				.pImageInfo = &imageInfos[i],
 			};
 		}
-		vkUpdateDescriptorSets(ctx->getLogicalDevice(), static_cast<uint32_t>(writes.size()), writes.data(), 0, nullptr);
+		vkUpdateDescriptorSets(ctx->getDevice(), static_cast<uint32_t>(writes.size()), writes.data(), 0, nullptr);
 		m_DescriptorDirty = false;
 	}
 
@@ -102,8 +101,8 @@ namespace cbk::platform::vk {
 			return;
 		s_Initialized = true;
 
-		auto ctx = static_cast<VulkanDeviceContext*>(Application::get().getWindow().getContext());
-		auto device = ctx->getLogicalDevice();
+		auto ctx = &VulkanRendererAPI::getContext();
+		auto device = ctx->getDevice();
 
 		// 1) Material descriptor set layout — 2 combined image samplers.
 		std::array<VkDescriptorSetLayoutBinding, 2> bindings{};
@@ -261,8 +260,8 @@ namespace cbk::platform::vk {
 	void VulkanPhongMaterial::destroySharedResources() {
 		if (!s_Initialized)
 			return;
-		auto ctx = static_cast<VulkanDeviceContext*>(Application::get().getWindow().getContext());
-		auto device = ctx->getLogicalDevice();
+		auto ctx = &VulkanRendererAPI::getContext();
+		auto device = ctx->getDevice();
 		if (s_Pipeline != VK_NULL_HANDLE)
 			vkDestroyPipeline(device, s_Pipeline, nullptr);
 		if (s_PipelineLayout != VK_NULL_HANDLE)

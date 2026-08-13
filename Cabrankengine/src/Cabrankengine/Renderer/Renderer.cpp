@@ -57,10 +57,10 @@ namespace cbk::rendering {
 	// fixed GPU memory: sizeof(LightBufferHeader) + N * sizeof(PointLightGPU).
 	static constexpr uint32_t k_MaxPointLights = 64;
 
-	void Renderer::init() {
+	void Renderer::init(const Window& window) {
 		CBK_PROFILE_FUNCTION();
 
-		RenderCommand::init();
+		RenderCommand::init(window);
 		DefaultLibrary::init();
 		// Scene UBO must exist before Renderer2D/TextRenderer init, because the
 		// Vulkan materials they create pull the scene descriptor set layout from it

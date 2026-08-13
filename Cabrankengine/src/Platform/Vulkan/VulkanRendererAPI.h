@@ -3,13 +3,14 @@
 #include <Cabrankengine/Renderer/RendererAPI.h>
 
 #include "VulkanConstants.h"
+#include "VulkanDeviceContext.h"
 #include "VulkanSwapchainManager.h"
 
 namespace cbk::platform::vk {
 
 	class VulkanRendererAPI : public rendering::RendererAPI {
 	  public:
-		void init() override;
+		void init(const Window& window) override;
 		void shutdown() override;
 		void setClearColor(const math::Vector4& color) override;
 		void beginFrame() override;
@@ -26,39 +27,38 @@ namespace cbk::platform::vk {
 		[[nodiscard]] VkCommandBuffer getCommandBuffer() const;
 		[[nodiscard]] uint64_t getFinalFrame() const override;
 
+		// Accessor for Vulkan resource classes (textures, buffers, shaders, materials) that
+		// need the device/allocator but sit below RendererAPI in the dependency graph and
+		// have no other route to it now that Window no longer owns the graphics context.
+		[[nodiscard]] static VulkanDeviceContext& getContext();
+
 	  private:
+		VulkanDeviceContext m_Context;
+		inline static VulkanDeviceContext* s_Context = nullptr;
 		VulkanSwapchainManager m_SwapchainManager;
 		uint32_t m_FrameIndex{ 0 };
 		uint32_t m_ImageIndex{ 0 };
 		std::array<VkFence, k_MaxFramesInFlight> m_Fences;
 		std::array<VkSemaphore, k_MaxFramesInFlight> m_ImageAcquiredSemaphores;
-		std::vector<VkSemaphore> m_RenderCompleteSemaphores;
-		VkCommandPool m_CommandPool{ VK_NULL_HANDLE };
 		std::array<VkCommandBuffer, k_MaxFramesInFlight> m_CommandBuffers;
-		bool m_UpdateSwapchain{ false };
 		math::Vector4 m_ClearColor{ 0.5, 0.5, 0.5, 1.f };
 
-		// Offscreen colour target the scene is rendered into, so the result can be sampled
-		// by ImGui instead of going straight to the swapchain. One per frame in flight:
-		// the UI pass of frame N samples the same image the scene pass of frame N+1 would
-		// otherwise be overwriting while N is still executing. Sized to the window, so it
-		// is recreated alongside the swapchain.
-		std::array<VkImage, k_MaxFramesInFlight> m_FinalFrameImages{};
-		std::array<VmaAllocation, k_MaxFramesInFlight> m_FinalFrameAllocations{};
-		std::array<VkImageView, k_MaxFramesInFlight> m_FinalFrameViews{};
+		// ImGui texture handles for the swapchain manager's per-frame-in-flight offscreen
+		// color attachment (see VulkanSwapchainManager::getColorImageView), so the scene the
+		// engine renders can be displayed inside an ImGui window instead of going straight to
+		// the swapchain. Registered lazily in ensureFinalFrameDescriptorSets() and invalidated
+		// whenever the swapchain (and therefore the underlying image views) is rebuilt.
 		std::array<VkDescriptorSet, k_MaxFramesInFlight> m_FinalFrameDescriptorSets{};
-		VkExtent2D m_FinalFrameExtent{};
 
 		// False when beginFrame() bailed out (minimized, or the swapchain went out of date),
 		// which leaves no command buffer recording for endScenePass()/endFrame() to add to.
 		bool m_FrameStarted{ false };
 
 		// Initialization
-		void createSyncObjects(VulkanDeviceContext* ctx);
+		void createSyncObjects();
 		void createRenderCompleteSemaphores();
-		void createCommandPool(VulkanDeviceContext* ctx);
-		void createFinalFrameTargets(VulkanDeviceContext* ctx);
-		void destroyFinalFrameTargets(VulkanDeviceContext* ctx);
+		void createCommandPool();
+		void destroyFinalFrameDescriptorSets();
 		void ensureFinalFrameDescriptorSets();
 
 		// Begin Frame stage

@@ -63,7 +63,7 @@ namespace cbk {
 			style.Colors[ImGuiCol_WindowBg].w = 1.f;
 		}
 
-		auto ctx = static_cast<platform::vk::VulkanDeviceContext*>(Application::get().getWindow().getContext());
+		auto ctx = &platform::vk::VulkanRendererAPI::getContext();
 
 		ImGui_ImplGlfw_InitForVulkan(window, true);
 		auto rendererAPI = static_cast<platform::vk::VulkanRendererAPI*>(rendering::RenderCommand::getRendererAPI());
@@ -85,9 +85,9 @@ namespace cbk {
 		ImGui_ImplVulkan_InitInfo initInfo{ .ApiVersion = VK_API_VERSION_1_3,
 			                                .Instance = ctx->getInstance(),
 			                                .PhysicalDevice = ctx->getPhysicalDevice(),
-			                                .Device = ctx->getLogicalDevice(),
+			                                .Device = ctx->getDevice(),
 			                                .QueueFamily = ctx->getQueueFamily(),
-			                                .Queue = ctx->getDeviceQueue(),
+			                                .Queue = ctx->getQueue().getQueue(),
 			                                .DescriptorPoolSize = 1000,
 			                                .MinImageCount = rendererAPI->getMinImageCount(),
 			                                .ImageCount = rendererAPI->getImageCount(),

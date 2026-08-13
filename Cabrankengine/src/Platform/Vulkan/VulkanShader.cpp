@@ -5,11 +5,9 @@
 #include <sstream>
 #include <vector>
 
-#include <Cabrankengine/Core/Application.h>
-#include <Cabrankengine/Core/Window.h>
-
 #include "VkCheck.h"
 #include "VulkanDeviceContext.h"
+#include "VulkanRendererAPI.h"
 
 namespace cbk::platform::vk {
 
@@ -23,7 +21,7 @@ namespace cbk::platform::vk {
 		std::filesystem::path path(filepath);
 		m_Name = path.stem().string();
 
-		auto ctx = static_cast<VulkanDeviceContext*>(Application::get().getWindow().getContext());
+		auto ctx = &VulkanRendererAPI::getContext();
 
 		// 1) Read shader source from disk. loadModuleFromSourceString needs the actual code,
 		//    not just a path; the previous code passed nullptr as the source blob and silently failed.
@@ -106,7 +104,7 @@ namespace cbk::platform::vk {
 			.codeSize = spirv->getBufferSize(),
 			.pCode = reinterpret_cast<const uint32_t*>(spirv->getBufferPointer()),
 		};
-		VK_CHECK(vkCreateShaderModule(ctx->getLogicalDevice(), &shaderModuleCI, nullptr, &m_ShaderModule));
+		VK_CHECK(vkCreateShaderModule(ctx->getDevice(), &shaderModuleCI, nullptr, &m_ShaderModule));
 	}
 
 	VulkanShader::VulkanShader(std::string_view name, std::string_view /*vertexSrc*/, std::string_view /*fragmentSrc*/) : m_Name(name) {
@@ -115,8 +113,8 @@ namespace cbk::platform::vk {
 
 	VulkanShader::~VulkanShader() {
 		if (m_ShaderModule != VK_NULL_HANDLE) {
-			auto ctx = static_cast<VulkanDeviceContext*>(Application::get().getWindow().getContext());
-			vkDestroyShaderModule(ctx->getLogicalDevice(), m_ShaderModule, nullptr);
+			auto ctx = &VulkanRendererAPI::getContext();
+			vkDestroyShaderModule(ctx->getDevice(), m_ShaderModule, nullptr);
 		}
 	}
 

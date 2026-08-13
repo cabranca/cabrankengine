@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Common/Math/Mat4.h>
+#include <Cabrankengine/Core/Window.h>
 
 #include "Lights.h"
 #include "RendererAPI.h"
@@ -18,7 +19,7 @@ namespace cbk::rendering {
 	class Renderer {
 	  public:
 		// Initializes the renderer, setting up necessary resources and state.
-		static void init();
+		static void init(const Window& window);
 
 		// Shuts down the renderer, releasing all resources and cleaning up state.
 		static void shutdown();

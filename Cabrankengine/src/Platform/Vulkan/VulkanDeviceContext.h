@@ -3,42 +3,53 @@
 #include <volk/volk.h>
 #include <vma/vk_mem_alloc.h>
 
+#include <GLFW/glfw3.h>
+
 #include <Cabrankengine/Renderer/GraphicsContext.h>
+
+#include "VulkanInstance.h"
+#include "VulkanQueue.h"
 
 namespace cbk::platform::vk {
 
 	class VulkanDeviceContext : public rendering::GraphicsContext {
 	  public:
-		void init() override;
+		void init(const Window& window) override;
 		void shutdown() override;
 
+		void waitIdle();
+		void queueWaitIdle();
+		void selectSurfaceFormat(VkSurfaceKHR surface);
+
 		[[nodiscard]] VkInstance getInstance() const;
-		[[nodiscard]] VkDevice getLogicalDevice() const;
 		[[nodiscard]] VkPhysicalDevice getPhysicalDevice() const;
-		[[nodiscard]] VkQueue getDeviceQueue() const;
+		[[nodiscard]] VkDevice getDevice() const;
+		[[nodiscard]] const VulkanQueue& getQueue() const;
 		[[nodiscard]] VmaAllocator getAllocator() const;
 		[[nodiscard]] uint32_t getQueueFamily() const;
 		[[nodiscard]] VkFormat getImageFormat() const;
 		[[nodiscard]] VkColorSpaceKHR getImageColorSpace() const;
 		[[nodiscard]] VkFormat getDepthFormat() const;
-
-		void selectSurfaceFormat(VkSurfaceKHR surface);
+		[[nodiscard]] VkSurfaceKHR getSurface() const;
 
 	  private:
-		VkInstance m_Instance;
-		VkDevice m_LogicalDevice;
+		VulkanInstance m_Instance;
 		VkPhysicalDevice m_PhysicalDevice;
-		VkQueue m_DeviceQueue;
-		VmaAllocator m_Allocator{};
+		VkDevice m_Device;
 		uint32_t m_QueueFamilyIndex{ 0 };
-#ifdef CBK_DEBUG
-		VkDebugUtilsMessengerEXT m_DebugMessenger{ VK_NULL_HANDLE };
-#endif
+		VulkanQueue m_Queue;
+		VmaAllocator m_Allocator{};
+
+		VkPhysicalDeviceMemoryProperties m_MemoryProperties;
+
+		constexpr static VkSampleCountFlagBits k_MaxMSAA = VK_SAMPLE_COUNT_8_BIT;
+		VkSampleCountFlagBits m_MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 
 		VkSurfaceFormatKHR m_SurfaceFormat{};
 		VkFormat m_DepthFormat{ VK_FORMAT_UNDEFINED };
 
-		void createVulkanInstance();
+		void pickPhysicalDevice();
+		[[nodiscard]] VkSampleCountFlagBits getMaxUsableSampleCount();
 		void createVulkanDevice();
 		void createAllocator();
 		void setDepthFormat();

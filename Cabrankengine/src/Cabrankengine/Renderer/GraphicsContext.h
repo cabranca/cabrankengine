@@ -1,8 +1,6 @@
 #pragma once
 
-#include <pch.h>
-
-struct GLFWwindow;
+#include <Cabrankengine/Core/Window.h>
 
 namespace cbk::rendering {
 
@@ -12,7 +10,7 @@ namespace cbk::rendering {
 		virtual ~GraphicsContext() = default;
 
 		// Initializes the graphics context.
-		virtual void init() = 0;
+		virtual void init(const Window& window) = 0;
 
 		// Releases backend resources (device, allocator, instance, etc.). Must be
 		// called before the windowing system tears down the surface.
