@@ -31,6 +31,7 @@ namespace cbk::platform::vk {
 		[[nodiscard]] VkColorSpaceKHR getImageColorSpace() const;
 		[[nodiscard]] VkFormat getDepthFormat() const;
 		[[nodiscard]] VkSurfaceKHR getSurface() const;
+		[[nodiscard]] VkSampleCountFlagBits getMSAA() const;
 
 	  private:
 		VulkanInstance m_Instance;

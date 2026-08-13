@@ -101,7 +101,7 @@ namespace cbk::platform::vk {
 		auto cb = m_CommandBuffers[m_FrameIndex];
 		vkCmdEndRendering(cb);
 
-		ImageBarrierInfo info{ .Image = m_SwapchainManager.getColorImage(m_FrameIndex),
+		ImageBarrierInfo info{ .Image = m_SwapchainManager.getResolveImage(m_FrameIndex),
 			                   .OldLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL,
 			                   .NewLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 			                   .SrcAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
@@ -174,6 +174,7 @@ namespace cbk::platform::vk {
 			}
 
 			m_FrameIndex = (m_FrameIndex + 1) % k_MaxFramesInFlight;
+			
 		}
 	}
 
@@ -212,7 +213,7 @@ namespace cbk::platform::vk {
 		for (auto i = 0; i < k_MaxFramesInFlight; i++) {
 			if (m_FinalFrameDescriptorSets[i] == VK_NULL_HANDLE)
 				m_FinalFrameDescriptorSets[i] =
-				    ImGui_ImplVulkan_AddTexture(m_SwapchainManager.getColorImageView(i), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+				    ImGui_ImplVulkan_AddTexture(m_SwapchainManager.getResolveImageView(i), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 		}
 	}
 
@@ -292,7 +293,17 @@ namespace cbk::platform::vk {
 			                                .AspectFlags = VK_IMAGE_ASPECT_COLOR_BIT,
 			                                .MipLevels = 1 };
 
-		VulkanCommands::transitionImageLayout(cb, { swapchainColorBarrier, sceneDepthBarrier, sceneColorBarrier });
+		ImageBarrierInfo sceneResolveBarrier{ .Image = m_SwapchainManager.getResolveImage(m_FrameIndex),
+			                                  .OldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+			                                  .NewLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL,
+			                                  .SrcAccessMask = 0,
+			                                  .DstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+			                                  .SrcStageMask = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT,
+			                                  .DstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+			                                  .AspectFlags = VK_IMAGE_ASPECT_COLOR_BIT,
+			                                  .MipLevels = 1 };
+
+		VulkanCommands::transitionImageLayout(cb, { swapchainColorBarrier, sceneDepthBarrier, sceneColorBarrier, sceneResolveBarrier });
 	}
 
 	void VulkanRendererAPI::beginRecording() {
@@ -300,8 +311,11 @@ namespace cbk::platform::vk {
 		VkRenderingAttachmentInfo colorAttachmentInfo{ .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
 			                                           .imageView = m_SwapchainManager.getColorImageView(m_FrameIndex),
 			                                           .imageLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL,
+													   .resolveMode = VK_RESOLVE_MODE_AVERAGE_BIT,
+													   .resolveImageView = m_SwapchainManager.getResolveImageView(m_FrameIndex),
+													   .resolveImageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 			                                           .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-			                                           .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+			                                           .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
 			                                           .clearValue{
 			                                               .color{ m_ClearColor.x, m_ClearColor.y, m_ClearColor.z, m_ClearColor.w } } };
 		VkRenderingAttachmentInfo depthAttachmentInfo{ .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,

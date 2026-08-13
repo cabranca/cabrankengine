@@ -282,4 +282,8 @@ namespace cbk::platform::vk {
 	VkSurfaceKHR VulkanDeviceContext::getSurface() const {
 		return m_Instance.getSurface();
 	}
+
+	VkSampleCountFlagBits VulkanDeviceContext::getMSAA() const {
+		return m_MSAASamples;
+	}
 } // namespace cbk::platform::vk

@@ -3,10 +3,8 @@
 #include <volk/volk.h>
 #include <vma/vk_mem_alloc.h>
 
-#include <array>
-#include <vector>
-
 #include "VulkanConstants.h"
+#include "VulkanImage.h"
 
 namespace cbk::platform::vk {
 
@@ -27,14 +25,11 @@ namespace cbk::platform::vk {
 		[[nodiscard]] VkImageView getSwapchainImageView(uint32_t index) const;
 		[[nodiscard]] VkSemaphore getSemaphore(uint32_t index) const;
 		[[nodiscard]] VkExtent2D getExtent() const;
-
-		// Per-frame-in-flight scene render targets, indexed by frame-in-flight slot rather
-		// than swapchain image count. Up to k_MaxFramesInFlight frames can have GPU work in
-		// flight simultaneously, so sharing one color/depth image across all of them would
-		// let one frame's attachment writes race the previous frame's still-executing ones.
 		[[nodiscard]] VkImage getColorImage(uint32_t frameIndex) const;
+		[[nodiscard]] VkImage getResolveImage(uint32_t frameIndex) const;
 		[[nodiscard]] VkImage getDepthImage(uint32_t frameIndex) const;
 		[[nodiscard]] VkImageView getColorImageView(uint32_t frameIndex) const;
+		[[nodiscard]] VkImageView getResolveImageView(uint32_t frameIndex) const;
 		[[nodiscard]] VkImageView getDepthImageView(uint32_t frameIndex) const;
 
 	  private:
@@ -44,6 +39,7 @@ namespace cbk::platform::vk {
 		VkSurfaceKHR m_Surface = VK_NULL_HANDLE;            // NON-OWNING
 		uint32_t m_QueueFamilyIndex = 0;
 		VmaAllocator m_Allocator = VK_NULL_HANDLE; // NON-OWNING
+		VkSampleCountFlagBits m_MSAA = VK_SAMPLE_COUNT_1_BIT;
 
 		// --- Swapchain ---
 		VkSwapchainKHR m_Swapchain{ VK_NULL_HANDLE };
@@ -57,15 +53,9 @@ namespace cbk::platform::vk {
 		std::vector<VkImage> m_SwapchainImages;
 		std::vector<VkImageView> m_SwapchainImageViews;
 
-		// Color Attachment (offscreen; sampled by ImGui), one per frame in flight.
-		std::array<VkImage, k_MaxFramesInFlight> m_ColorImages{};
-		std::array<VkImageView, k_MaxFramesInFlight> m_ColorImageViews{};
-		std::array<VmaAllocation, k_MaxFramesInFlight> m_ColorImageAllocations{};
-
-		// Depth Attachment, one per frame in flight.
-		std::array<VkImage, k_MaxFramesInFlight> m_DepthImages{};
-		std::array<VkImageView, k_MaxFramesInFlight> m_DepthImageViews{};
-		std::array<VmaAllocation, k_MaxFramesInFlight> m_DepthImageAllocations{};
+		std::array<VulkanImage, k_MaxFramesInFlight> m_ColorAttachments; // Color Attachments (multi-sampled), one per frame in flight.
+		std::array<VulkanImage, k_MaxFramesInFlight> m_ResolveAttachments; // Color resolve Attachments (offscreen; sampled by ImGui), one per frame in flight.
+		std::array<VulkanImage, k_MaxFramesInFlight> m_DepthAttachments; // Depth Attachments, one per frame in flight.
 
 		void createSwapchain(VkSwapchainKHR oldSwapchain);
 		[[nodiscard]] static VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);

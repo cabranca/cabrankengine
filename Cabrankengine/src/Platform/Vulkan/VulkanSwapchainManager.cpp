@@ -26,9 +26,12 @@ namespace cbk::platform::vk {
 		m_Surface = ctx.getSurface();
 		m_QueueFamilyIndex = ctx.getQueueFamily();
 		m_Allocator = ctx.getAllocator();
+		m_MSAA = ctx.getMSAA();
 		createSwapchain(VK_NULL_HANDLE);
 		createImageViews();
 		createRenderFinishedSemaphores();
+		m_DepthFormat = findSupportedFormat({ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
+		                                    VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_2_DEPTH_STENCIL_ATTACHMENT_BIT);
 		createRenderTargets();
 	}
 
@@ -185,58 +188,23 @@ namespace cbk::platform::vk {
 	}
 
 	void VulkanSwapchainManager::createRenderTargets() {
-		m_DepthFormat = findSupportedFormat({ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
-		                                    VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_2_DEPTH_STENCIL_ATTACHMENT_BIT);
-		VkImageCreateInfo depthImageCI{
-			.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
-			.imageType = VK_IMAGE_TYPE_2D,
-			.format = m_DepthFormat,
-			.extent{ .width = m_Extent.width, .height = m_Extent.height, .depth = 1 },
-			.mipLevels = 1,
-			.arrayLayers = 1,
-			.samples = VK_SAMPLE_COUNT_1_BIT,
-			.tiling = VK_IMAGE_TILING_OPTIMAL,
-			// Never read outside the render pass that writes it (LOAD_OP_CLEAR / STORE_OP_DONT_CARE),
-			// so TRANSIENT_ATTACHMENT lets the driver keep it tile-local on tilers.
-			.usage = VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-			.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-		};
-		VmaAllocationCreateInfo allocCI{ .flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT, .usage = VMA_MEMORY_USAGE_AUTO };
-
-		VkImageCreateInfo colorImageCI = depthImageCI;
-		colorImageCI.format = m_SelectedFormat.format;
-		// Unlike depth, this image's contents are read back by ImGui in a later pass, so it
-		// cannot be TRANSIENT — it needs COLOR_ATTACHMENT to render into and SAMPLED to display.
-		colorImageCI.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-
 		for (uint32_t i = 0; i < k_MaxFramesInFlight; i++) {
-			VK_CHECK(vmaCreateImage(m_Allocator, &depthImageCI, &allocCI, &m_DepthImages[i], &m_DepthImageAllocations[i], nullptr));
-			VkImageViewCreateInfo depthViewCI{ .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-				                               .image = m_DepthImages[i],
-				                               .viewType = VK_IMAGE_VIEW_TYPE_2D,
-				                               .format = m_DepthFormat,
-				                               .subresourceRange{
-				                                   .aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT, .levelCount = 1, .layerCount = 1 } };
-			VK_CHECK(vkCreateImageView(m_Device, &depthViewCI, nullptr, &m_DepthImageViews[i]));
-
-			VK_CHECK(vmaCreateImage(m_Allocator, &colorImageCI, &allocCI, &m_ColorImages[i], &m_ColorImageAllocations[i], nullptr));
-			VkImageViewCreateInfo colorViewCI{ .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-				                               .image = m_ColorImages[i],
-				                               .viewType = VK_IMAGE_VIEW_TYPE_2D,
-				                               .format = m_SelectedFormat.format,
-				                               .subresourceRange{
-				                                   .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .levelCount = 1, .layerCount = 1 } };
-			VK_CHECK(vkCreateImageView(m_Device, &colorViewCI, nullptr, &m_ColorImageViews[i]));
+			m_ColorAttachments[i].init(m_Device, m_Allocator, m_SelectedFormat.format, m_Extent, 1, m_MSAA, VK_IMAGE_TILING_OPTIMAL,
+			                           VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
+			m_ResolveAttachments[i].init(m_Device, m_Allocator, m_SelectedFormat.format, m_Extent, 1, VK_SAMPLE_COUNT_1_BIT,
+			                             VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+			                             VK_IMAGE_ASPECT_COLOR_BIT);
+			m_DepthAttachments[i].init(m_Device, m_Allocator, m_DepthFormat, m_Extent, 1, m_MSAA, VK_IMAGE_TILING_OPTIMAL,
+			                           VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+			                           VK_IMAGE_ASPECT_DEPTH_BIT);
 		}
 	}
 
 	void VulkanSwapchainManager::destroyRenderTargets() {
 		for (uint32_t i = 0; i < k_MaxFramesInFlight; i++) {
-			vkDestroyImageView(m_Device, m_ColorImageViews[i], nullptr);
-			vmaDestroyImage(m_Allocator, m_ColorImages[i], m_ColorImageAllocations[i]);
-
-			vkDestroyImageView(m_Device, m_DepthImageViews[i], nullptr);
-			vmaDestroyImage(m_Allocator, m_DepthImages[i], m_DepthImageAllocations[i]);
+			m_ColorAttachments[i].destroy();
+			m_ResolveAttachments[i].destroy();
+			m_DepthAttachments[i].destroy();
 		}
 	}
 
@@ -279,24 +247,32 @@ namespace cbk::platform::vk {
 		return m_SwapchainImages.at(index);
 	}
 
-	VkImage VulkanSwapchainManager::getDepthImage(uint32_t frameIndex) const {
-		return m_DepthImages.at(frameIndex);
+	VkImage VulkanSwapchainManager::getColorImage(uint32_t frameIndex) const {
+		return m_ColorAttachments[frameIndex].getImage();
 	}
 
-	VkImage VulkanSwapchainManager::getColorImage(uint32_t frameIndex) const {
-		return m_ColorImages.at(frameIndex);
+	VkImage VulkanSwapchainManager::getResolveImage(uint32_t frameIndex) const {
+		return m_ResolveAttachments[frameIndex].getImage();
+	}
+
+	VkImage VulkanSwapchainManager::getDepthImage(uint32_t frameIndex) const {
+		return m_DepthAttachments[frameIndex].getImage();
 	}
 
 	VkImageView VulkanSwapchainManager::getSwapchainImageView(uint32_t index) const {
 		return m_SwapchainImageViews.at(index);
 	}
 
-	VkImageView VulkanSwapchainManager::getDepthImageView(uint32_t frameIndex) const {
-		return m_DepthImageViews.at(frameIndex);
+	VkImageView VulkanSwapchainManager::getColorImageView(uint32_t frameIndex) const {
+		return m_ColorAttachments[frameIndex].getView();
 	}
 
-	VkImageView VulkanSwapchainManager::getColorImageView(uint32_t frameIndex) const {
-		return m_ColorImageViews.at(frameIndex);
+	VkImageView VulkanSwapchainManager::getResolveImageView(uint32_t frameIndex) const {
+		return m_ResolveAttachments[frameIndex].getView();
+	}
+
+	VkImageView VulkanSwapchainManager::getDepthImageView(uint32_t frameIndex) const {
+		return m_DepthAttachments[frameIndex].getView();
 	}
 
 	VkSemaphore VulkanSwapchainManager::getSemaphore(uint32_t index) const {
