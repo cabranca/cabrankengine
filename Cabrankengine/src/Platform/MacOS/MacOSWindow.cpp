@@ -45,9 +45,6 @@ namespace cbk {
 		return m_Data.VSync;
 	}
 
-	rendering::GraphicsContext* MacOSWindow::getContext() const {
-		return m_Context.get();
-	}
 
 	void MacOSWindow::init(const WindowProps& props) {
 		m_Data.Title = props.Title;
@@ -65,9 +62,6 @@ namespace cbk {
 		}
 
 		m_Window = glfwCreateWindow(props.Width, props.Height, m_Data.Title.c_str(), nullptr, nullptr);
-
-		m_Context = rendering::GraphicsContext::create();
-		m_Context->init();
 
 		glfwSetWindowUserPointer(m_Window, &m_Data);
 		setVSync(true);
