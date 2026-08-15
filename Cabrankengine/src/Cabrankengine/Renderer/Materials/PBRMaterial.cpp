@@ -3,10 +3,6 @@
 
 #include <Cabrankengine/Renderer/RendererAPI.h>
 
-#ifdef CBK_RENDERER_OPENGL
-#include <Platform/OpenGL/OpenGLPBRMaterial.h>
-#endif
-
 #ifdef CBK_RENDERER_VULKAN
 #include <Platform/Vulkan/VulkanPBRMaterial.h>
 #endif
@@ -20,9 +16,7 @@ namespace cbk::rendering {
 	using namespace scene;
 
 	Ref<PBRMaterial> PBRMaterial::create() {
-#ifdef CBK_RENDERER_OPENGL
-		return createRef<platform::opengl::OpenGLPBRMaterial>();
-#elif defined(CBK_RENDERER_METAL)
+#ifdef CBK_RENDERER_METAL
 		return createRef<platform::metal::MetalPBRMaterial>();
 #elif defined(CBK_RENDERER_VULKAN)
 		return createRef<platform::vk::VulkanPBRMaterial>();

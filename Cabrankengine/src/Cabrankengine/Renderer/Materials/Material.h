@@ -11,8 +11,6 @@ namespace cbk::rendering {
 		Material(const Ref<Shader>& shader) : m_Shader(shader) {}
 		virtual ~Material() = default;
 
-		virtual void bind() const = 0;
-
 		// Hooks consumed by model loading. Concrete materials override to wire a
 		// (TextureType, key) → setter mapping. Default is no-op.
 		virtual void applyTexture(common::TextureType type, const Ref<Texture2D>& texture) {}

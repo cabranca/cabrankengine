@@ -5,10 +5,6 @@
 #include <Platform/Metal/MetalShader.h>
 #endif
 
-#ifdef CBK_RENDERER_OPENGL
-#include <Platform/OpenGL/OpenGLShader.h>
-#endif
-
 #ifdef CBK_RENDERER_VULKAN
 #include <Platform/Vulkan/VulkanShader.h>
 #endif
@@ -16,9 +12,7 @@
 namespace cbk::rendering {
 
 	Ref<Shader> Shader::create(const std::string& filepath) {
-#ifdef CBK_RENDERER_OPENGL
-		return createRef<platform::opengl::OpenGLShader>(filepath);
-#elif defined(CBK_RENDERER_METAL)
+#ifdef CBK_RENDERER_METAL
 		return createRef<platform::metal::MetalShader>(filepath);
 #elif defined(CBK_RENDERER_VULKAN)
 		return createRef<platform::vk::VulkanShader>(filepath);
@@ -28,18 +22,6 @@ namespace cbk::rendering {
 #endif
 	}
 
-	Ref<Shader> Shader::create(const std::string& name, const std::string& vertexSrc, const std::string& fragmentSrc) {
-#ifdef CBK_RENDERER_OPENGL
-		return createRef<platform::opengl::OpenGLShader>(name, vertexSrc, fragmentSrc);
-#elif defined(CBK_RENDERER_METAL)
-		return createRef<platform::metal::MetalShader>(name, vertexSrc, fragmentSrc);
-#elif defined(CBK_RENDERER_VULKAN)
-		return createRef<platform::vk::VulkanShader>(name, vertexSrc, fragmentSrc);
-#else
-		CBK_CORE_ASSERT(false, "No renderer API defined!");
-		return nullptr;
-#endif
-	}
 
 	void ShaderLibrary::add(const std::string& name, const Ref<Shader>& shader) {
 		CBK_CORE_ASSERT(!s_Shaders.contains(name), "Shader already exists!");

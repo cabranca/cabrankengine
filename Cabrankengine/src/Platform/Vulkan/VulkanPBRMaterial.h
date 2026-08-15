@@ -13,10 +13,6 @@ namespace cbk::platform::vk {
 		VulkanPBRMaterial();
 		~VulkanPBRMaterial() override;
 
-		// No-op: state lives in the descriptor set and push constants. The actual
-		// recording happens in recordCommandBuffer() during commitRenderCommands().
-		void bind() const override {}
-
 		// IVulkanRecordable
 		void record(VkCommandBuffer cb, const math::Mat4& transform) const override;
 

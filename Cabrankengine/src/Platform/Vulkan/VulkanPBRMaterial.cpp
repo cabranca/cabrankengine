@@ -1,8 +1,6 @@
 #include <pch.h>
 #include "VulkanPBRMaterial.h"
 
-#include <array>
-
 #include <Cabrankengine/Renderer/GeometryDescriptor.h>
 #include <Cabrankengine/Renderer/Renderer.h>
 #include <Cabrankengine/Renderer/Shader.h>

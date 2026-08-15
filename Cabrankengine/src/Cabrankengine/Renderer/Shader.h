@@ -9,38 +9,11 @@ namespace cbk::rendering {
 	  public:
 		virtual ~Shader() = default;
 
-		// Binds the shader program for use in rendering.
-		virtual void bind() const = 0;
-
-		// Unbinds the shader program, stopping its use in rendering.
-		virtual void unbind() const = 0;
-
-		// Sets a int value in the shader program.
-		virtual void setInt(const std::string& name, int value) = 0;
-
-		// Sets a int array in the shader program.
-		virtual void setIntArray(const std::string& name, uint32_t count, int* values) = 0;
-
-		// Sets a float value in the shader program.
-		virtual void setFloat(const std::string& name, float value) = 0;
-
-		// Sets a 3 float vector in the shader program.
-		virtual void setFloat3(const std::string& name, const math::Vector3& vector) = 0;
-
-		// Sets a 4 float vector in the shader program.
-		virtual void setFloat4(const std::string& name, const math::Vector4& vector) = 0;
-
-		// Sets a 4x4 float matrix in the shader program.
-		virtual void setMat4(const std::string& name, const math::Mat4& value) = 0;
-
 		// Returns the name of the shader program given by the user.
 		[[nodiscard]] virtual const std::string& getName() const = 0;
 
 		// Creates and returns a shader from a file path.
 		[[nodiscard]] static Ref<Shader> create(const std::string& filepath);
-
-		// Creates and returns a shader from vertex and fragment shader source code.
-		[[nodiscard]] static Ref<Shader> create(const std::string& name, const std::string& vertexSrc, const std::string& fragmentSrc);
 	};
 
 	// ShaderLibrary is a class that manages a collection of shaders.
@@ -61,8 +34,7 @@ namespace cbk::rendering {
 		// Retrieves a shader from the library by its name.
 		[[nodiscard]] static Ref<Shader> get(const std::string& name);
 
-		// Release all cached shaders. Call from Renderer::shutdown so the Refs
-		// destruct while the Vulkan device is still alive.
+		// Release all cached shaders.
 		static void shutdown() {
 			s_Shaders.clear();
 		}
