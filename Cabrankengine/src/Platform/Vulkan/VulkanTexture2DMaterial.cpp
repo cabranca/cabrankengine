@@ -74,7 +74,7 @@ namespace cbk::platform::vk {
 
 		// Set 0 = scene globals, set 1 = the 32-sampler quad atlas array. Batched quads
 		// are already in world space, so there is no model-matrix push constant.
-		bindSceneSet(cb, s_PipelineLayout);
+		//bindSceneSet(cb, s_PipelineLayout);
 		vkCmdBindDescriptorSets(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, s_PipelineLayout, set_index::k_Material, 1, &m_DescriptorSet, 0,
 		                        nullptr);
 	}

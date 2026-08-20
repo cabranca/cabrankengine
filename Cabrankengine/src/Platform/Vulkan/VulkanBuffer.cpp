@@ -1,10 +1,11 @@
+#include <pch.h>
 #include "VulkanBuffer.h"
 
 #include "VkCheck.h"
 
 namespace cbk::platform::vk {
 
-	void VulkanBuffer::init(VkDevice device, VmaAllocator allocator, VkBufferUsageFlagBits usage) {
+	void VulkanBuffer::init(VkDevice device, VmaAllocator allocator, uint32_t size, VkBufferUsageFlags usage) {
 		m_Device = device;
 		m_Allocator = allocator;
 
@@ -21,7 +22,7 @@ namespace cbk::platform::vk {
 			.usage = VMA_MEMORY_USAGE_AUTO,
 		};
 		
-		VK_CHECK(vmaCreateBuffer(m_Allocator, &bufferCI, &allocCI, &m_Buffer, &m_Allocation, &m_AllocationInfo));
+		VK_CHECK(vmaCreateBuffer(m_Allocator, &bufferCI, &allocCI, &m_Buffer, &m_Allocation, &m_AllocInfo));
 	}
 
 	void VulkanBuffer::shutdown() {
@@ -29,12 +30,14 @@ namespace cbk::platform::vk {
     }
 
     void VulkanBuffer::setData(const void* data, uint32_t size, uint32_t offset) {
-        VmaAllocationInfo allocInfo;
-		vmaGetAllocationInfo(m_Allocator, m_Allocation, &allocInfo);
-		if (!allocInfo.pMappedData) {
+		if (!m_AllocInfo.pMappedData) {
 			CBK_CORE_ERROR("VulkanBuffer::setData: buffer is not mapped"); // TODO: add isMapped so the user can do this check and return a better error message
 			return;
 		}
-		std::memcpy(static_cast<uint8_t*>(allocInfo.pMappedData) + offset, data, size);
+		std::memcpy(static_cast<uint8_t*>(m_AllocInfo.pMappedData) + offset, data, size);
+	}
+
+	VkBuffer VulkanBuffer::getBuffer() const {
+		return m_Buffer;
 	}
 } // namespace cbk::platform::vk

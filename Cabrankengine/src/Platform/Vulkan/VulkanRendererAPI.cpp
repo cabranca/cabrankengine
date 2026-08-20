@@ -9,22 +9,11 @@
 #include <Cabrankengine/Core/Window.h>
 #include <Cabrankengine/Renderer/Materials/Material.h>
 
-#include "IVulkanRecordable.h"
 #include "VkCheck.h"
 #include "VulkanCommands.h"
 #include "VulkanDeviceContext.h"
 #include "VulkanGeometryDescriptor.h"
-#include "VulkanPBRMaterial.h"
 #include "VulkanPhongMaterial.h"
-#include "VulkanStorageBuffer.h"
-#include "VulkanTexture2DMaterial.h"
-#include "VulkanTextMaterial.h"
-#include "VulkanUniformBuffer.h"
-
-#include <Cabrankengine/Renderer/Renderer.h>
-#include <Cabrankengine/Renderer/StorageBuffer.h>
-#include <Cabrankengine/Renderer/UniformBuffer.h>
-#include <vulkan/vulkan_core.h>
 
 namespace cbk::platform::vk {
 
@@ -35,6 +24,7 @@ namespace cbk::platform::vk {
 		m_Context.init(window);
 		s_Context = &m_Context;
 		m_SwapchainManager.init(m_Context);
+		s_GraphicsPipeline.init(m_Context);
 		createSyncObjects();
 		auto commandBuffers = m_Context.getQueue().allocateCommandBuffers(k_MaxFramesInFlight);
 		std::copy(commandBuffers.begin(), commandBuffers.end(), m_CommandBuffers.begin());
@@ -45,18 +35,13 @@ namespace cbk::platform::vk {
 		const VkDevice device = m_Context.getDevice();
 		m_Context.waitIdle();
 
-		// Destroy per-material-class pipeline state before the device is torn down.
-		VulkanPBRMaterial::destroySharedResources();
-		VulkanPhongMaterial::destroySharedResources();
-		VulkanTexture2DMaterial::destroySharedResources();
-		VulkanTextMaterial::destroySharedResources();
-
 		for (auto i = 0; i < k_MaxFramesInFlight; i++) {
 			vkDestroyFence(device, m_Fences[i], nullptr);
 			vkDestroySemaphore(device, m_ImageAcquiredSemaphores[i], nullptr);
 		}
 
 		destroyFinalFrameDescriptorSets();
+		s_GraphicsPipeline.shutdown();
 		m_SwapchainManager.shutdown();
 		m_Context.shutdown();
 		s_Context = nullptr;
@@ -74,9 +59,6 @@ namespace cbk::platform::vk {
 		if (!syncAndAcquire())
 			return;
 
-		// Sets the UBO and SSBO current frame for when Renderer::beginFrame() is called.
-		setBufferObjectsCurrentFrame();
-
 		resetAndBeginCmdBuffer();
 		setupInitialBarriers();
 		beginRecording();
@@ -85,13 +67,23 @@ namespace cbk::platform::vk {
 		m_FrameStarted = true;
 	}
 
+	void VulkanRendererAPI::beginScene(const math::Mat4& viewProjectionMatrix, const math::Vector3& cameraWorldPosition,
+		                        const math::Vector3& direction, const math::Vector3& radiance) {
+		SceneData data {
+			.ViewProjectionMatrix = viewProjectionMatrix,
+			.DirLight = {.direction = direction, .radiance = radiance},
+			.CameraPosition = cameraWorldPosition
+		};
+		auto& ubo = s_GraphicsPipeline.getUBO();
+		ubo.setData(m_FrameIndex, &data, sizeof(SceneData));
+	}
+
 	void VulkanRendererAPI::draw(const Ref<GeometryDescriptor>& vertexArray) {}
 
 	void VulkanRendererAPI::drawIndexed(const Ref<Material>& material, const Ref<GeometryDescriptor>& desc, const math::Mat4& transform,
 	                                    uint32_t indexCount) {
-		// Records the per-draw work into the active command buffer set up by beginFrame.
-		// No CB lifecycle, no submit, no present — those belong to beginFrame/endFrame.
-		commitRenderCommands(material, desc, transform);
+		recordMaterial(material, transform);
+		bindAndDraw(desc);
 	}
 
 	void VulkanRendererAPI::endScenePass() {
@@ -234,13 +226,6 @@ namespace cbk::platform::vk {
 		return true;
 	}
 
-	void VulkanRendererAPI::setBufferObjectsCurrentFrame() {
-		auto sceneUbo = static_cast<VulkanUniformBuffer*>(rendering::Renderer::getSceneUBO().get());
-		sceneUbo->setCurrentFrame(m_FrameIndex);
-		auto lightSSBO = static_cast<VulkanStorageBuffer*>(rendering::Renderer::getLightSSBO().get());
-		lightSSBO->setCurrentFrame(m_FrameIndex);
-	}
-
 	void VulkanRendererAPI::resetAndBeginCmdBuffer() {
 		auto cb = m_CommandBuffers[m_FrameIndex];
 
@@ -347,22 +332,11 @@ namespace cbk::platform::vk {
 		vkCmdSetScissor(cb, 0, 1, &scissor);
 	}
 
-	void VulkanRendererAPI::commitRenderCommands(const Ref<Material>& material, const Ref<rendering::GeometryDescriptor>& desc,
-	                                             const math::Mat4& transform) {
-		recordMaterial(material, transform);
-		bindAndDraw(desc);
-	}
-
 	void VulkanRendererAPI::recordMaterial(const Ref<rendering::Material>& material, const math::Mat4& transform) {
 		auto cb = m_CommandBuffers[m_FrameIndex];
-
-		// Each concrete material binds its own pipeline, descriptor sets and push
-		// constants. The renderer only supplies the command buffer and the per-draw
-		// model matrix; the set-index convention lives in VulkanDescriptorBinding.h.
-		auto recordable = dynamic_cast<IVulkanRecordable*>(material.get());
-		CBK_CORE_ASSERT(recordable, "VulkanRendererAPI: material does not implement IVulkanRecordable");
-
-		recordable->record(cb, transform);
+		auto vkMaterial = dynamic_cast<VulkanPhongMaterial*>(material.get());
+		vkMaterial->updateDescriptorSet();
+		s_GraphicsPipeline.bind(cb, transform, vkMaterial->getShininess(), m_FrameIndex);
 	}
 
 	void VulkanRendererAPI::bindAndDraw(const Ref<rendering::GeometryDescriptor>& desc) {
@@ -393,6 +367,10 @@ namespace cbk::platform::vk {
 	VulkanDeviceContext& VulkanRendererAPI::getContext() {
 		CBK_CORE_ASSERT(s_Context, "VulkanRendererAPI::getContext() called before init()");
 		return *s_Context;
+	}
+
+	VkDescriptorSet VulkanRendererAPI::getPhongDescriptorSet() {
+		return s_GraphicsPipeline.getDescriptorSet();
 	}
 
 	uint64_t VulkanRendererAPI::getFinalFrame() const {

@@ -4,6 +4,7 @@
 
 #include "VulkanConstants.h"
 #include "VulkanDeviceContext.h"
+#include "VulkanGraphicsPipeline.h"
 #include "VulkanSwapchainManager.h"
 
 namespace cbk::platform::vk {
@@ -14,6 +15,8 @@ namespace cbk::platform::vk {
 		void shutdown() override;
 		void setClearColor(const math::Vector4& color) override;
 		void beginFrame() override;
+		void beginScene(const math::Mat4& viewProjectionMatrix, const math::Vector3& cameraWorldPosition, const math::Vector3& direction,
+		                const math::Vector3& radiance) override;
 		void draw(const Ref<rendering::GeometryDescriptor>& desc) override;
 		void drawIndexed(const Ref<rendering::Material>& material, const Ref<rendering::GeometryDescriptor>& desc,
 		                 const math::Mat4& transform, uint32_t indexCount = 0) override;
@@ -31,11 +34,13 @@ namespace cbk::platform::vk {
 		// need the device/allocator but sit below RendererAPI in the dependency graph and
 		// have no other route to it now that Window no longer owns the graphics context.
 		[[nodiscard]] static VulkanDeviceContext& getContext();
+		[[nodiscard]] static VkDescriptorSet getPhongDescriptorSet();
 
 	  private:
 		VulkanDeviceContext m_Context;
-		inline static VulkanDeviceContext* s_Context = nullptr;
+		inline static VulkanDeviceContext* s_Context = nullptr; // Why not a static reference directly?
 		VulkanSwapchainManager m_SwapchainManager;
+		static VulkanGraphicsPipeline s_GraphicsPipeline;
 		uint32_t m_FrameIndex{ 0 };
 		uint32_t m_ImageIndex{ 0 };
 		std::array<VkFence, k_MaxFramesInFlight> m_Fences;
@@ -63,7 +68,6 @@ namespace cbk::platform::vk {
 
 		// Begin Frame stage
 		bool syncAndAcquire();
-		void setBufferObjectsCurrentFrame();
 		void resetAndBeginCmdBuffer();
 		void setupInitialBarriers();
 		void beginRecording();

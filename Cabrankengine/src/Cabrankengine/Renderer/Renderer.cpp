@@ -66,10 +66,9 @@ namespace cbk::rendering {
 		// Vulkan materials they create pull the scene descriptor set layout from it
 		// at pipeline-layout construction time. The light SSBO is consumed the same
 		// way by VulkanPBRMaterial, so it must also be alive before that point.
-		s_SceneData->lightSSBO = StorageBuffer::create(sizeof(LightBufferHeader) + k_MaxPointLights * sizeof(PointLightGPU));
-		s_SSceneUbo = UniformBuffer::create(sizeof(AltSceneData), 0);
-		Renderer2D::init();
-		TextRenderer::init();
+		//s_SceneData->lightSSBO = StorageBuffer::create(sizeof(LightBufferHeader) + k_MaxPointLights * sizeof(PointLightGPU));
+		//Renderer2D::init();
+		//TextRenderer::init();
 	}
 
 	void Renderer::shutdown() {
@@ -78,33 +77,24 @@ namespace cbk::rendering {
 		s_SSceneUbo.reset();
 		if (s_SceneData)
 			s_SceneData->lightSSBO.reset();
-		TextRenderer::shutdown();
-		Renderer2D::shutdown();
+		//TextRenderer::shutdown();
+		//Renderer2D::shutdown();
 
 		RenderCommand::shutdown();
 	}
 
 	void Renderer::beginScene(const math::Mat4& viewProjectionMatrix, const math::Vector3& cameraWorldPosition,
-	                          const LightEnvironment& environment) {
-		s_AltSceneData.ViewProjectionMatrix = viewProjectionMatrix;
-		s_AltSceneData.DirLight.direction = environment.DirLight.direction;
-		s_AltSceneData.DirLight.radiance = environment.DirLight.radiance;
-		s_AltSceneData.CameraPosition = cameraWorldPosition;
-		// The Metal backend has no UniformBuffer implementation: its materials push the
-		// scene globals inline via setVertex/FragmentBytes(sceneUniformData(), ...), so
-		// s_SceneUBO is null there. Guard the upload — s_AltSceneData is already filled
-		// above, which is all the inline-bytes path needs. OpenGL/Vulkan still bind it.
-		if (s_SSceneUbo)
-			s_SSceneUbo->setData(&s_AltSceneData, sizeof(AltSceneData));
-		s_SceneData->lightEnvironment = environment;
+	                          const math::Vector3& direction, const math::Vector3& radiance) {
+		//s_SceneData->lightEnvironment = environment;
 
-		uploadLightEnvironment();
+		//uploadLightEnvironment();
+		RenderCommand::beginScene(viewProjectionMatrix, cameraWorldPosition, direction, radiance);
 	}
 
 	void Renderer::endScene() {}
 
 	void Renderer::submit(const Ref<Material>& material, const Ref<GeometryDescriptor>& desc, const Mat4& transform) {
-		material->getShader()->setMat4("u_Model", transform);
+		//material->getShader()->setMat4("u_Model", transform);
 		RenderCommand::drawIndexed(material, desc, transform, desc->getIndexCount());
 	}
 

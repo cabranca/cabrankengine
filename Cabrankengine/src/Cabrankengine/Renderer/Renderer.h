@@ -26,7 +26,7 @@ namespace cbk::rendering {
 
 		// Sets the necessary general data to render a scene, such as the camera, the lighting, etc.
 		static void beginScene(const math::Mat4& viewProjectionMatrix, const math::Vector3& cameraWorldPosition,
-		                       const LightEnvironment& environment);
+	                          const math::Vector3& direction, const math::Vector3& radiance);
 
 		// Ends the current scene, finalizing rendering operations.
 		static void endScene();

@@ -4,40 +4,21 @@
 
 #include <Cabrankengine/Renderer/Materials/PhongMaterial.h>
 
-#include "IVulkanRecordable.h"
-
 namespace cbk::platform::vk {
 
-	class VulkanPhongMaterial : public rendering::PhongMaterial, public IVulkanRecordable {
+	class VulkanPhongMaterial : public rendering::PhongMaterial {
 	  public:
 		VulkanPhongMaterial();
-		~VulkanPhongMaterial() override;
 
-		void bind() const override {}
+		void updateDescriptorSet();
 
-		// IVulkanRecordable
-		void record(VkCommandBuffer cb, const math::Mat4& transform) const override;
-
-		// Per-class pipeline state cleanup. Called by VulkanRendererAPI::shutdown().
-		static void destroySharedResources();
+		[[nodiscard]] float getShininess() const;
 
 	  private:
-		struct PushData {
-			float shininess;
-		};
+		bool m_DescriptorSetInitialized = false;
 
-		static void initSharedResourcesIfNeeded();
-		void updateDescriptorSet() const;
-
-		static bool s_Initialized;
-		static VkDescriptorSetLayout s_DescriptorSetLayout;
-		static VkDescriptorPool s_DescriptorPool;
-		static VkPipelineLayout s_PipelineLayout;
-		static VkPipeline s_Pipeline;
-
-		VkDescriptorSet m_DescriptorSet{ VK_NULL_HANDLE };
-		mutable bool m_DescriptorDirty{ true };
-		static inline VkSampleCountFlagBits s_MSAA = VK_SAMPLE_COUNT_1_BIT;
+		VkDevice m_Device = VK_NULL_HANDLE; // NON-OWNING
+		VkDescriptorSet m_DescriptorSet{ VK_NULL_HANDLE }; // NON-OWNING
 	};
 
 } // namespace cbk::platform::vk

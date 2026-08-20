@@ -1,25 +1,22 @@
 #include <pch.h>
 #include "VulkanUniformBuffer.h"
 
-#include <cstring>
-
 #include "VkCheck.h"
 #include "VulkanDeviceContext.h"
-#include "VulkanRendererAPI.h"
 
 namespace cbk::platform::vk {
 
-	void VulkanUniformBuffer::init(const VulkanDeviceContext& ctx, uint32_t size, uint32_t binding, VkStageFlags stageFlags) {
+	void VulkanUniformBuffer::init(const VulkanDeviceContext& ctx, uint32_t size, uint32_t binding, VkShaderStageFlags stageFlags) {
 		m_Device = ctx.getDevice();
 		m_Allocator = ctx.getAllocator();
 
-		for (const auto& buffer : m_Buffers) {
-			buffer.init(m_Device, m_Allocator, VK_BUFFER_USAGE_2_UNIFORM_BUFFER_BIT);
+		for (auto& buffer : m_Buffers) {
+			buffer.init(m_Device, m_Allocator, size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
 		}
-		createDescriptorSetLayout(stageFlags);
+		createDescriptorSetLayout(binding, stageFlags);
 		createDescriptorPool();
 		allocateDescriptorSets();
-		updateDescriptorSets();
+		updateDescriptorSets(size, binding);
 	}
 
 	void VulkanUniformBuffer::shutdown() {
@@ -27,7 +24,7 @@ namespace cbk::platform::vk {
 			vkDestroyDescriptorPool(m_Device, m_DescriptorPool, nullptr);
 		if (m_DescriptorSetLayout != VK_NULL_HANDLE)
 			vkDestroyDescriptorSetLayout(m_Device, m_DescriptorSetLayout, nullptr);
-		for (const auto& buffer : m_Buffers) {
+		for (auto& buffer : m_Buffers) {
 			buffer.shutdown();
 		}
 	}
@@ -36,7 +33,7 @@ namespace cbk::platform::vk {
 		m_Buffers[frameIndex].setData(data, size, offset);
 	}
 
-	void VulkanUniformBuffer::createDescriptorSetLayout(VkStageFlags stageFlags) {
+	void VulkanUniformBuffer::createDescriptorSetLayout(uint32_t binding, VkShaderStageFlags stageFlags) {
 		VkDescriptorSetLayoutBinding layoutBinding{
 			.binding = binding,
 			.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
@@ -77,12 +74,12 @@ namespace cbk::platform::vk {
 		VK_CHECK(vkAllocateDescriptorSets(m_Device, &dsAllocCI, m_DescriptorSets.data()));
 	}
 
-	void VulkanUniformBuffer::updateDescriptorSets() {
+	void VulkanUniformBuffer::updateDescriptorSets(uint32_t size, uint32_t binding) {
 		std::array<VkDescriptorBufferInfo, k_MaxFramesInFlight> bufferInfos{};
 		std::array<VkWriteDescriptorSet, k_MaxFramesInFlight> writes{};
 		for (uint32_t i = 0; i < k_MaxFramesInFlight; ++i) {
 			bufferInfos[i] = VkDescriptorBufferInfo{
-				.buffer = m_Buffers[i],
+				.buffer = m_Buffers[i].getBuffer(),
 				.offset = 0,
 				.range = size,
 			};
@@ -95,6 +92,6 @@ namespace cbk::platform::vk {
 				.pBufferInfo = &bufferInfos[i],
 			};
 		}
-		vkUpdateDescriptorSets(device, k_MaxFramesInFlight, writes.data(), 0, nullptr);
+		vkUpdateDescriptorSets(m_Device, k_MaxFramesInFlight, writes.data(), 0, nullptr);
 	}
 } // namespace cbk::platform::vk

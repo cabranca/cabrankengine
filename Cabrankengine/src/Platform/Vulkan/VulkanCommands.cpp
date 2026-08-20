@@ -65,4 +65,12 @@ namespace cbk::platform::vk {
 
 		vkCmdPipelineBarrier2(cb, &dependencyInfo);
 	}
+
+	void VulkanCommands::bindPipeline(VkCommandBuffer cb, VkPipeline pipeline, VkPipelineLayout layout, DescriptorSetsInfo descriptorSets,
+	                                  PushConstantsInfo pushConstants) {
+		vkCmdBindPipeline(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+		vkCmdBindDescriptorSets(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, descriptorSets.FirstSet, descriptorSets.DescriptorSetCount,
+		                        descriptorSets.DescriptorSets, 0, nullptr);
+		vkCmdPushConstants(cb, layout, pushConstants.StageFlags, pushConstants.Offset, pushConstants.Size, pushConstants.Values);
+	}
 } // namespace lab::vk

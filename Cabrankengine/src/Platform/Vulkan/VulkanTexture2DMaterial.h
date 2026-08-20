@@ -22,8 +22,6 @@ namespace cbk::platform::vk {
 		VulkanTexture2DMaterial();
 		~VulkanTexture2DMaterial() override;
 
-		void bind() const override {}
-
 		// Slot 0 is conventionally the white texture used by un-textured quads.
 		// Callers must populate slot 0 at least once before the first flush.
 		void setTextureSlot(uint32_t slot, const Ref<rendering::Texture2D>& texture) override;

@@ -22,11 +22,11 @@ namespace cbk::platform::vk {
 
 	// Binds set 0 — the scene globals UBO owned by the Renderer. Every material
 	// pipeline declares this set, so every material's record() calls it.
-	inline void bindSceneSet(VkCommandBuffer cb, VkPipelineLayout layout) {
-		auto sceneUbo = static_cast<VulkanUniformBuffer*>(rendering::Renderer::getSceneUBO().get());
-		vkCmdBindDescriptorSets(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, set_index::k_Scene, 1, sceneUbo->getDescriptorSet(), 0,
-		                        nullptr);
-	}
+	// inline void bindSceneSet(VkCommandBuffer cb, VkPipelineLayout layout) {
+	// 	auto sceneUbo = static_cast<VulkanUniformBuffer*>(rendering::Renderer::getSceneUBO().get());
+	// 	vkCmdBindDescriptorSets(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, set_index::k_Scene, 1, sceneUbo->getDescriptorSet(), 0,
+	// 	                        nullptr);
+	// }
 
 	// Binds set 2 — the point-light SSBO owned by the Renderer. Only materials whose
 	// pipeline layout declares set 2 (currently just PBR) call this.

@@ -6,8 +6,8 @@ namespace cbk::rendering {
 	  public:
 		virtual ~UniformBuffer() = default;
 
-		virtual void setData(const void* data, uint32_t size, uint32_t offset = 0) = 0;
+		virtual void setData(uint32_t frameIndex, const void* data, uint32_t size, uint32_t offset = 0) = 0;
 
-		[[nodiscard]] static Ref<UniformBuffer> create(uint32_t size, uint32_t binding);
+		//[[nodiscard]] static Ref<UniformBuffer> create(const GraphicsContext& ctx, uint32_t size, uint32_t binding, VkShaderStageFlags stageFlags);
 	};
 } // namespace cbk::rendering

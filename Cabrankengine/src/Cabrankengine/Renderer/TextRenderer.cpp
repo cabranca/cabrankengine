@@ -105,9 +105,6 @@ namespace cbk::rendering {
 		for (uint32_t i = 0; i < s_Data.textureSlotIndex; i++)
 			s_Data.textMaterial->setTextureSlot(i, s_Data.textureSlots[i]);
 
-		// Vulkan: bind() is a no-op and drawIndexed records the descriptor set.
-		// OpenGL: bind() binds the shader + texture units, drawIndexed issues the draw.
-		s_Data.textMaterial->bind();
 		RenderCommand::drawIndexed(s_Data.textMaterial, s_Data.textVertexDesc, math::identityMat(), s_Data.quadIndexCount);
 	}
 

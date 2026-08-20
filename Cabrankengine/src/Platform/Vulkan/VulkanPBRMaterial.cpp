@@ -50,7 +50,7 @@ namespace cbk::platform::vk {
 		vkCmdBindPipeline(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, s_Pipeline);
 
 		// Set 0 = scene globals, set 1 = this material's textures, set 2 = point lights.
-		bindSceneSet(cb, s_PipelineLayout);
+		//bindSceneSet(cb, s_PipelineLayout);
 		vkCmdBindDescriptorSets(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, s_PipelineLayout, set_index::k_Material, 1, &m_DescriptorSet, 0,
 		                        nullptr);
 		bindLightSet(cb, s_PipelineLayout);

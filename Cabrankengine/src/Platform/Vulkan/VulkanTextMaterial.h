@@ -21,8 +21,6 @@ namespace cbk::platform::vk {
 		VulkanTextMaterial();
 		~VulkanTextMaterial() override;
 
-		void bind() const override {}
-
 		// Slot 0 is conventionally the white texture used as a fallback for unused
 		// slots — callers must populate slot 0 at least once before the first flush.
 		void setTextureSlot(uint32_t slot, const Ref<rendering::Texture2D>& texture) override;

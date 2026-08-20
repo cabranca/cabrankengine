@@ -21,6 +21,9 @@ namespace cbk::rendering {
 
 		static void beginFrame();
 
+		static void beginScene(const math::Mat4& viewProjectionMatrix, const math::Vector3& cameraWorldPosition,
+		                       const math::Vector3& direction, const math::Vector3& radiance);
+
 		// Draws the vertex array vertices in order
 		static void draw(const Ref<GeometryDescriptor>& desc);
 

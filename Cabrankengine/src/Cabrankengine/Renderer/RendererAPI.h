@@ -29,6 +29,9 @@ namespace cbk::rendering {
 
 		virtual void beginFrame() = 0;
 
+		virtual void beginScene(const math::Mat4& viewProjectionMatrix, const math::Vector3& cameraWorldPosition,
+		                        const math::Vector3& direction, const math::Vector3& radiance) = 0;
+
 		// Draws the vertex array vertices in order
 		virtual void draw(const Ref<GeometryDescriptor>& vertexArray) = 0;
 
