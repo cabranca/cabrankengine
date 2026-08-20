@@ -11,24 +11,27 @@ namespace cbk::platform::vk {
 
 	void VulkanGraphicsPipeline::init(const VulkanDeviceContext& ctx) {
 		m_Device = ctx.getDevice();
-        createDescriptorSetLayout();
+		// The UBO owns set 0's layout, so it has to exist before createPipelineLayout()
+		// reads it. TODO: see how to share this between Phong and PBR (static?)
+		m_UBO.init(ctx, sizeof(SceneData), k_SceneDataBinding, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
+		createDescriptorSetLayout();
 		createDescriptorPool();
+		createDescriptorSet();
 		createPipelineLayout();
 		createPipeline(ctx.getImageFormat(), ctx.getDepthFormat(), ctx.getMSAA());
-        m_UBO.init(ctx, sizeof(SceneData), k_SceneDataBinding, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT); // TODO: see how to share this between Phong and PBR (static?)
 	}
 
 	void VulkanGraphicsPipeline::shutdown() {
-        vkDestroyPipeline(m_Device, m_Pipeline, nullptr);
-        vkDestroyPipelineLayout(m_Device, m_PipelineLayout, nullptr);
-        vkDestroyDescriptorPool(m_Device, m_DescriptorPool, nullptr);
-        vkDestroyDescriptorSetLayout(m_Device, m_SetLayout, nullptr);
+		vkDestroyPipeline(m_Device, m_Pipeline, nullptr);
+		vkDestroyPipelineLayout(m_Device, m_PipelineLayout, nullptr);
+		vkDestroyDescriptorPool(m_Device, m_DescriptorPool, nullptr);
+		vkDestroyDescriptorSetLayout(m_Device, m_SetLayout, nullptr);
 		m_UBO.shutdown();
 	}
 
 	void VulkanGraphicsPipeline::bind(VkCommandBuffer cb, const math::Mat4& transform, float shininess, uint32_t frameIndex) {
 		PushData pushData{ .transform = transform, .shininess = shininess };
-		std::array<VkDescriptorSet, 2> sets = {m_UBO.getDescriptorSet(frameIndex), m_DescriptorSet};
+		std::array<VkDescriptorSet, 2> sets = { m_UBO.getDescriptorSet(frameIndex), m_DescriptorSet };
 		VulkanCommands::bindPipeline(cb, m_Pipeline, m_PipelineLayout,
 		                             { .FirstSet = 0, .DescriptorSetCount = sets.size(), .DescriptorSets = sets.data() },
 		                             { .StageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
@@ -38,7 +41,7 @@ namespace cbk::platform::vk {
 	}
 
 	void VulkanGraphicsPipeline::createDescriptorSetLayout() {
-        std::array<VkDescriptorSetLayoutBinding, 2> bindings{};
+		std::array<VkDescriptorSetLayoutBinding, 2> bindings{};
 		for (uint32_t i = 0; i < bindings.size(); ++i) {
 			bindings[i] = VkDescriptorSetLayoutBinding{
 				.binding = i,
@@ -53,12 +56,12 @@ namespace cbk::platform::vk {
 			.bindingCount = static_cast<uint32_t>(bindings.size()),
 			.pBindings = bindings.data(),
 		};
-        
-		VK_CHECK(vkCreateDescriptorSetLayout(m_Device, &dslCI, nullptr, &m_SetLayout));
-    }
 
-    void VulkanGraphicsPipeline::createDescriptorPool() {
-        VkDescriptorPoolSize poolSize{
+		VK_CHECK(vkCreateDescriptorSetLayout(m_Device, &dslCI, nullptr, &m_SetLayout));
+	}
+
+	void VulkanGraphicsPipeline::createDescriptorPool() {
+		VkDescriptorPoolSize poolSize{
 			.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
 			.descriptorCount = static_cast<uint32_t>(k_MaterialBindingCount) * k_MaxInstances,
 		};
@@ -69,7 +72,7 @@ namespace cbk::platform::vk {
 			.pPoolSizes = &poolSize,
 		};
 		VK_CHECK(vkCreateDescriptorPool(m_Device, &poolCI, nullptr, &m_DescriptorPool));
-    }
+	}
 
 	void VulkanGraphicsPipeline::createDescriptorSet() {
 		VkDescriptorSetAllocateInfo dsAllocInfo = {
@@ -81,8 +84,8 @@ namespace cbk::platform::vk {
 		VK_CHECK(vkAllocateDescriptorSets(m_Device, &dsAllocInfo, &m_DescriptorSet));
 	}
 
-    void VulkanGraphicsPipeline::createPipelineLayout() {
-        std::array<VkDescriptorSetLayout, 2> setLayouts = { m_UBO.getDescriptorSetLayout(), m_SetLayout };
+	void VulkanGraphicsPipeline::createPipelineLayout() {
+		std::array<VkDescriptorSetLayout, 2> setLayouts = { m_UBO.getDescriptorSetLayout(), m_SetLayout };
 
 		// Slang emits one push-constant block visible to both stages, so use a single
 		// range covering the whole block instead of splitting per stage.
@@ -90,7 +93,7 @@ namespace cbk::platform::vk {
 			VkPushConstantRange{
 			    .stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
 			    .offset = 0,
-			    .size = static_cast<uint32_t>(sizeof(math::Mat4) + sizeof(PushData)),
+			    .size = static_cast<uint32_t>(sizeof(PushData)),
 			},
 		};
 
@@ -102,9 +105,10 @@ namespace cbk::platform::vk {
 			.pPushConstantRanges = pushRanges.data(),
 		};
 		VK_CHECK(vkCreatePipelineLayout(m_Device, &plCI, nullptr, &m_PipelineLayout));
-    }
+	}
 
 	void VulkanGraphicsPipeline::createPipeline(VkFormat colorFormat, VkFormat depthFormat, VkSampleCountFlagBits sampleCount) {
+		rendering::ShaderLibrary::load("assets/shaders/Phong");
 		auto shader = static_cast<VulkanShader*>(rendering::ShaderLibrary::get("Phong").get());
 
 		std::array<VkPipelineShaderStageCreateInfo, 2> stages = {

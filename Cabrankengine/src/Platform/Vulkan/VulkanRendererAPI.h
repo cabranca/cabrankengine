@@ -40,7 +40,11 @@ namespace cbk::platform::vk {
 		VulkanDeviceContext m_Context;
 		inline static VulkanDeviceContext* s_Context = nullptr; // Why not a static reference directly?
 		VulkanSwapchainManager m_SwapchainManager;
-		static VulkanGraphicsPipeline s_GraphicsPipeline;
+		// Same split as m_Context/s_Context: the member owns the lifetime (created in init(),
+		// destroyed in shutdown(), never at static-init time), the pointer is only a published
+		// access path for the static accessors below and is null outside init()/shutdown().
+		VulkanGraphicsPipeline m_GraphicsPipeline;
+		inline static VulkanGraphicsPipeline* s_GraphicsPipeline = nullptr;
 		uint32_t m_FrameIndex{ 0 };
 		uint32_t m_ImageIndex{ 0 };
 		std::array<VkFence, k_MaxFramesInFlight> m_Fences;

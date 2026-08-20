@@ -39,9 +39,9 @@ namespace cbk::rendering {
 			camPos = m_CameraSystem->getCameraWorldPosition();
 		}
 
-		Renderer2D::beginScene(vp);
-		m_SpriteRenderSystem->update(*m_Scene->getRegistry(), dt);
-		Renderer2D::endScene();
+		// Renderer2D::beginScene(vp);
+		// m_SpriteRenderSystem->update(*m_Scene->getRegistry(), dt);
+		// Renderer2D::endScene();
 
 		LightEnvironment lights;
 		for (auto e: m_DirLightSystem->getEntities()) {
@@ -59,9 +59,9 @@ namespace cbk::rendering {
 		m_ModelRenderSystem->update(*m_Scene->getRegistry(), dt);
 		Renderer::endScene();
 
-		TextRenderer::beginScene(vp);
-		m_TextRenderSystem->update(*m_Scene->getRegistry(), dt);
-		TextRenderer::endScene();
+		// TextRenderer::beginScene(vp);
+		// m_TextRenderSystem->update(*m_Scene->getRegistry(), dt);
+		// TextRenderer::endScene();
 	}
 
 	void RenderLayer::onEvent(Event& event) {

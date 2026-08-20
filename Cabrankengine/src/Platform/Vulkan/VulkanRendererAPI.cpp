@@ -24,7 +24,8 @@ namespace cbk::platform::vk {
 		m_Context.init(window);
 		s_Context = &m_Context;
 		m_SwapchainManager.init(m_Context);
-		s_GraphicsPipeline.init(m_Context);
+		m_GraphicsPipeline.init(m_Context);
+		s_GraphicsPipeline = &m_GraphicsPipeline;
 		createSyncObjects();
 		auto commandBuffers = m_Context.getQueue().allocateCommandBuffers(k_MaxFramesInFlight);
 		std::copy(commandBuffers.begin(), commandBuffers.end(), m_CommandBuffers.begin());
@@ -41,9 +42,10 @@ namespace cbk::platform::vk {
 		}
 
 		destroyFinalFrameDescriptorSets();
-		s_GraphicsPipeline.shutdown();
+		m_GraphicsPipeline.shutdown();
 		m_SwapchainManager.shutdown();
 		m_Context.shutdown();
+		s_GraphicsPipeline = nullptr;
 		s_Context = nullptr;
 	}
 
@@ -68,13 +70,11 @@ namespace cbk::platform::vk {
 	}
 
 	void VulkanRendererAPI::beginScene(const math::Mat4& viewProjectionMatrix, const math::Vector3& cameraWorldPosition,
-		                        const math::Vector3& direction, const math::Vector3& radiance) {
-		SceneData data {
-			.ViewProjectionMatrix = viewProjectionMatrix,
-			.DirLight = {.direction = direction, .radiance = radiance},
-			.CameraPosition = cameraWorldPosition
-		};
-		auto& ubo = s_GraphicsPipeline.getUBO();
+	                                   const math::Vector3& direction, const math::Vector3& radiance) {
+		SceneData data{ .ViewProjectionMatrix = viewProjectionMatrix,
+			            .DirLight = { .direction = direction, .radiance = radiance },
+			            .CameraPosition = cameraWorldPosition };
+		auto& ubo = m_GraphicsPipeline.getUBO();
 		ubo.setData(m_FrameIndex, &data, sizeof(SceneData));
 	}
 
@@ -166,7 +166,6 @@ namespace cbk::platform::vk {
 			}
 
 			m_FrameIndex = (m_FrameIndex + 1) % k_MaxFramesInFlight;
-			
 		}
 	}
 
@@ -296,9 +295,9 @@ namespace cbk::platform::vk {
 		VkRenderingAttachmentInfo colorAttachmentInfo{ .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
 			                                           .imageView = m_SwapchainManager.getColorImageView(m_FrameIndex),
 			                                           .imageLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL,
-													   .resolveMode = VK_RESOLVE_MODE_AVERAGE_BIT,
-													   .resolveImageView = m_SwapchainManager.getResolveImageView(m_FrameIndex),
-													   .resolveImageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+			                                           .resolveMode = VK_RESOLVE_MODE_AVERAGE_BIT,
+			                                           .resolveImageView = m_SwapchainManager.getResolveImageView(m_FrameIndex),
+			                                           .resolveImageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 			                                           .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
 			                                           .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
 			                                           .clearValue{
@@ -336,7 +335,7 @@ namespace cbk::platform::vk {
 		auto cb = m_CommandBuffers[m_FrameIndex];
 		auto vkMaterial = dynamic_cast<VulkanPhongMaterial*>(material.get());
 		vkMaterial->updateDescriptorSet();
-		s_GraphicsPipeline.bind(cb, transform, vkMaterial->getShininess(), m_FrameIndex);
+		m_GraphicsPipeline.bind(cb, transform, vkMaterial->getShininess(), m_FrameIndex);
 	}
 
 	void VulkanRendererAPI::bindAndDraw(const Ref<rendering::GeometryDescriptor>& desc) {
@@ -370,7 +369,8 @@ namespace cbk::platform::vk {
 	}
 
 	VkDescriptorSet VulkanRendererAPI::getPhongDescriptorSet() {
-		return s_GraphicsPipeline.getDescriptorSet();
+		CBK_CORE_ASSERT(s_GraphicsPipeline, "VulkanRendererAPI::getPhongDescriptorSet() called before init()");
+		return s_GraphicsPipeline->getDescriptorSet();
 	}
 
 	uint64_t VulkanRendererAPI::getFinalFrame() const {
