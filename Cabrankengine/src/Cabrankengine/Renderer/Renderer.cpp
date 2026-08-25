@@ -61,7 +61,7 @@ namespace cbk::rendering {
 		CBK_PROFILE_FUNCTION();
 
 		RenderCommand::init(window);
-		DefaultLibrary::init();
+		//DefaultLibrary::init();
 		// Scene UBO must exist before Renderer2D/TextRenderer init, because the
 		// Vulkan materials they create pull the scene descriptor set layout from it
 		// at pipeline-layout construction time. The light SSBO is consumed the same
@@ -72,7 +72,7 @@ namespace cbk::rendering {
 	}
 
 	void Renderer::shutdown() {
-		DefaultLibrary::shutdown();
+		//DefaultLibrary::shutdown();
 		ShaderLibrary::shutdown();
 		s_SSceneUbo.reset();
 		if (s_SceneData)
