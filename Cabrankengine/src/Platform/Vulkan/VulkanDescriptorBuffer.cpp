@@ -1,25 +1,61 @@
 #include <pch.h>
-#include "VulkanUniformBuffer.h"
+#include "VulkanDescriptorBuffer.h"
 
 #include "VkCheck.h"
-#include "VulkanDeviceContext.h"
 
 namespace cbk::platform::vk {
 
-	void VulkanUniformBuffer::init(const VulkanDeviceContext& ctx, uint32_t size, uint32_t binding, VkShaderStageFlags stageFlags) {
-		m_Device = ctx.getDevice();
-		m_Allocator = ctx.getAllocator();
+	// ----------STORAGE BUFFER----------
+
+	void VulkanStorageBuffer::init(VkDevice device, VmaAllocator allocator, uint32_t size, uint32_t binding,
+	                               VkShaderStageFlags stageFlags) {
+		m_DescriptorBuffer.init(device, allocator, size, binding, stageFlags, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+		                        VK_BUFFER_USAGE_2_STORAGE_BUFFER_BIT);
+	}
+
+	void VulkanStorageBuffer::shutdown() {
+		m_DescriptorBuffer.shutdown();
+	}
+
+	void VulkanStorageBuffer::setData(uint32_t frameIndex, const void* data, uint32_t size) {
+		m_DescriptorBuffer.setData(frameIndex, data, size, 0);
+	}
+
+	// ----------UNIFORM BUFFER----------
+
+	void VulkanUniformBuffer::init(VkDevice device, VmaAllocator allocator, uint32_t size, uint32_t binding,
+	                               VkShaderStageFlags stageFlags) {
+		m_DescriptorBuffer.init(device, allocator, size, binding, stageFlags, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+		                        VK_BUFFER_USAGE_2_UNIFORM_BUFFER_BIT);
+	}
+
+	void VulkanUniformBuffer::shutdown() {
+		m_DescriptorBuffer.shutdown();
+	}
+
+	void VulkanUniformBuffer::setData(uint32_t frameIndex, const void* data, uint32_t size, uint32_t offset) {
+		m_DescriptorBuffer.setData(frameIndex, data, size, offset);
+	}
+
+	// ----------DESCRIPTOR BUFFER----------
+
+	void VulkanDescriptorBuffer::init(VkDevice device, VmaAllocator allocator, uint32_t size, uint32_t binding, VkShaderStageFlags stageFlags,
+									  VkDescriptorType descriptorType, VkBufferUsageFlags usage) {
+		m_Device = device;
+		m_Allocator = allocator;
+		m_DescriptorType = descriptorType;
 
 		for (auto& buffer : m_Buffers) {
-			buffer.init(m_Device, m_Allocator, size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
+			buffer.init(m_Device, m_Allocator, size, usage);
 		}
+
 		createDescriptorSetLayout(binding, stageFlags);
 		createDescriptorPool();
 		allocateDescriptorSets();
 		updateDescriptorSets(size, binding);
 	}
 
-	void VulkanUniformBuffer::shutdown() {
+	void VulkanDescriptorBuffer::shutdown() {
 		if (m_DescriptorPool != VK_NULL_HANDLE)
 			vkDestroyDescriptorPool(m_Device, m_DescriptorPool, nullptr);
 		if (m_DescriptorSetLayout != VK_NULL_HANDLE)
@@ -29,14 +65,14 @@ namespace cbk::platform::vk {
 		}
 	}
 
-	void VulkanUniformBuffer::setData(uint32_t frameIndex, const void* data, uint32_t size, uint32_t offset) {
+	void VulkanDescriptorBuffer::setData(uint32_t frameIndex, const void* data, uint32_t size, uint32_t offset) {
 		m_Buffers[frameIndex].setData(data, size, offset);
 	}
 
-	void VulkanUniformBuffer::createDescriptorSetLayout(uint32_t binding, VkShaderStageFlags stageFlags) {
+	void VulkanDescriptorBuffer::createDescriptorSetLayout(uint32_t binding, VkShaderStageFlags stageFlags) {
 		VkDescriptorSetLayoutBinding layoutBinding{
 			.binding = binding,
-			.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+			.descriptorType = m_DescriptorType,
 			.descriptorCount = 1,
 			.stageFlags = stageFlags,
 		};
@@ -47,10 +83,10 @@ namespace cbk::platform::vk {
 		};
 		VK_CHECK(vkCreateDescriptorSetLayout(m_Device, &layoutCI, nullptr, &m_DescriptorSetLayout));
 	}
-	
-	void VulkanUniformBuffer::createDescriptorPool() {
+
+	void VulkanDescriptorBuffer::createDescriptorPool() {
 		VkDescriptorPoolSize poolSize{
-			.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+			.type = m_DescriptorType,
 			.descriptorCount = k_MaxFramesInFlight,
 		};
 		VkDescriptorPoolCreateInfo poolCI{
@@ -62,7 +98,7 @@ namespace cbk::platform::vk {
 		VK_CHECK(vkCreateDescriptorPool(m_Device, &poolCI, nullptr, &m_DescriptorPool));
 	}
 
-	void VulkanUniformBuffer::allocateDescriptorSets() {
+	void VulkanDescriptorBuffer::allocateDescriptorSets() {
 		std::array<VkDescriptorSetLayout, k_MaxFramesInFlight> setLayouts;
 		setLayouts.fill(m_DescriptorSetLayout);
 		VkDescriptorSetAllocateInfo dsAllocCI{
@@ -74,7 +110,7 @@ namespace cbk::platform::vk {
 		VK_CHECK(vkAllocateDescriptorSets(m_Device, &dsAllocCI, m_DescriptorSets.data()));
 	}
 
-	void VulkanUniformBuffer::updateDescriptorSets(uint32_t size, uint32_t binding) {
+	void VulkanDescriptorBuffer::updateDescriptorSets(uint32_t size, uint32_t binding) {
 		std::array<VkDescriptorBufferInfo, k_MaxFramesInFlight> bufferInfos{};
 		std::array<VkWriteDescriptorSet, k_MaxFramesInFlight> writes{};
 		for (uint32_t i = 0; i < k_MaxFramesInFlight; ++i) {
@@ -88,7 +124,7 @@ namespace cbk::platform::vk {
 				.dstSet = m_DescriptorSets[i],
 				.dstBinding = binding,
 				.descriptorCount = 1,
-				.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+				.descriptorType = m_DescriptorType,
 				.pBufferInfo = &bufferInfos[i],
 			};
 		}
