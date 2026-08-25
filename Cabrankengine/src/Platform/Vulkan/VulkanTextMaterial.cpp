@@ -12,7 +12,7 @@
 #include "VulkanRendererAPI.h"
 #include "VulkanShader.h"
 #include "VulkanTexture.h"
-#include "VulkanUniformBuffer.h"
+#include "VulkanDescriptorBuffer.h"
 
 namespace cbk::platform::vk {
 

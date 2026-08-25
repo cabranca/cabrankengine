@@ -24,7 +24,8 @@ namespace cbk::platform::vk {
 		m_Context.init(window);
 		s_Context = &m_Context;
 		m_SwapchainManager.init(m_Context);
-		m_GraphicsPipeline.init(m_Context);
+		m_GraphicsPipeline.init(m_Context.getDevice(), m_Context.getAllocator(), m_Context.getImageFormat(), m_Context.getDepthFormat(),
+		                        m_Context.getMSAA());
 		s_GraphicsPipeline = &m_GraphicsPipeline;
 		createSyncObjects();
 		auto commandBuffers = m_Context.getQueue().allocateCommandBuffers(k_MaxFramesInFlight);
@@ -74,8 +75,7 @@ namespace cbk::platform::vk {
 		SceneData data{ .ViewProjectionMatrix = viewProjectionMatrix,
 			            .DirLight = { .direction = direction, .radiance = radiance },
 			            .CameraPosition = cameraWorldPosition };
-		auto& ubo = m_GraphicsPipeline.getUBO();
-		ubo.setData(m_FrameIndex, &data, sizeof(SceneData));
+		m_GraphicsPipeline.getUBO().setData(m_FrameIndex, &data, sizeof(SceneData), 0);
 	}
 
 	void VulkanRendererAPI::draw(const Ref<GeometryDescriptor>& vertexArray) {}

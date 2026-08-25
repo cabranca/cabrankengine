@@ -4,8 +4,7 @@
 
 #include <Cabrankengine/Renderer/Renderer.h>
 
-#include "VulkanStorageBuffer.h"
-#include "VulkanUniformBuffer.h"
+#include "VulkanDescriptorBuffer.h"
 
 namespace cbk::platform::vk {
 
@@ -30,10 +29,10 @@ namespace cbk::platform::vk {
 
 	// Binds set 2 — the point-light SSBO owned by the Renderer. Only materials whose
 	// pipeline layout declares set 2 (currently just PBR) call this.
-	inline void bindLightSet(VkCommandBuffer cb, VkPipelineLayout layout) {
-		auto lightSSBO = static_cast<VulkanStorageBuffer*>(rendering::Renderer::getLightSSBO().get());
-		vkCmdBindDescriptorSets(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, set_index::k_Light, 1, lightSSBO->getDescriptorSet(), 0,
-		                        nullptr);
-	}
+	// inline void bindLightSet(VkCommandBuffer cb, VkPipelineLayout layout) {
+	// 	auto lightSSBO = static_cast<VulkanStorageBuffer*>(rendering::Renderer::getLightSSBO().get());
+	// 	vkCmdBindDescriptorSets(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, set_index::k_Light, 1, lightSSBO->getDescriptorSet(), 0,
+	// 	                        nullptr);
+	// }
 
 } // namespace cbk::platform::vk

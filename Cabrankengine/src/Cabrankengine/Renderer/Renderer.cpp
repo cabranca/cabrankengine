@@ -119,39 +119,39 @@ namespace cbk::rendering {
 	}
 
 	void Renderer::uploadLightEnvironment() {
-		size_t count = s_SceneData->lightEnvironment.PointLights.size();
-		CBK_CORE_ASSERT(count <= k_MaxPointLights, "Point-light count exceeds k_MaxPointLights — bump the cap or cull lights upstream");
-		LightBufferHeader header;
-		header.count = static_cast<int>(count);
+		// size_t count = s_SceneData->lightEnvironment.PointLights.size();
+		// CBK_CORE_ASSERT(count <= k_MaxPointLights, "Point-light count exceeds k_MaxPointLights — bump the cap or cull lights upstream");
+		// LightBufferHeader header;
+		// header.count = static_cast<int>(count);
 
-		std::vector<uint8_t> bufferData;
-		bufferData.resize(sizeof(LightBufferHeader) + count * sizeof(PointLightGPU));
+		// std::vector<uint8_t> bufferData;
+		// bufferData.resize(sizeof(LightBufferHeader) + count * sizeof(PointLightGPU));
 
-		memcpy(bufferData.data(), &header, sizeof(LightBufferHeader));
+		// memcpy(bufferData.data(), &header, sizeof(LightBufferHeader));
 
-		PointLightGPU* currentLight = reinterpret_cast<PointLightGPU*>(bufferData.data() + sizeof(LightBufferHeader));
+		// PointLightGPU* currentLight = reinterpret_cast<PointLightGPU*>(bufferData.data() + sizeof(LightBufferHeader));
 
-		for (const auto& light: s_SceneData->lightEnvironment.PointLights) {
-			currentLight->position[0] = light.position.x;
-			currentLight->position[1] = light.position.y;
-			currentLight->position[2] = light.position.z;
-			currentLight->position[3] = 1.f;
+		// for (const auto& light: s_SceneData->lightEnvironment.PointLights) {
+		// 	currentLight->position[0] = light.position.x;
+		// 	currentLight->position[1] = light.position.y;
+		// 	currentLight->position[2] = light.position.z;
+		// 	currentLight->position[3] = 1.f;
 
-			currentLight->radiance[0] = light.radiance.x;
-			currentLight->radiance[1] = light.radiance.y;
-			currentLight->radiance[2] = light.radiance.z;
-			currentLight->radiance[3] = 0.f;
+		// 	currentLight->radiance[0] = light.radiance.x;
+		// 	currentLight->radiance[1] = light.radiance.y;
+		// 	currentLight->radiance[2] = light.radiance.z;
+		// 	currentLight->radiance[3] = 0.f;
 
-			currentLight->constant = light.constant;
-			currentLight->linear = light.linear;
-			currentLight->quadratic = light.quadratic;
+		// 	currentLight->constant = light.constant;
+		// 	currentLight->linear = light.linear;
+		// 	currentLight->quadratic = light.quadratic;
 
-			currentLight++;
-		}
+		// 	currentLight++;
+		// }
 
-		if (s_SceneData->lightSSBO) {
-			s_SceneData->lightSSBO->setData(bufferData.data(), static_cast<uint32_t>(bufferData.size()));
-			s_SceneData->lightSSBO->bind(0);
-		}
+		// if (s_SceneData->lightSSBO) {
+		// 	s_SceneData->lightSSBO->setData(bufferData.data(), static_cast<uint32_t>(bufferData.size()));
+		// 	s_SceneData->lightSSBO->bind(0);
+		// }
 	}
 } // namespace cbk::rendering

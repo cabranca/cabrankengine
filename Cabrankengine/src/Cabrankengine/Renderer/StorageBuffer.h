@@ -8,9 +8,8 @@ namespace cbk::rendering {
 	  public:
 		virtual ~StorageBuffer() = default;
 
-		virtual void setData(const void* data, uint32_t size) = 0;
-		virtual void bind(uint32_t bindingPoint) const = 0;
+		virtual void setData(uint32_t frameIndex, const void* data, uint32_t size) = 0;
 
-		[[nodiscard]] static Ref<StorageBuffer> create(uint32_t size);
+		// [[nodiscard]] static Ref<StorageBuffer> create(uint32_t size);
 	};
 } // namespace cbk::rendering

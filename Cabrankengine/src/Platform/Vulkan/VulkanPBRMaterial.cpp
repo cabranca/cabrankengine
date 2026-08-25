@@ -10,9 +10,8 @@
 #include "VulkanDeviceContext.h"
 #include "VulkanRendererAPI.h"
 #include "VulkanShader.h"
-#include "VulkanStorageBuffer.h"
+#include "VulkanDescriptorBuffer.h"
 #include "VulkanTexture.h"
-#include "VulkanUniformBuffer.h"
 
 namespace cbk::platform::vk {
 
@@ -53,7 +52,7 @@ namespace cbk::platform::vk {
 		//bindSceneSet(cb, s_PipelineLayout);
 		vkCmdBindDescriptorSets(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, s_PipelineLayout, set_index::k_Material, 1, &m_DescriptorSet, 0,
 		                        nullptr);
-		bindLightSet(cb, s_PipelineLayout);
+		//bindLightSet(cb, s_PipelineLayout);
 
 		// Push constants: [0..64) model matrix, [64..) material params.
 		vkCmdPushConstants(cb, s_PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(math::Mat4),

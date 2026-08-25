@@ -4,7 +4,7 @@
 
 #include <Common/Math/Mat4.h>
 
-#include "VulkanUniformBuffer.h"
+#include "VulkanDescriptorBuffer.h"
 
 namespace cbk::platform::vk {
 
@@ -33,7 +33,7 @@ namespace cbk::platform::vk {
 	// For now it's a Phong Graphics Pipeline.
 	class VulkanGraphicsPipeline {
 	  public:
-		void init(const VulkanDeviceContext& vkDeviceContext);
+		void init(VkDevice device, VmaAllocator allocator, VkFormat colorFormat, VkFormat depthFormat, VkSampleCountFlagBits sampleCount);
 		void shutdown();
 
 		void bind(VkCommandBuffer cb, const math::Mat4& transform, float shininess, uint32_t frameIndex);

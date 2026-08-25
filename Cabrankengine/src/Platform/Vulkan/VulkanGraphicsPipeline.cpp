@@ -9,16 +9,17 @@
 
 namespace cbk::platform::vk {
 
-	void VulkanGraphicsPipeline::init(const VulkanDeviceContext& ctx) {
-		m_Device = ctx.getDevice();
+	void VulkanGraphicsPipeline::init(VkDevice device, VmaAllocator allocator, VkFormat colorFormat, VkFormat depthFormat,
+	                                  VkSampleCountFlagBits sampleCount) {
+		m_Device = device;
 		// The UBO owns set 0's layout, so it has to exist before createPipelineLayout()
 		// reads it. TODO: see how to share this between Phong and PBR (static?)
-		m_UBO.init(ctx, sizeof(SceneData), k_SceneDataBinding, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
+		m_UBO.init(device, allocator, sizeof(SceneData), k_SceneDataBinding, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
 		createDescriptorSetLayout();
 		createDescriptorPool();
 		createDescriptorSet();
 		createPipelineLayout();
-		createPipeline(ctx.getImageFormat(), ctx.getDepthFormat(), ctx.getMSAA());
+		createPipeline(colorFormat, depthFormat, sampleCount);
 	}
 
 	void VulkanGraphicsPipeline::shutdown() {

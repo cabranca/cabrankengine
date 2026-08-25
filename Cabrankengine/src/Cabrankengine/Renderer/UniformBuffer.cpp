@@ -1,12 +1,8 @@
 #include <pch.h>
 #include "UniformBuffer.h"
 
-#ifdef CBK_RENDERER_OPENGL
-#include <Platform/OpenGL/OpenGLUniformBuffer.h>
-#endif
-
 #ifdef CBK_RENDERER_VULKAN
-#include <Platform/Vulkan/VulkanUniformBuffer.h>
+#include <Platform/Vulkan/VulkanDescriptorBuffer.h>
 #endif
 
 namespace cbk::rendering {
