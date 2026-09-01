@@ -70,12 +70,8 @@ namespace cbk::platform::vk {
 		m_FrameStarted = true;
 	}
 
-	void VulkanRendererAPI::beginScene(const math::Mat4& viewProjectionMatrix, const math::Vector3& cameraWorldPosition,
-	                                   const math::Vector3& direction, const math::Vector3& radiance) {
-		SceneData data{ .ViewProjectionMatrix = viewProjectionMatrix,
-			            .DirLight = { .direction = direction, .radiance = radiance },
-			            .CameraPosition = cameraWorldPosition };
-		m_GraphicsPipeline.getUBO().setData(m_FrameIndex, &data, sizeof(SceneData), 0);
+	void VulkanRendererAPI::beginScene(const SceneData& sceneData) {
+		m_GraphicsPipeline.setSceneData(sceneData, m_FrameIndex);
 	}
 
 	void VulkanRendererAPI::draw(const Ref<GeometryDescriptor>& vertexArray) {}

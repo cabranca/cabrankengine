@@ -55,7 +55,7 @@ namespace cbk::rendering {
 			lights.PointLights.push_back({ transform->Position, pl->Radiance, pl->Constant, pl->Linear, pl->Quadratic });
 		}
 
-		Renderer::beginScene(vp, camPos, lights.DirLight.direction, lights.DirLight.radiance);
+		Renderer::beginScene({ .ViewProjectionMatrix = vp, .CameraWorldPosition = camPos, .LightEnvironment = lights });
 		m_ModelRenderSystem->update(*m_Scene->getRegistry(), dt);
 		Renderer::endScene();
 

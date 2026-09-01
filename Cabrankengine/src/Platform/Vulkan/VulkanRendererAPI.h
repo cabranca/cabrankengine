@@ -15,8 +15,7 @@ namespace cbk::platform::vk {
 		void shutdown() override;
 		void setClearColor(const math::Vector4& color) override;
 		void beginFrame() override;
-		void beginScene(const math::Mat4& viewProjectionMatrix, const math::Vector3& cameraWorldPosition, const math::Vector3& direction,
-		                const math::Vector3& radiance) override;
+		void beginScene(const rendering::SceneData& sceneData) override;
 		void draw(const Ref<rendering::GeometryDescriptor>& desc) override;
 		void drawIndexed(const Ref<rendering::Material>& material, const Ref<rendering::GeometryDescriptor>& desc,
 		                 const math::Mat4& transform, uint32_t indexCount = 0) override;

@@ -2,33 +2,45 @@
 
 #include <volk/volk.h>
 
+#include <Cabrankengine/Renderer/RendererAPI.h>
 #include <Common/Math/Mat4.h>
 
 #include "VulkanDescriptorBuffer.h"
 
 namespace cbk::platform::vk {
 
-	// Hardcoded struct for every graphics pipeline (Phong and PBR). Mirrors the
-	// ConstantBuffer<SceneData> block in Phong.slang: this is a memory layout, not a
-	// domain type. std140 rounds every vec3 up to a 16-byte slot, so the pads are
-	// load-bearing and must stay in step with the shader's _pad0/_pad1/_pad2. Do not
-	// substitute rendering::DirectionalLight here -- it is tightly packed.
-	struct SceneData {
-		struct DirLightData {
-			math::Vector3 direction{ 0.f, -1.f, 0.f };
-			float _Pad0 = 0.0f;
-			// Defaults to zero radiance: a scene with no CDirectionalLight authored
-			// gets no directional light, rather than a phantom white sun.
-			math::Vector3 radiance{ 0.f };
-			float _Pad1 = 0.0f;
-		};
-
-		math::Mat4 ViewProjectionMatrix; // 64 bytes (offset 0)
-		DirLightData DirLight;           // 32 bytes (offset 64)
-		math::Vector3 CameraPosition;    // 12 bytes (offset 96)
-		float _Pad2 = 0.0f;              //  4 bytes (offset 108 -> 112 total)
+	struct GPUDirLight {
+		math::Vector3 Direction{ 0.f, -1.f, 0.f };
+		float Pad0 = 0.0f;
+		math::Vector3 Radiance{ 0.f };
+		float Pad1 = 0.0f;
 	};
-	static_assert(sizeof(SceneData) == 112, "SceneData must match the std140 layout of Phong.slang's SceneData");
+
+	struct GPUPointLight {
+		math::Vector4 Position; // x, y, z, padding
+		math::Vector4 Radiance; // r, g, b, padding
+		float Constant;
+		float Linear;
+		float Quadratic;
+		float Padding; // To complete (16 * 3) bytes
+	};
+
+	struct GPUPointLightsBufferHeader {
+		int Count;
+		int Padding[3]; // Align with PointLightGPU
+	};
+
+	struct GPUCameraData {
+		math::Mat4 ViewProjectionMatrix; // 64 bytes (offset 0)
+		math::Vector3 CameraPosition;    // 12 bytes (offset 64)
+		float Pad2 = 0.0f;               //  4 bytes (offset 76 -> total 80)
+	};
+
+	struct UBOData {
+		GPUCameraData CameraData;		 // 80 bytes (offset 0)
+		GPUDirLight DirLight;            // 32 bytes (offset 80 -> total 112)
+	};
+	static_assert(sizeof(UBOData) == 112, "SceneData must match the std140 layout of Phong.slang's SceneData");
 
 	// For now it's a Phong Graphics Pipeline.
 	class VulkanGraphicsPipeline {
@@ -36,9 +48,8 @@ namespace cbk::platform::vk {
 		void init(VkDevice device, VmaAllocator allocator, VkFormat colorFormat, VkFormat depthFormat, VkSampleCountFlagBits sampleCount);
 		void shutdown();
 
+		void setSceneData(const rendering::SceneData& sceneData, uint32_t frameIndex);
 		void bind(VkCommandBuffer cb, const math::Mat4& transform, float shininess, uint32_t frameIndex);
-
-		[[nodiscard]] VulkanUniformBuffer& getUBO();
 
 		// I'm pretty sure I've got to provide a new allocate descriptor set for each new material instance.
 		// Maybe I should have a vector of descriptor sets here, inserted when allocated and I give that pointer to the material?
@@ -62,11 +73,14 @@ namespace cbk::platform::vk {
 		VkPipelineLayout m_PipelineLayout = VK_NULL_HANDLE;
 		VkPipeline m_Pipeline = VK_NULL_HANDLE;
 		VulkanUniformBuffer m_UBO;
+		VulkanStorageBuffer m_SSBO;
 
 		void createDescriptorSetLayout();
 		void createDescriptorPool();
 		void createDescriptorSet();
 		void createPipelineLayout();
 		void createPipeline(VkFormat colorFormat, VkFormat depthFormat, VkSampleCountFlagBits sampleCount);
+		void setUBOData(uint32_t frameIndex, math::Mat4 viewProjectionMatrix, math::Vector3 cameraPosition, rendering::DirectionalLight dirLight);
+		void setSSBOData(uint32_t frameIndex, const std::vector<rendering::PointLight>& pointLights);
 	};
 } // namespace cbk::platform::vk

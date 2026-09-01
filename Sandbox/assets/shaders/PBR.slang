@@ -27,9 +27,9 @@ struct DirLight {
 
 struct SceneData {
     float4x4 viewProjection;
-    DirLight           dirLight;
     float3             cameraPosition;
     float              _pad2;
+    DirLight           dirLight;
 };
 
 [[vk::binding(0, 0)]] ConstantBuffer<SceneData> scene;

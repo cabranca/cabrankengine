@@ -12,6 +12,34 @@ namespace cbk::rendering {
 	class GeometryDescriptor; // Forward declaration of VertexArray class.
 	class Material;
 
+	struct DirectionalLight {
+		math::Vector3 Direction{ 0.f, -1.f, 0.f };
+		// Defaults to zero radiance: a scene with no CDirectionalLight authored
+		// gets no directional light, rather than a phantom white sun.
+		math::Vector3 Radiance{ 0.f };
+	};
+
+	struct PointLight {
+		math::Vector3 Position;
+		math::Vector3 Radiance{ 1.f };
+
+		// Standard Attenuation
+		float Constant{ 1.f };
+		float Linear{ 0.09f };
+		float Quadratic{ 0.032f };
+	};
+
+	struct LightEnvironment {
+		DirectionalLight DirLight;
+		std::vector<PointLight> PointLights;
+	};
+
+	struct SceneData {
+		math::Mat4 ViewProjectionMatrix;
+		math::Vector3 CameraWorldPosition;
+		struct LightEnvironment LightEnvironment;
+	};
+
 	// RendererAPI is an abstract class that defines the interface for the low level rendering operations.
 	class RendererAPI {
 	  public:
@@ -29,8 +57,7 @@ namespace cbk::rendering {
 
 		virtual void beginFrame() = 0;
 
-		virtual void beginScene(const math::Mat4& viewProjectionMatrix, const math::Vector3& cameraWorldPosition,
-		                        const math::Vector3& direction, const math::Vector3& radiance) = 0;
+		virtual void beginScene(const SceneData& sceneData) = 0;
 
 		// Draws the vertex array vertices in order
 		virtual void draw(const Ref<GeometryDescriptor>& vertexArray) = 0;

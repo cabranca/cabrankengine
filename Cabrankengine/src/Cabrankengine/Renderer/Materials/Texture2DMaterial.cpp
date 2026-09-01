@@ -24,7 +24,7 @@ namespace cbk::rendering {
 #elif defined(CBK_RENDERER_METAL)
 		return createRef<platform::metal::MetalTexture2DMaterial>();
 #elif defined(CBK_RENDERER_VULKAN)
-		return createRef<platform::vk::VulkanTexture2DMaterial>();
+		return nullptr;
 #else
 		CBK_CORE_ASSERT(false, "No renderer API defined!");
 		return nullptr;

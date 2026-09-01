@@ -9,12 +9,16 @@
 
 namespace cbk::platform::vk {
 
+	using namespace math;
+	using namespace rendering;
+
 	void VulkanGraphicsPipeline::init(VkDevice device, VmaAllocator allocator, VkFormat colorFormat, VkFormat depthFormat,
 	                                  VkSampleCountFlagBits sampleCount) {
 		m_Device = device;
 		// The UBO owns set 0's layout, so it has to exist before createPipelineLayout()
 		// reads it. TODO: see how to share this between Phong and PBR (static?)
 		m_UBO.init(device, allocator, sizeof(SceneData), k_SceneDataBinding, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
+		//m_SSBO.init(device, allocator, sizeof(), 2, VK_SHADER_STAGE_FRAGMENT_BIT);
 		createDescriptorSetLayout();
 		createDescriptorPool();
 		createDescriptorSet();
@@ -28,6 +32,11 @@ namespace cbk::platform::vk {
 		vkDestroyDescriptorPool(m_Device, m_DescriptorPool, nullptr);
 		vkDestroyDescriptorSetLayout(m_Device, m_SetLayout, nullptr);
 		m_UBO.shutdown();
+	}
+
+	void VulkanGraphicsPipeline::setSceneData(const rendering::SceneData& sceneData, uint32_t frameIndex) {
+		setUBOData(frameIndex, sceneData.ViewProjectionMatrix, sceneData.CameraWorldPosition, sceneData.LightEnvironment.DirLight);
+		//setSSBOData(frameIndex, sceneData.LightEnvironment.PointLights);
 	}
 
 	void VulkanGraphicsPipeline::bind(VkCommandBuffer cb, const math::Mat4& transform, float shininess, uint32_t frameIndex) {
@@ -229,8 +238,32 @@ namespace cbk::platform::vk {
 		VK_CHECK(vkCreateGraphicsPipelines(m_Device, VK_NULL_HANDLE, 1, &pipelineCI, nullptr, &m_Pipeline));
 	}
 
-	VulkanUniformBuffer& VulkanGraphicsPipeline::getUBO() {
-		return m_UBO;
+	void VulkanGraphicsPipeline::setUBOData(uint32_t frameIndex, Mat4 viewProjectionMatrix, Vector3 cameraPosition, DirectionalLight dirLight) {
+		UBOData data {
+			.CameraData = {.ViewProjectionMatrix = viewProjectionMatrix, .CameraPosition = cameraPosition},
+			.DirLight = {.Direction = dirLight.Direction, .Radiance = dirLight.Radiance}
+		};
+		m_UBO.setData(frameIndex, &data, sizeof(UBOData), 0);
+	}
+
+	void VulkanGraphicsPipeline::setSSBOData(uint32_t frameIndex, const std::vector<rendering::PointLight>& pointLights) {
+		std::vector<uint8_t> buffer;
+		buffer.resize(sizeof(GPUPointLightsBufferHeader) + pointLights.size() * sizeof(GPUPointLight));
+		
+		GPUPointLightsBufferHeader header {.Count = pointLights.size()};
+		memcpy(buffer.data(), &header, sizeof(GPUPointLightsBufferHeader));
+
+		GPUPointLight* gpuPointLightPtr = reinterpret_cast<GPUPointLight*>(buffer.data() + sizeof(GPUPointLightsBufferHeader));
+		for (const auto& pointLight : pointLights) {
+			gpuPointLightPtr->Position = {pointLight.Position.x, pointLight.Position.y, pointLight.Position.z, 0.f};
+			gpuPointLightPtr->Radiance = {pointLight.Radiance.x, pointLight.Radiance.y, pointLight.Radiance.z, 0.f};
+			gpuPointLightPtr->Constant = pointLight.Constant;
+			gpuPointLightPtr->Linear = pointLight.Linear;
+			gpuPointLightPtr->Quadratic = pointLight.Quadratic;
+
+			gpuPointLightPtr++;
+		}
+		m_SSBO.setData(frameIndex, buffer.data(), buffer.size());
 	}
 
 	VkDescriptorSet VulkanGraphicsPipeline::getDescriptorSet() const {

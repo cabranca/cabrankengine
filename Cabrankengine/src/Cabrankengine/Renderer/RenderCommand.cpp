@@ -46,9 +46,8 @@ namespace cbk::rendering {
 		s_RendererAPI->beginFrame();
 	}
 
-	void RenderCommand::beginScene(const math::Mat4& viewProjectionMatrix, const math::Vector3& cameraWorldPosition,
-	                               const math::Vector3& direction, const math::Vector3& radiance) {
-		s_RendererAPI->beginScene(viewProjectionMatrix, cameraWorldPosition, direction, radiance);
+	void RenderCommand::beginScene(const SceneData& sceneData) {
+		s_RendererAPI->beginScene(sceneData);
 	}
 
 	void RenderCommand::draw(const Ref<GeometryDescriptor>& desc) {

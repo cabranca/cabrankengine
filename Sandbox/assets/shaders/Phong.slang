@@ -18,15 +18,21 @@ struct DirLight {
 
 struct SceneData {
     float4x4 viewProjection;
-    DirLight           dirLight;
     float3             cameraPosition;
     float              _pad2;
+    DirLight           dirLight;
 };
 
 [[vk::binding(0, 0)]] ConstantBuffer<SceneData> scene;
 
 [[vk::binding(0, 1)]] Sampler2D diffuseMap;
 [[vk::binding(1, 1)]] Sampler2D specularMap;
+
+// Slang doesn't accept GLSL-style buffer blocks with unbounded arrays, so we
+// load the header and each light by byte offset.
+[[vk::binding(0, 2)]] ByteAddressBuffer u_Lights;
+
+static const uint k_PointLightStride = 48; // sizeof(PointLight) in std430
 
 struct PushConstants {
     float4x4 model;
