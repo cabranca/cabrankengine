@@ -51,8 +51,6 @@ struct PointLight {
     float  _pad2;
 };
 
-// Raw byte view of the SSBO produced by Renderer::uploadLightEnvironment:
-// 16-byte LightBufferHeader (int count + int3 pad) followed by PointLight[].
 // Slang doesn't accept GLSL-style buffer blocks with unbounded arrays, so we
 // load the header and each light by byte offset.
 [[vk::binding(0, 2)]] ByteAddressBuffer u_Lights;
