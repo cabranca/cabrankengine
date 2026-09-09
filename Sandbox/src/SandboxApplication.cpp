@@ -73,7 +73,7 @@ class ExampleLayer : public Layer {
 
 class Sandbox : public Application {
   public:
-	Sandbox() {
+	Sandbox() : Application(false) {
 		pushLayer(createScope<ExampleLayer>());
 		// pushLayer(createScope<Sandbox2D>());
 	}

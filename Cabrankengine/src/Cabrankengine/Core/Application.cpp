@@ -19,7 +19,7 @@ namespace cbk {
 	using namespace scene;
 	using namespace rendering;
 
-	Application::Application() : m_Running(true), m_LastFrameTime(0.0f) {
+	Application::Application(bool editorMode) : m_Running(true), m_LastFrameTime(0.0f) {
 		CBK_PROFILE_FUNCTION();
 		CBK_CORE_ASSERT(!s_Instance, "Application already exists!");
 		s_Instance = this;
@@ -35,8 +35,7 @@ namespace cbk {
 
 		// value() rather than at(): a config.json written before this key existed has no
 		// "renderer" object at all, and at() would throw on it.
-		RendererSpec rendererSpec{ .RenderSceneToTexture =
-			                           configJson.value("renderer", nlohmann::json::object()).value("renderSceneToTexture", false) };
+		RendererSpec rendererSpec{ .RenderSceneToTexture = editorMode };
 
 		Renderer::init(*m_Window, rendererSpec);
 

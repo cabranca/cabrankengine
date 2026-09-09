@@ -11,8 +11,7 @@ namespace cbk {
 		static nlohmann::json load(const std::string& path) {
 			std::ifstream file(path);
 			if (!file.is_open()) {
-				nlohmann::json defaults = { { "window", { { "title", "Cabrankengine" }, { "width", 1600 }, { "height", 900 } } },
-					                        { "renderer", { { "renderSceneToTexture", false } } } };
+				nlohmann::json defaults = { { "window", { { "title", "Cabrankengine" }, { "width", 1600 }, { "height", 900 } } } };
 
 				std::ofstream out(path);
 				if (out.is_open()) {
@@ -31,8 +30,7 @@ namespace cbk {
 				file >> j;
 			} catch (std::exception& e) {
 				CBK_CORE_ERROR("[Config] Failed reading {0} - Error message: {1}", path, e.what());
-				return { { "window", { { "title", "Cabrankengine" }, { "width", 1600 }, { "height", 900 } } },
-					     { "renderer", { { "renderSceneToTexture", false } } } };
+				return { { "window", { { "title", "Cabrankengine" }, { "width", 1600 }, { "height", 900 } } } };
 			}
 			return j;
 		}

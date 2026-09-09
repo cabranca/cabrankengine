@@ -1,4 +1,4 @@
-project "Sandbox"
+project "CBKEditor"
     kind "ConsoleApp"
     language "C++"
     cppdialect "C++23"

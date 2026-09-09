@@ -45,6 +45,7 @@ workspace("Cabrankengine")
 	include("Sandbox")
 	include("CBKAssetConverter/vendor/assimp")
 	include("CBKAssetConverter")
+	include("CBKEditor")
 	include("UnitTests")
 
 

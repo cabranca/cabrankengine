@@ -15,7 +15,7 @@ namespace cbk {
 
 	class Application {
 	  public:
-		Application();
+		Application(bool editorMode);
 		virtual ~Application(); // Cannot define the destructor in the header because of the incomplete types (Window)
 
 		// Main Application running loop
