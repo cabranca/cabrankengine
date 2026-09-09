@@ -34,7 +34,11 @@ namespace cbk::platform::vk {
 		// need the device/allocator but sit below RendererAPI in the dependency graph and
 		// have no other route to it now that Window no longer owns the graphics context.
 		[[nodiscard]] static VulkanDeviceContext& getContext();
-		[[nodiscard]] static VkDescriptorSet getPhongDescriptorSet();
+
+		// Each material instance owns its own set 1. Called once from the concrete material's
+		// constructor, which statically knows its own kind — no runtime dispatch needed here.
+		[[nodiscard]] static VkDescriptorSet allocatePhongDescriptorSet();
+		[[nodiscard]] static VkDescriptorSet allocatePBRDescriptorSet();
 
 	  private:
 		VulkanDeviceContext m_Context;

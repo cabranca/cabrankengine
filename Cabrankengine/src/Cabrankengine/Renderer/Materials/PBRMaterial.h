@@ -25,6 +25,10 @@ namespace cbk::rendering {
 		void applyTexture(common::TextureType type, const Ref<Texture2D>& texture) override;
 		void applyProperty(uint32_t key, float value) override;
 
+		[[nodiscard]] common::MaterialKind getKind() const override {
+			return common::MaterialKind::PBR;
+		}
+
 		[[nodiscard]] Ref<Material> instantiate() const override {
 			return create();
 		}

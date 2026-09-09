@@ -13,11 +13,14 @@ namespace cbk::platform::vk {
 		void updateDescriptorSet();
 
 		[[nodiscard]] float getShininess() const;
+		[[nodiscard]] VkDescriptorSet getDescriptorSet() const {
+			return m_DescriptorSet;
+		}
 
 	  private:
 		bool m_DescriptorSetInitialized = false;
 
-		VkDevice m_Device = VK_NULL_HANDLE; // NON-OWNING
+		VkDevice m_Device = VK_NULL_HANDLE;                // NON-OWNING
 		VkDescriptorSet m_DescriptorSet{ VK_NULL_HANDLE }; // NON-OWNING
 	};
 

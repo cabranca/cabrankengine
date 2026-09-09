@@ -13,6 +13,7 @@
 #include "VulkanCommands.h"
 #include "VulkanDeviceContext.h"
 #include "VulkanGeometryDescriptor.h"
+#include "VulkanPBRMaterial.h"
 #include "VulkanPhongMaterial.h"
 
 namespace cbk::platform::vk {
@@ -24,11 +25,13 @@ namespace cbk::platform::vk {
 		m_Context.init(window);
 		s_Context = &m_Context;
 		m_SwapchainManager.init(m_Context);
-		m_PhongGraphicsPipeline.init(m_Context.getDevice(), m_Context.getAllocator(), m_Context.getImageFormat(), m_Context.getDepthFormat(),
-		                        m_Context.getMSAA());
+		// Shared by both pipelines, and read by their pipeline layouts, so it goes first.
+		VulkanGraphicsPipeline::initSceneResources(m_Context.getDevice(), m_Context.getAllocator());
+		m_PhongGraphicsPipeline.init(m_Context.getDevice(), m_Context.getAllocator(), m_Context.getImageFormat(),
+		                             m_Context.getDepthFormat(), m_Context.getMSAA());
 		s_PhongGraphicsPipeline = &m_PhongGraphicsPipeline;
 		m_PBRGraphicsPipeline.init(m_Context.getDevice(), m_Context.getAllocator(), m_Context.getImageFormat(), m_Context.getDepthFormat(),
-		                        m_Context.getMSAA());
+		                           m_Context.getMSAA());
 		s_PBRGraphicsPipeline = &m_PBRGraphicsPipeline;
 		createSyncObjects();
 		auto commandBuffers = m_Context.getQueue().allocateCommandBuffers(k_MaxFramesInFlight);
@@ -48,6 +51,7 @@ namespace cbk::platform::vk {
 		destroyFinalFrameDescriptorSets();
 		m_PhongGraphicsPipeline.shutdown();
 		m_PBRGraphicsPipeline.shutdown();
+		VulkanGraphicsPipeline::shutdownSceneResources();
 		m_SwapchainManager.shutdown();
 		m_Context.shutdown();
 		s_PhongGraphicsPipeline = nullptr;
@@ -76,7 +80,8 @@ namespace cbk::platform::vk {
 	}
 
 	void VulkanRendererAPI::beginScene(const SceneData& sceneData) {
-		m_PhongGraphicsPipeline.setSceneData(sceneData, m_FrameIndex);
+		// One upload per frame for every pipeline: the scene UBO and light SSBO are shared.
+		VulkanGraphicsPipeline::setSceneData(sceneData, m_FrameIndex);
 	}
 
 	void VulkanRendererAPI::draw(const Ref<GeometryDescriptor>& vertexArray) {}
@@ -334,9 +339,28 @@ namespace cbk::platform::vk {
 
 	void VulkanRendererAPI::recordMaterial(const Ref<rendering::Material>& material, const math::Mat4& transform) {
 		auto cb = m_CommandBuffers[m_FrameIndex];
-		auto vkMaterial = dynamic_cast<VulkanPhongMaterial*>(material.get());
-		vkMaterial->updateDescriptorSet();
-		m_PhongGraphicsPipeline.bind(cb, m_FrameIndex, transform, vkMaterial->getShininess());
+
+		// getKind() is what Renderer bucketed on, so by construction the cast below always
+		// matches. static_cast rather than dynamic_cast: the kind already answered the
+		// question a dynamic_cast would re-ask at runtime.
+		switch (material->getKind()) {
+			case common::MaterialKind::Phong: {
+				auto* vkMaterial = static_cast<VulkanPhongMaterial*>(material.get());
+				vkMaterial->updateDescriptorSet();
+				m_PhongGraphicsPipeline.bind(cb, m_FrameIndex, vkMaterial->getDescriptorSet(), transform, vkMaterial->getShininess());
+				break;
+			}
+			case common::MaterialKind::PBR: {
+				auto* vkMaterial = static_cast<VulkanPBRMaterial*>(material.get());
+				vkMaterial->updateDescriptorSet();
+				m_PBRGraphicsPipeline.bind(cb, m_FrameIndex, vkMaterial->getDescriptorSet(), transform, vkMaterial->getAlbedoColor(),
+				                           vkMaterial->getMetalness(), vkMaterial->getRoughness());
+				break;
+			}
+			default:
+				CBK_CORE_ERROR("VulkanRendererAPI: no pipeline for material kind {}", static_cast<uint32_t>(material->getKind()));
+				break;
+		}
 	}
 
 	void VulkanRendererAPI::bindAndDraw(const Ref<rendering::GeometryDescriptor>& desc) {
@@ -369,9 +393,14 @@ namespace cbk::platform::vk {
 		return *s_Context;
 	}
 
-	VkDescriptorSet VulkanRendererAPI::getPhongDescriptorSet() {
-		CBK_CORE_ASSERT(s_GraphicsPipeline, "VulkanRendererAPI::getPhongDescriptorSet() called before init()");
-		return s_GraphicsPipeline->getDescriptorSet();
+	VkDescriptorSet VulkanRendererAPI::allocatePhongDescriptorSet() {
+		CBK_CORE_ASSERT(s_PhongGraphicsPipeline, "VulkanRendererAPI::allocatePhongDescriptorSet() called before init()");
+		return s_PhongGraphicsPipeline->allocateDescriptorSet();
+	}
+
+	VkDescriptorSet VulkanRendererAPI::allocatePBRDescriptorSet() {
+		CBK_CORE_ASSERT(s_PBRGraphicsPipeline, "VulkanRendererAPI::allocatePBRDescriptorSet() called before init()");
+		return s_PBRGraphicsPipeline->allocateDescriptorSet();
 	}
 
 	uint64_t VulkanRendererAPI::getFinalFrame() const {

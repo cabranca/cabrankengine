@@ -16,6 +16,13 @@ namespace cbk::rendering {
 		virtual void setTextureSlot(uint32_t slot, const Ref<Texture2D>& texture) = 0;
 		virtual void setViewProjection(const math::Mat4& viewProjection) = 0;
 
+		// Renderer2D submits through RenderCommand::drawIndexed directly, so quad
+		// batches never reach Renderer::submit's queues. The kind is reported anyway
+		// because Material requires it.
+		[[nodiscard]] common::MaterialKind getKind() const override {
+			return common::MaterialKind::Unlit;
+		}
+
 	  protected:
 		Texture2DMaterial() : Material(ShaderLibrary::get("Texture")) {}
 	};

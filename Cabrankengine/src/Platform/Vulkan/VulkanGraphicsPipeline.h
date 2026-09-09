@@ -18,7 +18,7 @@ namespace cbk::platform::vk {
 		std::span<const VkDescriptorSetLayoutBinding> bindings;
 		VkDescriptorPoolSize poolSize;
 		uint32_t maxSets = 0;
-		uint32_t pushConstantsRangeSize = 0; 
+		uint32_t pushConstantsRangeSize = 0;
 		VkShaderModule shaderModule = VK_NULL_HANDLE;
 	};
 
@@ -57,16 +57,26 @@ namespace cbk::platform::vk {
 
 	class VulkanGraphicsPipeline {
 	  public:
+		// The scene UBO and light SSBO are shared by every pipeline — same data, same
+		// layouts — so they are owned once here rather than per instance. Must run before
+		// any init(), which reads their set layouts to build the pipeline layout, and
+		// shutdownSceneResources() must run after every shutdown().
+		static void initSceneResources(VkDevice device, VmaAllocator allocator);
+		static void shutdownSceneResources();
+
+		// Uploads set 0 and set 2 for the frame. Static because it only touches the shared
+		// buffers: one call per frame covers every pipeline.
+		static void setSceneData(const rendering::SceneData& sceneData, uint32_t frameIndex);
+
 		void init(const PipelineDescriptor& pipelineDesc);
 		void shutdown();
+		void bind(VkCommandBuffer cb, uint32_t frameIndex, VkDescriptorSet materialSet, const std::vector<uint8_t>& pushConstants);
 
-		void setSceneData(const rendering::SceneData& sceneData, uint32_t frameIndex);
-		void bind(VkCommandBuffer cb, uint32_t frameIndex, const std::vector<uint8_t>& pushConstants);
-
-		// I'm pretty sure I've got to provide a new allocate descriptor set for each new material instance.
-		// Maybe I should have a vector of descriptor sets here, inserted when allocated and I give that pointer to the material?
-		// Then I bind the specific descriptor set for each material call.
-		[[nodiscard]] VkDescriptorSet getDescriptorSet() const;
+		// Set 1 is per-material-instance, not per-pipeline: every material owns the textures
+		// it writes, so each one gets its own set out of this pipeline's pool. Sharing a
+		// single set meant the last material to write it won for the whole frame, and the
+		// write raced command buffers still in flight.
+		[[nodiscard]] VkDescriptorSet allocateDescriptorSet();
 
 	  private:
 		static constexpr uint32_t k_SceneDataBinding = 0;
@@ -76,7 +86,6 @@ namespace cbk::platform::vk {
 		VkDevice m_Device = VK_NULL_HANDLE; // NON-OWNING
 		VkDescriptorSetLayout m_SetLayout = VK_NULL_HANDLE;
 		VkDescriptorPool m_DescriptorPool = VK_NULL_HANDLE;
-		VkDescriptorSet m_DescriptorSet = VK_NULL_HANDLE;
 		VkPipelineLayout m_PipelineLayout = VK_NULL_HANDLE;
 		VkPipeline m_Pipeline = VK_NULL_HANDLE;
 		inline static VulkanUniformBuffer s_UBO;
@@ -84,11 +93,10 @@ namespace cbk::platform::vk {
 
 		void createDescriptorSetLayout(std::span<const VkDescriptorSetLayoutBinding> bindings);
 		void createDescriptorPool(VkDescriptorPoolSize poolSize, uint32_t maxSets);
-		void createDescriptorSet();
 		void createPipelineLayout(uint32_t pushConstantsRangeSize);
 		void createPipeline(VkShaderModule shaderModule, VkFormat colorFormat, VkFormat depthFormat, VkSampleCountFlagBits sampleCount);
-		void setUBOData(uint32_t frameIndex, math::Mat4 viewProjectionMatrix, math::Vector3 cameraPosition,
-		                rendering::DirectionalLight dirLight);
-		void setSSBOData(uint32_t frameIndex, const std::vector<rendering::PointLight>& pointLights);
+		static void setUBOData(uint32_t frameIndex, math::Mat4 viewProjectionMatrix, math::Vector3 cameraPosition,
+		                       rendering::DirectionalLight dirLight);
+		static void setSSBOData(uint32_t frameIndex, const std::vector<rendering::PointLight>& pointLights);
 	};
 } // namespace cbk::platform::vk

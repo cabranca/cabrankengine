@@ -8,9 +8,9 @@ namespace cbk::platform::vk {
 
 	using namespace rendering;
 
-	VulkanPhongMaterial::VulkanPhongMaterial() {		
+	VulkanPhongMaterial::VulkanPhongMaterial() {
 		m_Device = VulkanRendererAPI::getContext().getDevice();
-		m_DescriptorSet = VulkanRendererAPI::getPhongDescriptorSet();
+		m_DescriptorSet = VulkanRendererAPI::allocatePhongDescriptorSet();
 	}
 
 	void VulkanPhongMaterial::updateDescriptorSet() {

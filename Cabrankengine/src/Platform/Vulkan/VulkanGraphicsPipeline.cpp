@@ -12,17 +12,23 @@ namespace cbk::platform::vk {
 	using namespace math;
 	using namespace rendering;
 
+	void VulkanGraphicsPipeline::initSceneResources(VkDevice device, VmaAllocator allocator) {
+		s_UBO.init(device, allocator, sizeof(UBOData), k_SceneDataBinding, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
+		s_SSBO.init(device, allocator, sizeof(GPUPointLightsBufferHeader) + sizeof(GPUPointLight) * k_MaxPointLights, k_PointLightsBinding,
+		            VK_SHADER_STAGE_FRAGMENT_BIT);
+	}
+
+	void VulkanGraphicsPipeline::shutdownSceneResources() {
+		s_SSBO.shutdown();
+		s_UBO.shutdown();
+	}
+
 	void VulkanGraphicsPipeline::init(const PipelineDescriptor& pipelineDesc) {
 		m_Device = pipelineDesc.device;
-		// The UBO owns set 0's layout, so it has to exist before createPipelineLayout()
-		// reads it. TODO: see how to share this between Phong and PBR (static?)
-		s_UBO.init(m_Device, pipelineDesc.allocator, sizeof(UBOData), k_SceneDataBinding,
-		           VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
-		s_SSBO.init(m_Device, pipelineDesc.allocator, sizeof(GPUPointLightsBufferHeader) + sizeof(GPUPointLight) * k_MaxPointLights,
-		            k_PointLightsBinding, VK_SHADER_STAGE_FRAGMENT_BIT);
+		// s_UBO owns set 0's layout and s_SSBO set 2's, so initSceneResources() has to have
+		// run before createPipelineLayout() reads them.
 		createDescriptorSetLayout(pipelineDesc.bindings);
 		createDescriptorPool(pipelineDesc.poolSize, pipelineDesc.maxSets);
-		createDescriptorSet();
 		createPipelineLayout(pipelineDesc.pushConstantsRangeSize);
 		createPipeline(pipelineDesc.shaderModule, pipelineDesc.colorFormat, pipelineDesc.depthFormat, pipelineDesc.sampleCount);
 	}
@@ -32,8 +38,6 @@ namespace cbk::platform::vk {
 		vkDestroyPipelineLayout(m_Device, m_PipelineLayout, nullptr);
 		vkDestroyDescriptorPool(m_Device, m_DescriptorPool, nullptr);
 		vkDestroyDescriptorSetLayout(m_Device, m_SetLayout, nullptr);
-		s_SSBO.shutdown();
-		s_UBO.shutdown();
 	}
 
 	void VulkanGraphicsPipeline::setSceneData(const rendering::SceneData& sceneData, uint32_t frameIndex) {
@@ -41,8 +45,9 @@ namespace cbk::platform::vk {
 		setSSBOData(frameIndex, sceneData.LightEnvironment.PointLights);
 	}
 
-	void VulkanGraphicsPipeline::bind(VkCommandBuffer cb, uint32_t frameIndex, const std::vector<uint8_t>& pushConstants) {
-		std::array<VkDescriptorSet, 3> sets = { s_UBO.getDescriptorSet(frameIndex), m_DescriptorSet, s_SSBO.getDescriptorSet(frameIndex) };
+	void VulkanGraphicsPipeline::bind(VkCommandBuffer cb, uint32_t frameIndex, VkDescriptorSet materialSet,
+	                                  const std::vector<uint8_t>& pushConstants) {
+		std::array<VkDescriptorSet, 3> sets = { s_UBO.getDescriptorSet(frameIndex), materialSet, s_SSBO.getDescriptorSet(frameIndex) };
 		VulkanCommands::bindPipeline(cb, m_Pipeline, m_PipelineLayout,
 		                             { .FirstSet = 0, .DescriptorSetCount = sets.size(), .DescriptorSets = sets.data() },
 		                             { .StageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
@@ -71,14 +76,16 @@ namespace cbk::platform::vk {
 		VK_CHECK(vkCreateDescriptorPool(m_Device, &poolCI, nullptr, &m_DescriptorPool));
 	}
 
-	void VulkanGraphicsPipeline::createDescriptorSet() {
+	VkDescriptorSet VulkanGraphicsPipeline::allocateDescriptorSet() {
 		VkDescriptorSetAllocateInfo dsAllocInfo = {
 			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
 			.descriptorPool = m_DescriptorPool,
 			.descriptorSetCount = 1,
 			.pSetLayouts = &m_SetLayout,
 		};
-		VK_CHECK(vkAllocateDescriptorSets(m_Device, &dsAllocInfo, &m_DescriptorSet));
+		VkDescriptorSet set = VK_NULL_HANDLE;
+		VK_CHECK(vkAllocateDescriptorSets(m_Device, &dsAllocInfo, &set));
+		return set;
 	}
 
 	void VulkanGraphicsPipeline::createPipelineLayout(uint32_t pushConstantsRangeSize) {
@@ -248,9 +255,5 @@ namespace cbk::platform::vk {
 			gpuPointLightPtr++;
 		}
 		s_SSBO.setData(frameIndex, buffer.data(), buffer.size());
-	}
-
-	VkDescriptorSet VulkanGraphicsPipeline::getDescriptorSet() const {
-		return m_DescriptorSet;
 	}
 } // namespace cbk::platform::vk

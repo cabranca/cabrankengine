@@ -30,15 +30,16 @@ namespace cbk::platform::vk {
 		m_Pipeline.shutdown();
 	}
 
-	void VulkanPhongGraphicsPipeline::setSceneData(const rendering::SceneData& sceneData, uint32_t frameIndex) {
-		m_Pipeline.setSceneData(sceneData, frameIndex);
-	}
-
-	void VulkanPhongGraphicsPipeline::bind(VkCommandBuffer cb, uint32_t frameIndex, const math::Mat4& transform, float shininess) {
+	void VulkanPhongGraphicsPipeline::bind(VkCommandBuffer cb, uint32_t frameIndex, VkDescriptorSet materialSet,
+	                                       const math::Mat4& transform, float shininess) {
 		PushData pushData{ .transform = transform, .shininess = shininess };
 		std::vector<uint8_t> pushDataBuffer;
 		pushDataBuffer.resize(sizeof(PushData));
 		memcpy(pushDataBuffer.data(), &pushData, sizeof(PushData));
-		m_Pipeline.bind(cb, frameIndex, pushDataBuffer);
+		m_Pipeline.bind(cb, frameIndex, materialSet, pushDataBuffer);
+	}
+
+	VkDescriptorSet VulkanPhongGraphicsPipeline::allocateDescriptorSet() {
+		return m_Pipeline.allocateDescriptorSet();
 	}
 } // namespace cbk::platform::vk

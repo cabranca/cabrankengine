@@ -16,6 +16,11 @@ namespace cbk::rendering {
 		virtual void applyTexture(common::TextureType type, const Ref<Texture2D>& texture) {}
 		virtual void applyProperty(uint32_t key, float value) {}
 
+		// Which family this material belongs to. Renderer::submit buckets draws by it so
+		// each pipeline's state is bound as one contiguous run. Deliberately pure: a new
+		// material has to declare where it sorts rather than silently landing in bucket 0.
+		[[nodiscard]] virtual common::MaterialKind getKind() const = 0;
+
 		// Returns a fresh, blank material of the same concrete type. Used by model
 		// loading to give each material slot its own instance. Returns nullptr if
 		// the concrete type does not support it.

@@ -46,10 +46,19 @@ namespace cbk::common {
 
 	// Tags a model component so the loader knows which material factory to invoke.
 	// Stored alongside the model path in CModel; serialized to JSON.
+	//
+	// Also the sort key the renderer buckets draw submissions by, which is why
+	// Unlit exists: the batch materials (Renderer2D quads, TextRenderer glyphs)
+	// need a kind to report even though they never reach a model component.
 	enum class MaterialKind : uint32_t {
 		PBR = 0,
 		Phong = 1,
+		Unlit = 2,
 	};
+
+	// Number of enumerators above. Sizes the renderer's per-kind draw queues, so it
+	// has to move whenever MaterialKind gains a value.
+	static constexpr uint32_t k_MaterialKindCount = 3;
 
 	struct TextureEntry {
 		TextureType type;

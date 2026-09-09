@@ -10,13 +10,12 @@ namespace cbk::platform::vk {
 
 	VulkanPBRMaterial::VulkanPBRMaterial() {
 		m_Device = VulkanRendererAPI::getContext().getDevice();
-		m_DescriptorSet = VulkanRendererAPI::getPhongDescriptorSet();
+		m_DescriptorSet = VulkanRendererAPI::allocatePBRDescriptorSet();
 	}
 
 	void VulkanPBRMaterial::updateDescriptorSet() {
-        if (m_DescriptorSetInitialized)
+		if (m_DescriptorSetInitialized)
 			return;
-        
 
 		auto albedoVk = static_cast<VulkanTexture*>(m_AlbedoMap.get());
 		auto normalVk = static_cast<VulkanTexture*>(m_NormalMap.get());

@@ -116,6 +116,7 @@ namespace cbk::ecs {
 	NLOHMANN_JSON_SERIALIZE_ENUM(common::MaterialKind, {
 	                                                       { common::MaterialKind::PBR, "pbr" },
 	                                                       { common::MaterialKind::Phong, "phong" },
+	                                                       { common::MaterialKind::Unlit, "unlit" },
 	                                                   })
 
 	inline void to_json(nlohmann::json& j, const CModel& c) {

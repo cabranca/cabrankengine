@@ -10,12 +10,16 @@ namespace cbk::platform::vk {
 	  public:
 		VulkanPBRMaterial();
 
-        void updateDescriptorSet();
+		void updateDescriptorSet();
+
+		[[nodiscard]] VkDescriptorSet getDescriptorSet() const {
+			return m_DescriptorSet;
+		}
 
 	  private:
 		bool m_DescriptorSetInitialized = false;
 
-		VkDevice m_Device = VK_NULL_HANDLE; // NON-OWNING
+		VkDevice m_Device = VK_NULL_HANDLE;                // NON-OWNING
 		VkDescriptorSet m_DescriptorSet{ VK_NULL_HANDLE }; // NON-OWNING
 	};
 
