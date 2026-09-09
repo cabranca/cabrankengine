@@ -9,6 +9,19 @@
 
 namespace cbk::platform::vk {
 
+	struct PipelineDescriptor {
+		VkDevice device = VK_NULL_HANDLE;
+		VmaAllocator allocator = VK_NULL_HANDLE;
+		VkFormat colorFormat;
+		VkFormat depthFormat;
+		VkSampleCountFlagBits sampleCount = VK_SAMPLE_COUNT_1_BIT;
+		std::span<const VkDescriptorSetLayoutBinding> bindings;
+		VkDescriptorPoolSize poolSize;
+		uint32_t maxSets = 0;
+		uint32_t pushConstantsRangeSize = 0; 
+		VkShaderModule shaderModule = VK_NULL_HANDLE;
+	};
+
 	struct GPUDirLight {
 		math::Vector3 Direction{ 0.f, -1.f, 0.f };
 		float Pad0 = 0.0f;
@@ -26,8 +39,8 @@ namespace cbk::platform::vk {
 	};
 
 	struct GPUPointLightsBufferHeader {
-		int Count;
-		int Padding[3]; // Align with PointLightGPU
+		uint32_t Count;
+		uint32_t Padding[3]; // Align with PointLightGPU
 	};
 
 	struct GPUCameraData {
@@ -37,19 +50,18 @@ namespace cbk::platform::vk {
 	};
 
 	struct UBOData {
-		GPUCameraData CameraData;		 // 80 bytes (offset 0)
-		GPUDirLight DirLight;            // 32 bytes (offset 80 -> total 112)
+		GPUCameraData CameraData; // 80 bytes (offset 0)
+		GPUDirLight DirLight;     // 32 bytes (offset 80 -> total 112)
 	};
 	static_assert(sizeof(UBOData) == 112, "SceneData must match the std140 layout of Phong.slang's SceneData");
 
-	// For now it's a Phong Graphics Pipeline.
 	class VulkanGraphicsPipeline {
 	  public:
-		void init(VkDevice device, VmaAllocator allocator, VkFormat colorFormat, VkFormat depthFormat, VkSampleCountFlagBits sampleCount);
+		void init(const PipelineDescriptor& pipelineDesc);
 		void shutdown();
 
 		void setSceneData(const rendering::SceneData& sceneData, uint32_t frameIndex);
-		void bind(VkCommandBuffer cb, const math::Mat4& transform, float shininess, uint32_t frameIndex);
+		void bind(VkCommandBuffer cb, uint32_t frameIndex, const std::vector<uint8_t>& pushConstants);
 
 		// I'm pretty sure I've got to provide a new allocate descriptor set for each new material instance.
 		// Maybe I should have a vector of descriptor sets here, inserted when allocated and I give that pointer to the material?
@@ -57,30 +69,26 @@ namespace cbk::platform::vk {
 		[[nodiscard]] VkDescriptorSet getDescriptorSet() const;
 
 	  private:
-		// Claude says I'm exceeding limit of push data. I don't follow
-		struct PushData {
-			math::Mat4 transform;
-			float shininess;
-		};
-
 		static constexpr uint32_t k_SceneDataBinding = 0;
-		static constexpr uint32_t k_MaterialBindingCount = 2;
-		static constexpr uint32_t k_MaxInstances = 256;
+		static constexpr uint32_t k_PointLightsBinding = 0;
+		static constexpr uint32_t k_MaxPointLights = 10;
+
 		VkDevice m_Device = VK_NULL_HANDLE; // NON-OWNING
 		VkDescriptorSetLayout m_SetLayout = VK_NULL_HANDLE;
 		VkDescriptorPool m_DescriptorPool = VK_NULL_HANDLE;
 		VkDescriptorSet m_DescriptorSet = VK_NULL_HANDLE;
 		VkPipelineLayout m_PipelineLayout = VK_NULL_HANDLE;
 		VkPipeline m_Pipeline = VK_NULL_HANDLE;
-		VulkanUniformBuffer m_UBO;
-		VulkanStorageBuffer m_SSBO;
+		inline static VulkanUniformBuffer s_UBO;
+		inline static VulkanStorageBuffer s_SSBO;
 
-		void createDescriptorSetLayout();
-		void createDescriptorPool();
+		void createDescriptorSetLayout(std::span<const VkDescriptorSetLayoutBinding> bindings);
+		void createDescriptorPool(VkDescriptorPoolSize poolSize, uint32_t maxSets);
 		void createDescriptorSet();
-		void createPipelineLayout();
-		void createPipeline(VkFormat colorFormat, VkFormat depthFormat, VkSampleCountFlagBits sampleCount);
-		void setUBOData(uint32_t frameIndex, math::Mat4 viewProjectionMatrix, math::Vector3 cameraPosition, rendering::DirectionalLight dirLight);
+		void createPipelineLayout(uint32_t pushConstantsRangeSize);
+		void createPipeline(VkShaderModule shaderModule, VkFormat colorFormat, VkFormat depthFormat, VkSampleCountFlagBits sampleCount);
+		void setUBOData(uint32_t frameIndex, math::Mat4 viewProjectionMatrix, math::Vector3 cameraPosition,
+		                rendering::DirectionalLight dirLight);
 		void setSSBOData(uint32_t frameIndex, const std::vector<rendering::PointLight>& pointLights);
 	};
 } // namespace cbk::platform::vk

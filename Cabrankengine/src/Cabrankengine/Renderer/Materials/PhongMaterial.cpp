@@ -4,10 +4,6 @@
 
 #include <Cabrankengine/Renderer/RendererAPI.h>
 
-#ifdef CBK_RENDERER_OPENGL
-#include <Platform/OpenGL/OpenGLPhongMaterial.h>
-#endif
-
 #ifdef CBK_RENDERER_VULKAN
 #include <Platform/Vulkan/VulkanPhongMaterial.h>
 #endif
@@ -19,9 +15,7 @@
 namespace cbk::rendering {
 
 	Ref<PhongMaterial> PhongMaterial::create() {
-#ifdef CBK_RENDERER_OPENGL
-		return createRef<platform::opengl::OpenGLPhongMaterial>();
-#elif defined(CBK_RENDERER_METAL)
+#ifdef CBK_RENDERER_METAL
 		return createRef<platform::metal::MetalPhongMaterial>();
 #elif defined(CBK_RENDERER_VULKAN)
 		return createRef<platform::vk::VulkanPhongMaterial>();

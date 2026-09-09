@@ -1,42 +1,41 @@
 #include <pch.h>
-#include "VulkanPBRGraphicsPipeline.h"
+#include "VulkanPhongGraphicsPipeline.h"
 
 #include "VulkanPipelineHelpers.h"
 
 namespace cbk::platform::vk {
 
-	static constexpr uint32_t k_MaterialBindingCount = 4;
+	static constexpr uint32_t k_MaterialBindingCount = 2;
 	static constexpr uint32_t k_MaxInstances = 256;
-	
-	// TODO: repeated code with Phong, probably needs a base class
-	void VulkanPBRGraphicsPipeline::init(VkDevice device, VmaAllocator allocator, VkFormat colorFormat, VkFormat depthFormat,
-	                                     VkSampleCountFlagBits sampleCount) {
-		const auto bindings = createSetLayoutBinding(k_MaterialBindingCount);
+
+	// TODO: repeated code with PBR, probably needs a base class
+	void VulkanPhongGraphicsPipeline::init(VkDevice device, VmaAllocator allocator, VkFormat colorFormat, VkFormat depthFormat,
+	                                       VkSampleCountFlagBits sampleCount) {
+		const auto bindings = createSetLayoutBindings(k_MaterialBindingCount);
 		const VkDescriptorPoolSize poolSize = createPoolSize(k_MaterialBindingCount * k_MaxInstances);
-		const VkShaderModule shaderModule = createShaderModule("PBR");
+		const VkShaderModule shaderModule = createShaderModule("Phong");
 		m_Pipeline.init({ .device = device,
 		                  .allocator = allocator,
 		                  .colorFormat = colorFormat,
 		                  .depthFormat = depthFormat,
 		                  .sampleCount = sampleCount,
-		                  .layoutBindingData = bindings.data(),
-		                  .bindingCount = k_MaterialBindingCount,
+		                  .bindings = { bindings },
 		                  .poolSize = poolSize,
 		                  .maxSets = k_MaxInstances,
 		                  .pushConstantsRangeSize = sizeof(PushData),
 		                  .shaderModule = shaderModule });
 	}
 
-	void VulkanPBRGraphicsPipeline::shutdown() {
+	void VulkanPhongGraphicsPipeline::shutdown() {
 		m_Pipeline.shutdown();
 	}
 
-	void VulkanPBRGraphicsPipeline::setSceneData(const rendering::SceneData& sceneData, uint32_t frameIndex) {
+	void VulkanPhongGraphicsPipeline::setSceneData(const rendering::SceneData& sceneData, uint32_t frameIndex) {
 		m_Pipeline.setSceneData(sceneData, frameIndex);
 	}
 
-	void VulkanPBRGraphicsPipeline::bind(VkCommandBuffer cb, uint32_t frameIndex, const math::Mat4& transform) {
-		PushData pushData{ .transform = transform };
+	void VulkanPhongGraphicsPipeline::bind(VkCommandBuffer cb, uint32_t frameIndex, const math::Mat4& transform, float shininess) {
+		PushData pushData{ .transform = transform, .shininess = shininess };
 		std::vector<uint8_t> pushDataBuffer;
 		pushDataBuffer.resize(sizeof(PushData));
 		memcpy(pushDataBuffer.data(), &pushData, sizeof(PushData));

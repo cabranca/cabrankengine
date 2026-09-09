@@ -32,7 +32,7 @@ namespace cbk::rendering {
 		static void load(const std::string& name, const std::string& filepath);
 
 		// Retrieves a shader from the library by its name.
-		[[nodiscard]] static Ref<Shader> get(const std::string& name);
+		[[nodiscard]] static Ref<Shader> get(std::string_view name);
 
 		// Release all cached shaders.
 		static void shutdown() {
@@ -40,6 +40,6 @@ namespace cbk::rendering {
 		}
 
 	  private:
-		static inline std::unordered_map<std::string, Ref<Shader>> s_Shaders; // A map from the shader names to the shader references.
+		static inline std::unordered_map<std::string_view, Ref<Shader>> s_Shaders; // A map from the shader names to the shader references.
 	};
 } // namespace cbk::rendering

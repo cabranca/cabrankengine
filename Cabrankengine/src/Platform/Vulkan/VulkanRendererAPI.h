@@ -4,7 +4,8 @@
 
 #include "VulkanConstants.h"
 #include "VulkanDeviceContext.h"
-#include "VulkanGraphicsPipeline.h"
+#include "VulkanPBRGraphicsPipeline.h"
+#include "VulkanPhongGraphicsPipeline.h"
 #include "VulkanSwapchainManager.h"
 
 namespace cbk::platform::vk {
@@ -42,8 +43,10 @@ namespace cbk::platform::vk {
 		// Same split as m_Context/s_Context: the member owns the lifetime (created in init(),
 		// destroyed in shutdown(), never at static-init time), the pointer is only a published
 		// access path for the static accessors below and is null outside init()/shutdown().
-		VulkanGraphicsPipeline m_GraphicsPipeline;
-		inline static VulkanGraphicsPipeline* s_GraphicsPipeline = nullptr;
+		VulkanPBRGraphicsPipeline m_PBRGraphicsPipeline;
+		inline static VulkanPBRGraphicsPipeline* s_PBRGraphicsPipeline = nullptr;
+		VulkanPhongGraphicsPipeline m_PhongGraphicsPipeline;
+		inline static VulkanPhongGraphicsPipeline* s_PhongGraphicsPipeline = nullptr;
 		uint32_t m_FrameIndex{ 0 };
 		uint32_t m_ImageIndex{ 0 };
 		std::array<VkFence, k_MaxFramesInFlight> m_Fences;

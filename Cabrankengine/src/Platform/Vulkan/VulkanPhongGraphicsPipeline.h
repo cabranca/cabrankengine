@@ -4,17 +4,18 @@
 
 namespace cbk::platform::vk {
 
-	class VulkanPBRGraphicsPipeline {
+	class VulkanPhongGraphicsPipeline {
 	  public:
 		void init(VkDevice device, VmaAllocator allocator, VkFormat colorFormat, VkFormat depthFormat, VkSampleCountFlagBits sampleCount);
-		void shutdown();
+        void shutdown();
 
 		void setSceneData(const rendering::SceneData& sceneData, uint32_t frameIndex);
-		void bind(VkCommandBuffer cb, uint32_t frameIndex, const math::Mat4& transform);
+		void bind(VkCommandBuffer cb, uint32_t frameIndex, const math::Mat4& transform, float shininess);
 
 	  private:
-		struct PushData {
+        struct PushData {
 			math::Mat4 transform;
+			float shininess;
 		};
 
 		VulkanGraphicsPipeline m_Pipeline;

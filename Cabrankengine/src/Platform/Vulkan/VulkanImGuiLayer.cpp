@@ -42,6 +42,7 @@ namespace cbk {
 		io.ConfigDpiScaleViewports = true;
 
 		auto window = static_cast<GLFWwindow*>(Application::get().getWindow().getNativeWindow());
+		ImGui_ImplGlfw_InitForVulkan(window, true);
 
 		// Reports 1.0 on macOS (handled via FramebufferScale) and on X11 sessions that
 		// leave Xft.dpi unset, in which case scaling falls back to style.FontScaleMain.
@@ -65,7 +66,6 @@ namespace cbk {
 
 		auto ctx = &platform::vk::VulkanRendererAPI::getContext();
 
-		ImGui_ImplGlfw_InitForVulkan(window, true);
 		auto rendererAPI = static_cast<platform::vk::VulkanRendererAPI*>(rendering::RenderCommand::getRendererAPI());
 
 		// ImGui shallow-copies InitInfo; pColorAttachmentFormats must outlive the

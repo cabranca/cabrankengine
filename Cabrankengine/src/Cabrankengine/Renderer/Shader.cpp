@@ -44,8 +44,8 @@ namespace cbk::rendering {
 		add(name, shader);
 	}
 
-	Ref<Shader> ShaderLibrary::get(const std::string& name) {
-		CBK_CORE_ASSERT(s_Shaders.contains(name), "Shader not found!");
+	Ref<Shader> ShaderLibrary::get(std::string_view name) {
+		CBK_CORE_ASSERT(s_Shaders.contains(name.data()), "Shader not found!");
 		return s_Shaders[name];
 	}
 } // namespace cbk::rendering

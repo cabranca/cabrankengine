@@ -24,9 +24,12 @@ namespace cbk::platform::vk {
 		m_Context.init(window);
 		s_Context = &m_Context;
 		m_SwapchainManager.init(m_Context);
-		m_GraphicsPipeline.init(m_Context.getDevice(), m_Context.getAllocator(), m_Context.getImageFormat(), m_Context.getDepthFormat(),
+		m_PhongGraphicsPipeline.init(m_Context.getDevice(), m_Context.getAllocator(), m_Context.getImageFormat(), m_Context.getDepthFormat(),
 		                        m_Context.getMSAA());
-		s_GraphicsPipeline = &m_GraphicsPipeline;
+		s_PhongGraphicsPipeline = &m_PhongGraphicsPipeline;
+		m_PBRGraphicsPipeline.init(m_Context.getDevice(), m_Context.getAllocator(), m_Context.getImageFormat(), m_Context.getDepthFormat(),
+		                        m_Context.getMSAA());
+		s_PBRGraphicsPipeline = &m_PBRGraphicsPipeline;
 		createSyncObjects();
 		auto commandBuffers = m_Context.getQueue().allocateCommandBuffers(k_MaxFramesInFlight);
 		std::copy(commandBuffers.begin(), commandBuffers.end(), m_CommandBuffers.begin());
@@ -43,10 +46,12 @@ namespace cbk::platform::vk {
 		}
 
 		destroyFinalFrameDescriptorSets();
-		m_GraphicsPipeline.shutdown();
+		m_PhongGraphicsPipeline.shutdown();
+		m_PBRGraphicsPipeline.shutdown();
 		m_SwapchainManager.shutdown();
 		m_Context.shutdown();
-		s_GraphicsPipeline = nullptr;
+		s_PhongGraphicsPipeline = nullptr;
+		s_PBRGraphicsPipeline = nullptr;
 		s_Context = nullptr;
 	}
 
@@ -71,7 +76,7 @@ namespace cbk::platform::vk {
 	}
 
 	void VulkanRendererAPI::beginScene(const SceneData& sceneData) {
-		m_GraphicsPipeline.setSceneData(sceneData, m_FrameIndex);
+		m_PhongGraphicsPipeline.setSceneData(sceneData, m_FrameIndex);
 	}
 
 	void VulkanRendererAPI::draw(const Ref<GeometryDescriptor>& vertexArray) {}
@@ -331,7 +336,7 @@ namespace cbk::platform::vk {
 		auto cb = m_CommandBuffers[m_FrameIndex];
 		auto vkMaterial = dynamic_cast<VulkanPhongMaterial*>(material.get());
 		vkMaterial->updateDescriptorSet();
-		m_GraphicsPipeline.bind(cb, transform, vkMaterial->getShininess(), m_FrameIndex);
+		m_PhongGraphicsPipeline.bind(cb, m_FrameIndex, transform, vkMaterial->getShininess());
 	}
 
 	void VulkanRendererAPI::bindAndDraw(const Ref<rendering::GeometryDescriptor>& desc) {

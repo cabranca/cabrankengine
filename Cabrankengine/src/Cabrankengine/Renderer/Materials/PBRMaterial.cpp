@@ -19,7 +19,7 @@ namespace cbk::rendering {
 #ifdef CBK_RENDERER_METAL
 		return createRef<platform::metal::MetalPBRMaterial>();
 #elif defined(CBK_RENDERER_VULKAN)
-		return nullptr;
+		return createRef<platform::vk::VulkanPBRMaterial>();
 #else
 		CBK_CORE_ASSERT(false, "No renderer API defined!");
 		return nullptr;
