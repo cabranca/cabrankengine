@@ -162,7 +162,7 @@ namespace cbk::platform::vk {
 			                                                  .rasterizerDiscardEnable = VK_FALSE,
 			                                                  .polygonMode = VK_POLYGON_MODE_FILL,
 			                                                  .cullMode = VK_CULL_MODE_BACK_BIT,
-			                                                  .frontFace = VK_FRONT_FACE_CLOCKWISE,
+			                                                  .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
 			                                                  .depthBiasEnable = VK_FALSE,
 			                                                  .depthBiasConstantFactor = 0.f,
 			                                                  .depthBiasClamp = 0.f,
@@ -171,7 +171,7 @@ namespace cbk::platform::vk {
 
 		VkPipelineMultisampleStateCreateInfo multisample{ .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
 			                                              .rasterizationSamples = sampleCount,
-			                                              .sampleShadingEnable = VK_TRUE,
+			                                              .sampleShadingEnable = VK_FALSE,
 			                                              .minSampleShading = 0.2f,
 			                                              .pSampleMask = nullptr,
 			                                              .alphaToCoverageEnable = VK_FALSE,

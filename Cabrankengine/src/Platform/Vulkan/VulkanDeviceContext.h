@@ -43,7 +43,7 @@ namespace cbk::platform::vk {
 
 		VkPhysicalDeviceMemoryProperties m_MemoryProperties;
 
-		constexpr static VkSampleCountFlagBits k_MaxMSAA = VK_SAMPLE_COUNT_8_BIT;
+		constexpr static VkSampleCountFlagBits k_MaxMSAA = VK_SAMPLE_COUNT_2_BIT;
 		VkSampleCountFlagBits m_MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 
 		VkSurfaceFormatKHR m_SurfaceFormat{};
