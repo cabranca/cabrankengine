@@ -19,10 +19,11 @@ namespace cbk::platform::vk {
 	using namespace math;
 	using namespace rendering;
 
-	void VulkanRendererAPI::init(const Window& window) {
+	void VulkanRendererAPI::init(const Window& window, const RendererSpec& spec) {
+		m_RenderSceneToTexture = spec.RenderSceneToTexture;
 		m_Context.init(window);
 		s_Context = &m_Context;
-		m_SwapchainManager.init(m_Context);
+		m_SwapchainManager.init(m_Context, m_RenderSceneToTexture);
 		// Shared by both pipelines, and read by their pipeline layouts, so it goes first.
 		VulkanGraphicsPipeline::initSceneResources(m_Context.getDevice(), m_Context.getAllocator());
 		m_PhongGraphicsPipeline.init(m_Context.getDevice(), m_Context.getAllocator(), m_Context.getImageFormat(),
@@ -101,27 +102,53 @@ namespace cbk::platform::vk {
 		auto cb = m_CommandBuffers[m_FrameIndex];
 		vkCmdEndRendering(cb);
 
-		ImageBarrierInfo info{ .Image = m_SwapchainManager.getResolveImage(m_FrameIndex),
-			                   .OldLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL,
-			                   .NewLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-			                   .SrcAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
-			                   .DstAccessMask = VK_ACCESS_2_SHADER_READ_BIT,
-			                   .SrcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
-			                   .DstStageMask = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT,
-			                   .AspectFlags = VK_IMAGE_ASPECT_COLOR_BIT,
-			                   .MipLevels = 1 };
+		// The scene pass and the UI pass are two separate rendering regions in the same command
+		// buffer, so nothing orders one against the other implicitly — hence a barrier either way.
+		if (m_RenderSceneToTexture) {
+			// 2. Hand the result over to the fragment shader: ImGui samples this image in the
+			// UI pass below, so the colour writes have to complete and the layout has to move
+			// to the one the descriptor was registered with.
+			ImageBarrierInfo info{ .Image = m_SwapchainManager.getResolveImage(m_FrameIndex),
+				                   .OldLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL,
+				                   .NewLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+				                   .SrcAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
+				                   .DstAccessMask = VK_ACCESS_2_SHADER_READ_BIT,
+				                   .SrcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+				                   .DstStageMask = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT,
+				                   .AspectFlags = VK_IMAGE_ASPECT_COLOR_BIT,
+				                   .MipLevels = 1 };
 
-		VulkanCommands::transitionImageLayout(cb, { info });
+			VulkanCommands::transitionImageLayout(cb, { info });
+		} else {
+			// 2. The scene resolved into the swapchain image itself, and the UI pass is about to
+			// load that image and blend over it. Same layout on both sides — this barrier exists
+			// only to order the resolve write against that load.
+			ImageBarrierInfo info{ .Image = m_SwapchainManager.getSwapchainImage(m_ImageIndex),
+				                   .OldLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL,
+				                   .NewLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL,
+				                   .SrcAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
+				                   .DstAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
+				                   .SrcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+				                   .DstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+				                   .AspectFlags = VK_IMAGE_ASPECT_COLOR_BIT,
+				                   .MipLevels = 1 };
+
+			VulkanCommands::transitionImageLayout(cb, { info });
+		}
 
 		// 3. Open the UI pass, this time against the swapchain image. No depth attachment —
 		// ImGui does not depth-test, and its pipeline declares VK_FORMAT_UNDEFINED to match.
-		VkRenderingAttachmentInfo colorAttachmentInfo{ .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
-			                                           .imageView = m_SwapchainManager.getSwapchainImageView(m_ImageIndex),
-			                                           .imageLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL,
-			                                           .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-			                                           .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-			                                           .clearValue{
-			                                               .color{ m_ClearColor.x, m_ClearColor.y, m_ClearColor.z, m_ClearColor.w } } };
+		// CLEAR only when the scene went offscreen and ImGui is about to draw it into a panel;
+		// rendering straight to the surface means the scene is already in this image, so the UI
+		// has to LOAD it and composite on top — clearing here would wipe the frame.
+		VkRenderingAttachmentInfo colorAttachmentInfo{
+			.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+			.imageView = m_SwapchainManager.getSwapchainImageView(m_ImageIndex),
+			.imageLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL,
+			.loadOp = m_RenderSceneToTexture ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD,
+			.storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+			.clearValue{ .color{ m_ClearColor.x, m_ClearColor.y, m_ClearColor.z, m_ClearColor.w } }
+		};
 
 		// The render area follows the swapchain, not the window. The window's size updates the
 		// moment GLFW reports the resize, while the swapchain is only rebuilt once a present
@@ -208,7 +235,10 @@ namespace cbk::platform::vk {
 		// init() — calling this any earlier dereferences a null backend. Registering on the
 		// first frame instead also covers re-registering after a swapchain resize, and the
 		// null check keeps it from allocating a fresh set every frame.
-		if (ImGui::GetCurrentContext() == nullptr)
+		//
+		// Rendering straight to the surface has no offscreen image to register, so the sets stay
+		// null: getFinalFrame() then returns 0 and callers skip drawing a viewport panel.
+		if (!m_RenderSceneToTexture || ImGui::GetCurrentContext() == nullptr)
 			return;
 
 		for (auto i = 0; i < k_MaxFramesInFlight; i++) {
@@ -287,26 +317,43 @@ namespace cbk::platform::vk {
 			                                .AspectFlags = VK_IMAGE_ASPECT_COLOR_BIT,
 			                                .MipLevels = 1 };
 
-		ImageBarrierInfo sceneResolveBarrier{ .Image = m_SwapchainManager.getResolveImage(m_FrameIndex),
-			                                  .OldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-			                                  .NewLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL,
-			                                  .SrcAccessMask = 0,
-			                                  .DstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-			                                  .SrcStageMask = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT,
-			                                  .DstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
-			                                  .AspectFlags = VK_IMAGE_ASPECT_COLOR_BIT,
-			                                  .MipLevels = 1 };
+		std::vector<ImageBarrierInfo> barriers{ swapchainColorBarrier, sceneDepthBarrier, sceneColorBarrier };
 
-		VulkanCommands::transitionImageLayout(cb, { swapchainColorBarrier, sceneDepthBarrier, sceneColorBarrier, sceneResolveBarrier });
+		// Rendering straight to the surface needs no fourth barrier: the swapchain image is the
+		// resolve destination, and swapchainColorBarrier above already puts it in the right
+		// layout with the right access. The offscreen target instead ends every frame in
+		// SHADER_READ_ONLY_OPTIMAL, so it has to come back before the scene pass can write it.
+		// oldLayout UNDEFINED discards the old contents, which the resolve overwrites anyway,
+		// and saves having to track the true layout across the first frame.
+		if (m_RenderSceneToTexture)
+			barriers.push_back({ .Image = m_SwapchainManager.getResolveImage(m_FrameIndex),
+			                     .OldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+			                     .NewLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL,
+			                     .SrcAccessMask = 0,
+			                     .DstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+			                     .SrcStageMask = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT,
+			                     .DstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+			                     .AspectFlags = VK_IMAGE_ASPECT_COLOR_BIT,
+			                     .MipLevels = 1 });
+
+		VulkanCommands::transitionImageLayout(cb, barriers);
 	}
 
 	void VulkanRendererAPI::beginRecording() {
 		auto cb = m_CommandBuffers.at(m_FrameIndex);
+
+		// The multi-sampled attachment the scene is rasterized into is the same either way — only
+		// where it resolves changes. Mind the index space: the offscreen attachments are one per
+		// frame in flight (m_FrameIndex), the swapchain images are a separate, larger set that the
+		// present engine hands out (m_ImageIndex).
+		const VkImageView resolveView = m_RenderSceneToTexture ? m_SwapchainManager.getResolveImageView(m_FrameIndex)
+		                                                       : m_SwapchainManager.getSwapchainImageView(m_ImageIndex);
+
 		VkRenderingAttachmentInfo colorAttachmentInfo{ .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
 			                                           .imageView = m_SwapchainManager.getColorImageView(m_FrameIndex),
 			                                           .imageLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL,
 			                                           .resolveMode = VK_RESOLVE_MODE_AVERAGE_BIT,
-			                                           .resolveImageView = m_SwapchainManager.getResolveImageView(m_FrameIndex),
+			                                           .resolveImageView = resolveView,
 			                                           .resolveImageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 			                                           .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
 			                                           .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,

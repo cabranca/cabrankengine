@@ -33,7 +33,12 @@ namespace cbk {
 
 		// AudioEngine::init();
 
-		Renderer::init(*m_Window);
+		// value() rather than at(): a config.json written before this key existed has no
+		// "renderer" object at all, and at() would throw on it.
+		RendererSpec rendererSpec{ .RenderSceneToTexture =
+			                           configJson.value("renderer", nlohmann::json::object()).value("renderSceneToTexture", false) };
+
+		Renderer::init(*m_Window, rendererSpec);
 
 		auto renderLayer = createScope<RenderLayer>();
 		m_RenderLayer = renderLayer.get();

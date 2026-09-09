@@ -30,8 +30,8 @@ namespace cbk::rendering {
 
 namespace cbk::rendering {
 
-	void RenderCommand::init(const Window& window) {
-		s_RendererAPI->init(window);
+	void RenderCommand::init(const Window& window, const RendererSpec& spec) {
+		s_RendererAPI->init(window, spec);
 	}
 
 	void RenderCommand::shutdown() {

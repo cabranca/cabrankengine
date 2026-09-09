@@ -18,7 +18,9 @@ namespace cbk::platform::metal {
 	class MetalRendererAPI : public rendering::RendererAPI {
 	  public:
 		// Initializes the renderer API. This method should be called before any rendering operations.
-		void init() override;
+		// RendererSpec is ignored: the scene and the UI share one encoder against the drawable, so
+		// this backend is always the direct path. See endScenePass() and getFinalFrame().
+		void init(const Window& window, const rendering::RendererSpec& spec) override;
 
 		void shutdown() override;
 

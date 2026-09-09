@@ -24,7 +24,13 @@ class ExampleLayer : public Layer {
 		// sponza.transform().Scale = Vector3(0.1f);
 		// PBRModelArch curtains{ "assets/models/sponza_curtains/Curtains.cbkm" };
 
+		// One model per material kind, side by side, to exercise both pipelines in one frame.
 		PhongModelArch backpack{ "assets/models/backpack/backpack.cbkm" };
+		backpack.transform().Position = { -2.F, 0.F, -5.F };
+
+		PBRModelArch gun{ "assets/models/gun/Cerberus_LP.cbkm" };
+		gun.transform().Position = { 2.F, 0.F, -5.F };
+		gun.transform().Scale = Vector3(0.05F);
 
 		// Start camera inside the main hall, looking down the corridor
 		CameraControllerArch camera(ProjectionType::Perspective);
@@ -44,19 +50,20 @@ class ExampleLayer : public Layer {
 	void onUpdate(Timestep delta) override {}
 
 	void onImGuiRender() override {
-		auto* reg = Application::get().getRegistry();
-		auto* dirLight = reg->getComponent<CDirectionalLight>(m_SunEntity).value();
+		// auto* reg = Application::get().getRegistry();
+		// auto* dirLight = reg->getComponent<CDirectionalLight>(m_SunEntity).value();
 
-		auto* pointLightTrans = reg->getComponent<CTransform>(m_PointLight).value();
-		auto* pointLight = reg->getComponent<CPointLight>(m_PointLight).value();
+		// auto* pointLightTrans = reg->getComponent<CTransform>(m_PointLight).value();
+		// auto* pointLight = reg->getComponent<CPointLight>(m_PointLight).value();
 
-		ImGui::Begin("Lights");
-		ImGui::DragFloat3("Directional Light Direction", &(dirLight->Direction.x));
-		ImGui::ColorEdit3("Directional Light Position", &(dirLight->Radiance.x), ImGuiColorEditFlags_HDR | ImGuiColorEditFlags_Float);
-		ImGui::Separator();
-		ImGui::InputFloat3("Point Light Position", &(pointLightTrans->Position.x));
-		ImGui::ColorEdit3("Point Light Position", &(pointLight->Radiance.x), ImGuiColorEditFlags_HDR | ImGuiColorEditFlags_Float);
-		ImGui::End();
+		// ImGui::Begin("Lights");
+		// ImGui::DragFloat3("Directional Light Direction", &(dirLight->Direction.x));
+		// ImGui::ColorEdit3("Directional Light Position", &(dirLight->Radiance.x), ImGuiColorEditFlags_HDR | ImGuiColorEditFlags_Float);
+		// ImGui::Separator();
+		// ImGui::InputFloat3("Point Light Position", &(pointLightTrans->Position.x));
+		// ImGui::ColorEdit3("Point Light Position", &(pointLight->Radiance.x), ImGuiColorEditFlags_HDR | ImGuiColorEditFlags_Float);
+		// ImGui::End();
+
 	}
 
   private:

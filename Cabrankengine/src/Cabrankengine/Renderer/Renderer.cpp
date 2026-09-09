@@ -34,10 +34,10 @@ namespace cbk::rendering {
 
 	} // namespace
 
-	void Renderer::init(const Window& window) {
+	void Renderer::init(const Window& window, const RendererSpec& spec) {
 		CBK_PROFILE_FUNCTION();
 
-		RenderCommand::init(window);
+		RenderCommand::init(window, spec);
 		// DefaultLibrary::init();
 		// Renderer2D::init();
 		// TextRenderer::init();

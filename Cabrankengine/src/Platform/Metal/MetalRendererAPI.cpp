@@ -26,7 +26,9 @@ namespace cbk::platform::metal {
 
 	using namespace rendering;
 
-	void MetalRendererAPI::init() {
+	// Both parameters go unused: the layer is attached to the Application's window below, and the
+	// spec's offscreen option has no meaning here — see endScenePass() and getFinalFrame().
+	void MetalRendererAPI::init(const Window&, const RendererSpec&) {
 		auto& window = Application::get().getWindow();
 		auto glfwWindow = static_cast<GLFWwindow*>(window.getNativeWindow());
 

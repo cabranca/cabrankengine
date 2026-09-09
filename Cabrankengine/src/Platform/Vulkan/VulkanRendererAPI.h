@@ -12,7 +12,7 @@ namespace cbk::platform::vk {
 
 	class VulkanRendererAPI : public rendering::RendererAPI {
 	  public:
-		void init(const Window& window) override;
+		void init(const Window& window, const rendering::RendererSpec& spec) override;
 		void shutdown() override;
 		void waitIdle() override;
 		void setClearColor(const math::Vector4& color) override;
@@ -64,7 +64,14 @@ namespace cbk::platform::vk {
 		// engine renders can be displayed inside an ImGui window instead of going straight to
 		// the swapchain. Registered lazily in ensureFinalFrameDescriptorSets() and invalidated
 		// whenever the swapchain (and therefore the underlying image views) is rebuilt.
+		// All null when m_RenderSceneToTexture is false — nothing registers them in that mode.
 		std::array<VkDescriptorSet, k_MaxFramesInFlight> m_FinalFrameDescriptorSets{};
+
+		// RendererSpec::RenderSceneToTexture, kept for the frame recording to branch on. True
+		// resolves the scene pass into the swapchain manager's offscreen resolve attachment and
+		// composites the UI over a cleared swapchain image; false resolves the scene pass
+		// straight into the swapchain image and the UI pass loads on top of it.
+		bool m_RenderSceneToTexture{ false };
 
 		// False when beginFrame() bailed out (minimized, or the swapchain went out of date),
 		// which leaves no command buffer recording for endScenePass()/endFrame() to add to.

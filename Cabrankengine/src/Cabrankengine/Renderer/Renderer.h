@@ -17,7 +17,7 @@ namespace cbk::rendering {
 	class Renderer {
 	  public:
 		// Initializes the renderer, setting up necessary resources and state.
-		static void init(const Window& window);
+		static void init(const Window& window, const RendererSpec& spec);
 
 		// Shuts down the renderer, releasing all resources and cleaning up state.
 		static void shutdown();

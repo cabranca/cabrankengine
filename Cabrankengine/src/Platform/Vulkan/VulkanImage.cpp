@@ -14,8 +14,18 @@ namespace cbk::platform::vk {
 	}
 
 	void VulkanImage::destroy() {
-		vkDestroyImageView(m_Device, m_View, nullptr);
-		vmaDestroyImage(m_Allocator, m_Image, m_Allocation);
+		// Guarded because not every VulkanImage a holder declares is necessarily initialized —
+		// the swapchain manager skips its resolve attachments when the scene goes straight to
+		// the swapchain, and destroying through a null device is invalid, not a no-op. Resetting
+		// the handles is what makes destroy() idempotent.
+		if (m_View != VK_NULL_HANDLE)
+			vkDestroyImageView(m_Device, m_View, nullptr);
+		m_View = VK_NULL_HANDLE;
+
+		if (m_Image != VK_NULL_HANDLE)
+			vmaDestroyImage(m_Allocator, m_Image, m_Allocation);
+		m_Image = VK_NULL_HANDLE;
+		m_Allocation = VK_NULL_HANDLE;
 	}
 
 	void VulkanImage::allocateImage(VkFormat format, VkExtent2D extent, uint32_t mipLevels, VkSampleCountFlagBits msaa,
@@ -41,10 +51,10 @@ namespace cbk::platform::vk {
 
 	void VulkanImage::createView(VkFormat format, VkImageAspectFlags aspect) {
 		VkImageViewCreateInfo viewCI{ .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-			                               .image = m_Image,
-			                               .viewType = VK_IMAGE_VIEW_TYPE_2D,
-			                               .format = format,
-			                               .subresourceRange{ .aspectMask = aspect, .levelCount = 1, .layerCount = 1 } };
+			                          .image = m_Image,
+			                          .viewType = VK_IMAGE_VIEW_TYPE_2D,
+			                          .format = format,
+			                          .subresourceRange{ .aspectMask = aspect, .levelCount = 1, .layerCount = 1 } };
 		VK_CHECK(vkCreateImageView(m_Device, &viewCI, nullptr, &m_View));
 	}
 

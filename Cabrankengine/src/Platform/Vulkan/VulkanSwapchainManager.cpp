@@ -20,13 +20,14 @@ namespace cbk::platform::vk {
 		return string_VkPresentModeKHR(presentMode);
 	}
 
-	void VulkanSwapchainManager::init(const VulkanDeviceContext& ctx) {
+	void VulkanSwapchainManager::init(const VulkanDeviceContext& ctx, bool offscreenResolve) {
 		m_Device = ctx.getDevice();
 		m_PhysicalDevice = ctx.getPhysicalDevice();
 		m_Surface = ctx.getSurface();
 		m_QueueFamilyIndex = ctx.getQueueFamily();
 		m_Allocator = ctx.getAllocator();
 		m_MSAA = ctx.getMSAA();
+		m_OffscreenResolve = offscreenResolve;
 		createSwapchain(VK_NULL_HANDLE);
 		createImageViews();
 		createRenderFinishedSemaphores();
@@ -190,10 +191,15 @@ namespace cbk::platform::vk {
 	void VulkanSwapchainManager::createRenderTargets() {
 		for (uint32_t i = 0; i < k_MaxFramesInFlight; i++) {
 			m_ColorAttachments[i].init(m_Device, m_Allocator, m_SelectedFormat.format, m_Extent, 1, m_MSAA, VK_IMAGE_TILING_OPTIMAL,
-			                           VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
-			m_ResolveAttachments[i].init(m_Device, m_Allocator, m_SelectedFormat.format, m_Extent, 1, VK_SAMPLE_COUNT_1_BIT,
-			                             VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-			                             VK_IMAGE_ASPECT_COLOR_BIT);
+			                           VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT,
+			                           VK_IMAGE_ASPECT_COLOR_BIT);
+			// Only needed when the scene is resolved offscreen so ImGui can sample it. Rendering
+			// straight to the surface resolves into the swapchain image instead, which already
+			// carries COLOR_ATTACHMENT_BIT — all a resolve destination needs.
+			if (m_OffscreenResolve)
+				m_ResolveAttachments[i].init(m_Device, m_Allocator, m_SelectedFormat.format, m_Extent, 1, VK_SAMPLE_COUNT_1_BIT,
+				                             VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+				                             VK_IMAGE_ASPECT_COLOR_BIT);
 			m_DepthAttachments[i].init(m_Device, m_Allocator, m_DepthFormat, m_Extent, 1, m_MSAA, VK_IMAGE_TILING_OPTIMAL,
 			                           VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
 			                           VK_IMAGE_ASPECT_DEPTH_BIT);

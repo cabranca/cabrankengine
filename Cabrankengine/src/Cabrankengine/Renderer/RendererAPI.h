@@ -40,6 +40,15 @@ namespace cbk::rendering {
 		struct LightEnvironment LightEnvironment;
 	};
 
+	// Startup-time renderer configuration. Everything here is fixed at init(): changing it later
+	// would mean tearing down and rebuilding render targets while frames are still in flight.
+	struct RendererSpec {
+		// True renders the scene into an offscreen texture, which getFinalFrame() hands to ImGui so
+		// it can be shown inside a viewport panel. False resolves the scene straight into the
+		// swapchain image and composites the UI on top of it.
+		bool RenderSceneToTexture = false;
+	};
+
 	// RendererAPI is an abstract class that defines the interface for the low level rendering operations.
 	class RendererAPI {
 	  public:
@@ -48,7 +57,7 @@ namespace cbk::rendering {
 		virtual ~RendererAPI() = default;
 
 		// Initializes the renderer API. This method should be called before any rendering operations.
-		virtual void init(const Window& window) = 0;
+		virtual void init(const Window& window, const RendererSpec& spec) = 0;
 
 		virtual void shutdown() = 0;
 
@@ -72,10 +81,10 @@ namespace cbk::rendering {
 		virtual void drawIndexed(const Ref<Material>& material, const Ref<GeometryDescriptor>& vertexArray, const math::Mat4& transform,
 		                         uint32_t indexCount = 0) = 0;
 
-		// Closes the pass scene geometry is drawn into and opens the one the UI is drawn
-		// into. Backends that render straight to the backbuffer leave this empty; backends
-		// that render the scene offscreen (so it can be displayed inside an ImGui window)
-		// use it to end the offscreen pass and transition its result to a sampleable state.
+		// Closes the pass scene geometry is drawn into and opens the one the UI is drawn into.
+		// Backends that draw the UI into the same pass as the scene leave this empty. Where the
+		// two are separate passes, this is also where an offscreen scene target is transitioned
+		// to a sampleable state, so RendererSpec::RenderSceneToTexture is honoured here.
 		virtual void endScenePass() = 0;
 
 		virtual void endFrame() = 0;
@@ -89,8 +98,10 @@ namespace cbk::rendering {
 		}
 
 		// Backend handle for the texture the scene was rendered into, in a form ImGui can
-		// consume as an ImTextureID. Returns 0 (ImTextureID_Invalid) on backends that render
-		// straight to the backbuffer and therefore have no such texture.
+		// consume as an ImTextureID. Returns 0 (ImTextureID_Invalid) whenever the scene went
+		// straight to the backbuffer — either because the backend has no offscreen path at all,
+		// or because RendererSpec::RenderSceneToTexture was false — and there is therefore no
+		// such texture. Callers use that as the signal to skip drawing a viewport panel.
 		[[nodiscard]] virtual uint64_t getFinalFrame() const = 0;
 
 	  private:

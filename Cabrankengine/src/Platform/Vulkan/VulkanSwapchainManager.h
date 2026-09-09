@@ -12,7 +12,10 @@ namespace cbk::platform::vk {
 
 	class VulkanSwapchainManager {
 	  public:
-		void init(const VulkanDeviceContext& vkDeviceContext);
+		// offscreenResolve mirrors RendererSpec::RenderSceneToTexture: when false the scene pass
+		// resolves into the acquired swapchain image and the resolve attachments below are never
+		// allocated, so getResolveImage/View() must not be called in that mode.
+		void init(const VulkanDeviceContext& vkDeviceContext, bool offscreenResolve);
 		void shutdown();
 
 		uint32_t acquireImage(VkSemaphore presentCompleteSempahore);
@@ -40,6 +43,9 @@ namespace cbk::platform::vk {
 		uint32_t m_QueueFamilyIndex = 0;
 		VmaAllocator m_Allocator = VK_NULL_HANDLE; // NON-OWNING
 		VkSampleCountFlagBits m_MSAA = VK_SAMPLE_COUNT_1_BIT;
+		// Snapshotted in init() alongside m_MSAA, and just as fixed for the manager's lifetime:
+		// recreateSwapchain() rebuilds the render targets and has to make the same choice again.
+		bool m_OffscreenResolve = false;
 
 		// --- Swapchain ---
 		VkSwapchainKHR m_Swapchain{ VK_NULL_HANDLE };
@@ -54,7 +60,9 @@ namespace cbk::platform::vk {
 		std::vector<VkImageView> m_SwapchainImageViews;
 
 		std::array<VulkanImage, k_MaxFramesInFlight> m_ColorAttachments; // Color Attachments (multi-sampled), one per frame in flight.
-		std::array<VulkanImage, k_MaxFramesInFlight> m_ResolveAttachments; // Color resolve Attachments (offscreen; sampled by ImGui), one per frame in flight.
+		// Color resolve Attachments (offscreen; sampled by ImGui), one per frame in flight.
+		// Only allocated when m_OffscreenResolve is set; otherwise the swapchain image is the resolve target.
+		std::array<VulkanImage, k_MaxFramesInFlight> m_ResolveAttachments;
 		std::array<VulkanImage, k_MaxFramesInFlight> m_DepthAttachments; // Depth Attachments, one per frame in flight.
 
 		void createSwapchain(VkSwapchainKHR oldSwapchain);
