@@ -80,6 +80,9 @@ namespace cbk {
 		// must be declared BEFORE m_LayerStack so they outlive it: when the stack is
 		// destroyed it calls each layer's onDetach(), which can touch the window
 		// (ImGui shutdown) and the scene's registry (entity cleanup).
+		// This ordering is only the fallback — ~Application tears the stack and the scene
+		// down explicitly, because the body runs ahead of every member and the renderer
+		// (and with it the device) is shut down there.
 		Scope<Window> m_Window;                // Ptr to the app window
 		scene::Scene m_Scene;                  // Scene with the game world and registry
 		ImGuiLayer* m_ImGuiLayer;              // ImGui layer for rendering the UI. The Stack owns this.

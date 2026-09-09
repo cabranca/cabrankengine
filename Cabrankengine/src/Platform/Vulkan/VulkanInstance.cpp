@@ -73,6 +73,9 @@ namespace cbk::platform::vk {
 		if (m_DebugMessenger != VK_NULL_HANDLE)
 			vkDestroyDebugUtilsMessengerEXT(m_Instance, m_DebugMessenger, nullptr);
 #endif
+		// Created here by glfwCreateWindowSurface, so it is destroyed here: an instance with
+		// a live surface is invalid at vkDestroyInstance.
+		vkDestroySurfaceKHR(m_Instance, m_Surface, nullptr);
 		vkDestroyInstance(m_Instance, nullptr);
 	}
 

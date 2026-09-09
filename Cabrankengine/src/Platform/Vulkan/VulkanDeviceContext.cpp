@@ -18,9 +18,13 @@ namespace cbk::platform::vk {
 	}
 
 	void VulkanDeviceContext::shutdown() {
+		// Mirrors init() in reverse. The queue owns the command pool, and destroying the pool
+		// is what frees the command buffers allocated out of it — both have to go before the
+		// device they were created on.
 		vmaDestroyAllocator(m_Allocator);
+		m_Queue.shutdown();
 		vkDestroyDevice(m_Device, nullptr);
-		// DESTROY SURFACE
+		m_Instance.shutdown();
 	}
 
 	void VulkanDeviceContext::waitIdle() {

@@ -19,6 +19,10 @@ namespace cbk::scene {
 		[[nodiscard]] ecs::Entity createEntity(const std::string& name);
 		void destroyEntity(ecs::Entity e);
 
+		// Destroys every entity the scene created. Called during teardown so components
+		// holding GPU resources drop them before the renderer is shut down.
+		void clear();
+
 		[[nodiscard]] ecs::Entity findEntityByName(std::string_view name) const;
 		[[nodiscard]] std::span<const ecs::Entity> getAllEntities() const;
 

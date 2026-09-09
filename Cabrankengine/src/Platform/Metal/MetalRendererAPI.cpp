@@ -56,12 +56,24 @@ namespace cbk::platform::metal {
 		((void (*)(id, SEL, BOOL))objc_msgSend)((id)contentView, sel_registerName("setWantsLayer:"), YES);
 	}
 
+	void MetalRendererAPI::waitIdle() {
+		// Commands are committed in order on the one queue, so waiting on the last buffer
+		// waits on every buffer before it.
+		if (m_LastCommittedCommandBuffer)
+			m_LastCommittedCommandBuffer->waitUntilCompleted();
+	}
+
 	void MetalRendererAPI::shutdown() {
 		// Release each material class's shared pipeline state while the device is alive.
 		MetalTexture2DMaterial::destroySharedResources();
 		MetalTextMaterial::destroySharedResources();
 		MetalPhongMaterial::destroySharedResources();
 		MetalPBRMaterial::destroySharedResources();
+
+		if (m_LastCommittedCommandBuffer) {
+			m_LastCommittedCommandBuffer->release();
+			m_LastCommittedCommandBuffer = nullptr;
+		}
 
 		if (m_DepthTexture)
 			m_DepthTexture->release();
@@ -201,7 +213,12 @@ namespace cbk::platform::metal {
 
 			m_ActiveCommandBuffer->presentDrawable(m_CurrentDrawable);
 			m_ActiveCommandBuffer->commit();
-			m_ActiveCommandBuffer->release();
+
+			// Ownership moves to m_LastCommittedCommandBuffer instead of being released here,
+			// so waitIdle() can block on it at teardown.
+			if (m_LastCommittedCommandBuffer)
+				m_LastCommittedCommandBuffer->release();
+			m_LastCommittedCommandBuffer = m_ActiveCommandBuffer;
 			m_ActiveCommandBuffer = nullptr;
 		}
 	}

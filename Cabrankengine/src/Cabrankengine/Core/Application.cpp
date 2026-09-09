@@ -48,6 +48,22 @@ namespace cbk {
 	Application::~Application() {
 		CBK_PROFILE_FUNCTION();
 
+		// Renderer::shutdown() destroys the allocator and the device, and this body runs
+		// before any member is destroyed — so no declaration order can put the GPU-owning
+		// members ahead of it. They are torn down explicitly here instead, leaving their
+		// own destructors as no-ops. See KnownIssues.md #1.
+		Renderer::waitIdle();
+
+		// Layers first: they can own GPU resources of their own, and ImGui's Vulkan
+		// objects go with ImGuiLayer::onDetach().
+		m_LayerStack.clear();
+		m_ImGuiLayer = nullptr;
+		m_RenderLayer = nullptr;
+
+		// Then the registry: CModel -> Model -> Mesh holds a Ref<GeometryDescriptor> and a
+		// Ref<Material>, i.e. the VMA buffers and images.
+		m_Scene.clear();
+
 		Renderer::shutdown();
 	}
 

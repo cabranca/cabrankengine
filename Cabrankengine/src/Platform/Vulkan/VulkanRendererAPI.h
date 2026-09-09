@@ -14,6 +14,7 @@ namespace cbk::platform::vk {
 	  public:
 		void init(const Window& window) override;
 		void shutdown() override;
+		void waitIdle() override;
 		void setClearColor(const math::Vector4& color) override;
 		void beginFrame() override;
 		void beginScene(const rendering::SceneData& sceneData) override;

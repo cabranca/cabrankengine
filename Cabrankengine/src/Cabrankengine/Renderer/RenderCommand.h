@@ -16,6 +16,9 @@ namespace cbk::rendering {
 
 		static void shutdown();
 
+		// Blocks until the GPU has finished everything already submitted. See RendererAPI::waitIdle().
+		static void waitIdle();
+
 		// Sets the color used to clear the screen.
 		static void setClearColor(const math::Vector4& color);
 

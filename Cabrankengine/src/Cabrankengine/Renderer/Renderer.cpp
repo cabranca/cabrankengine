@@ -58,6 +58,10 @@ namespace cbk::rendering {
 		RenderCommand::shutdown();
 	}
 
+	void Renderer::waitIdle() {
+		RenderCommand::waitIdle();
+	}
+
 	void Renderer::beginScene(const SceneData& sceneData) {
 		RenderCommand::beginScene(sceneData);
 	}

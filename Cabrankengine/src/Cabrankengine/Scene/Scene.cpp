@@ -39,6 +39,16 @@ namespace cbk::scene {
 		m_EntityToName.erase(e);
 	}
 
+	void Scene::clear() {
+		// Registry::destroyEntity rather than Scene::destroyEntity: the latter erases from
+		// m_Entities, which is what is being iterated here.
+		for (Entity e: m_Entities)
+			m_Registry.destroyEntity(e);
+
+		m_Entities.clear();
+		m_EntityToName.clear();
+	}
+
 	Entity Scene::findEntityByName(std::string_view name) const {
 		for (auto& [entity, n]: m_EntityToName)
 			if (n == name)

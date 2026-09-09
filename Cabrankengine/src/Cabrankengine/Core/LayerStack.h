@@ -23,6 +23,11 @@ namespace cbk {
 		// Pops the top overlay from the stack
 		void popOverlay(Layer* overlay);
 
+		// Detaches and destroys every layer. The destructor calls this; Application also
+		// calls it directly, so layers release whatever they own (ImGui's Vulkan objects,
+		// for one) while the renderer is still alive.
+		void clear();
+
 		// Getter for the iterator pointing to the beginning of the layer stack
 		[[nodiscard]] std::vector<Scope<Layer>>::iterator begin() {
 			return m_Layers.begin();

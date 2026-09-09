@@ -22,6 +22,9 @@ namespace cbk::rendering {
 		// Shuts down the renderer, releasing all resources and cleaning up state.
 		static void shutdown();
 
+		// Blocks until the GPU has finished everything already submitted. See RendererAPI::waitIdle().
+		static void waitIdle();
+
 		// Sets the necessary general data to render a scene, such as the camera, the lighting, etc.
 		static void beginScene(const SceneData& sceneData);
 

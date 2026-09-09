@@ -8,8 +8,15 @@ namespace cbk {
 	LayerStack::LayerStack() : m_LayerInsertIndex(0) {}
 
 	LayerStack::~LayerStack() {
+		clear();
+	}
+
+	void LayerStack::clear() {
 		for (Scope<Layer>& layer: m_Layers)
 			layer->onDetach();
+
+		m_Layers.clear();
+		m_LayerInsertIndex = 0;
 	}
 
 	void LayerStack::pushLayer(Scope<Layer> layer) {

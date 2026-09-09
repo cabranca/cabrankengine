@@ -38,6 +38,10 @@ namespace cbk::rendering {
 		s_RendererAPI->shutdown();
 	}
 
+	void RenderCommand::waitIdle() {
+		s_RendererAPI->waitIdle();
+	}
+
 	void RenderCommand::setClearColor(const math::Vector4& color) {
 		s_RendererAPI->setClearColor(color);
 	}

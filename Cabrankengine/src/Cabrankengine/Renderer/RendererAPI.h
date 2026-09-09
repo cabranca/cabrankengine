@@ -52,6 +52,11 @@ namespace cbk::rendering {
 
 		virtual void shutdown() = 0;
 
+		// Blocks until everything already submitted has finished on the GPU. Teardown needs
+		// it: the layers and the scene release their GPU resources before the renderer is
+		// shut down, and freeing a resource an in-flight frame still references is invalid.
+		virtual void waitIdle() = 0;
+
 		// Sets the color used to clear the screen.
 		virtual void setClearColor(const math::Vector4& color) = 0;
 

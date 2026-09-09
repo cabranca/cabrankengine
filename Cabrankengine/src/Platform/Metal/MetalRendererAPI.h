@@ -22,6 +22,8 @@ namespace cbk::platform::metal {
 
 		void shutdown() override;
 
+		void waitIdle() override;
+
 		// Sets the color used to clear the screen.
 		void setClearColor(const math::Vector4& color) override;
 
@@ -61,6 +63,10 @@ namespace cbk::platform::metal {
 		// exposed (with the command buffer and pass descriptor) so the ImGui layer can
 		// draw into the same in-flight pass.
 		MTL::CommandBuffer* m_ActiveCommandBuffer = nullptr;
+
+		// Metal has no device-wide idle, so the most recently committed buffer is held past
+		// commit() purely so waitIdle() has something to block on. Released on the next commit.
+		MTL::CommandBuffer* m_LastCommittedCommandBuffer = nullptr;
 		MTL::RenderCommandEncoder* m_ActiveEncoder = nullptr;
 		MTL::RenderPassDescriptor* m_RenderPassDescriptor = nullptr;
 

@@ -46,6 +46,10 @@ namespace cbk::ecs {
 			size_t index = m_EntityToIndex[e];
 			size_t lastIndex = m_Size - 1;
 			m_Components[index] = m_Components[lastIndex];
+			// The array is fixed size, so nothing ever overwrites the slot the last component
+			// was moved out of. Left alone, a component holding a Ref (CModel's material and
+			// geometry) keeps that resource alive until the whole registry is destroyed.
+			m_Components[lastIndex] = T{};
 			Entity lastEntity = m_IndexToEntity[lastIndex];
 			m_EntityToIndex[lastEntity] = index;
 			m_IndexToEntity[index] = lastEntity;

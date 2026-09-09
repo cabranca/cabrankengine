@@ -5,8 +5,6 @@
 #include <imgui.h>
 #include <backends/imgui_impl_vulkan.h>
 
-#include <Cabrankengine/Core/Application.h>
-#include <Cabrankengine/Core/Window.h>
 #include <Cabrankengine/Renderer/Materials/Material.h>
 
 #include "VkCheck.h"
@@ -57,6 +55,10 @@ namespace cbk::platform::vk {
 		s_PhongGraphicsPipeline = nullptr;
 		s_PBRGraphicsPipeline = nullptr;
 		s_Context = nullptr;
+	}
+
+	void VulkanRendererAPI::waitIdle() {
+		m_Context.waitIdle();
 	}
 
 	void VulkanRendererAPI::setClearColor(const Vector4& color) {
@@ -121,10 +123,12 @@ namespace cbk::platform::vk {
 			                                           .clearValue{
 			                                               .color{ m_ClearColor.x, m_ClearColor.y, m_ClearColor.z, m_ClearColor.w } } };
 
-		auto& window = Application::get().getWindow();
+		// The render area follows the swapchain, not the window. The window's size updates the
+		// moment GLFW reports the resize, while the swapchain is only rebuilt once a present
+		// comes back out-of-date, so sizing this from the window overshoots the image for the
+		// frames in between - VUID-VkRenderingInfo-pNext-06079/06080.
 		VkRenderingInfo renderingInfo{ .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
-			                           .renderArea{ .extent{ .width = static_cast<uint32_t>(window.getWidth()),
-			                                                 .height = static_cast<uint32_t>(window.getHeight()) } },
+			                           .renderArea{ .extent = m_SwapchainManager.getExtent() },
 			                           .layerCount = 1,
 			                           .colorAttachmentCount = 1,
 			                           .pColorAttachments = &colorAttachmentInfo,
