@@ -1,0 +1,22 @@
+#pragma once
+
+#include <Cabrankengine/ECS/Common.h>
+
+#include "Panel.h"
+
+namespace cbk::editor {
+
+	// Lists the entities in the active scene. No data wired yet.
+	class OutlinerPanel : public Panel {
+	  public:
+		OutlinerPanel() : Panel("Outliner") {}
+
+		void onImGuiRender() override;
+
+		void setSelectedEntityCallBack(const std::function<void(ecs::Entity)>& callback);
+
+	  private:
+		ecs::Entity m_SelectedEntity = 0;
+		std::vector<std::function<void(ecs::Entity)>> m_Callbacks;
+	};
+} // namespace cbk::editor

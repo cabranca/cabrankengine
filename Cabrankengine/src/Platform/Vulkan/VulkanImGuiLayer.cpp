@@ -19,7 +19,7 @@ namespace cbk {
 		// Font size in ImGui is expressed in pixels, so a fixed value tracks physical
 		// display density rather than resolution. This is the size intended for a
 		// 1.0-scale (~96 DPI) display; the monitor's content scale multiplies it.
-		constexpr float k_KBaseFontSize = 16.f;
+		constexpr float k_KBaseFontSize = 12.f;
 	} // namespace
 
 	ImGuiLayer::ImGuiLayer() : Layer("ImGuiLayer") {}
@@ -35,11 +35,12 @@ namespace cbk {
 		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 		// io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
 		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-		io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+		// Multi-viewport is deliberately off: the engine drives the main swapchain's
+		// acquire/present by hand and secondary viewport swapchains are not wired into
+		// that loop, so tearing a panel into its own OS window trips validation. Panels
+		// stay clamped to the main window instead.
 
-		// Keeps fonts and window sizes following whichever monitor a viewport lands on.
 		io.ConfigDpiScaleFonts = true;
-		io.ConfigDpiScaleViewports = true;
 
 		auto window = static_cast<GLFWwindow*>(Application::get().getWindow().getNativeWindow());
 		ImGui_ImplGlfw_InitForVulkan(window, true);
@@ -58,11 +59,6 @@ namespace cbk {
 		// as a cramped UI on a high-DPI display.
 		ImGuiStyle& style = ImGui::GetStyle();
 		style.ScaleAllSizes(dpiScale);
-
-		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
-			style.WindowRounding = 0.f;
-			style.Colors[ImGuiCol_WindowBg].w = 1.f;
-		}
 
 		auto ctx = &platform::vk::VulkanRendererAPI::getContext();
 
@@ -122,12 +118,5 @@ namespace cbk {
 		ImGui::Render();
 		auto rendererAPI = static_cast<platform::vk::VulkanRendererAPI*>(rendering::RenderCommand::getRendererAPI());
 		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), rendererAPI->getCommandBuffer());
-
-		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
-			GLFWwindow* backupCurrentContext = glfwGetCurrentContext();
-			ImGui::UpdatePlatformWindows();
-			ImGui::RenderPlatformWindowsDefault();
-			glfwMakeContextCurrent(backupCurrentContext);
-		}
 	}
 } // namespace cbk
