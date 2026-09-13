@@ -33,6 +33,7 @@ premake5.exe
 
 # Assets
 *.cbk*
+CBKEditor/assets/
 
 # Tools
 tools/
