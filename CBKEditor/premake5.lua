@@ -27,7 +27,7 @@ project "CBKEditor"
 
         postbuildcommands
         {
-            'xcopy /Y /Q /E /I "%{prj.location}\\assets" "%{cfg.targetdir}\\assets"',
+            'if exist "%{prj.location}\\assets" xcopy /Y /Q /E /I "%{prj.location}\\assets" "%{cfg.targetdir}\\assets"',
             'if exist "%{prj.location}\\config.json" copy /Y "%{prj.location}\\config.json" "%{cfg.targetdir}\\config.json"'
         }
 
@@ -45,7 +45,7 @@ project "CBKEditor"
 
         postbuildcommands
         {
-            'cp -ru %{prj.location}/assets/ %{cfg.targetdir}/',
+            'if [ -d %{prj.location}/assets ]; then cp -ru %{prj.location}/assets/ %{cfg.targetdir}/; fi',
             'cp -u %{prj.location}/config.json %{cfg.targetdir}/config.json 2>/dev/null || true'
         }
 
