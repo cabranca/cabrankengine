@@ -41,8 +41,6 @@ namespace cbk {
 			return m_Window;
 		}
 
-		rendering::GraphicsContext* getContext() const override;
-
 	  private:
 		// Initialize the window from the given properties
 		void init(const WindowProps& props);
@@ -51,7 +49,6 @@ namespace cbk {
 		void shutdown();
 
 		GLFWwindow* m_Window;                        // Actual window object
-		Scope<rendering::GraphicsContext> m_Context; // Graphics context for rendering
 
 		// Data of the window to work with GLFW
 		// TODO: could I reuse WindowProps in any way?

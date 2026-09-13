@@ -134,7 +134,7 @@ jobs:
         shell: pwsh
         run: |
           Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/${env:VULKAN_SDK_VERSION}/windows/vulkansdk-windows-X64-${env:VULKAN_SDK_VERSION}.exe" -OutFile vulkan_sdk.exe
-          $installerArgs = @("--root", "${env:GITHUB_WORKSPACE}\vulkan_sdk", "--accept-licenses", "--default-answer", "--confirm-command", "install")
+          $installerArgs = @("--root", "${env:GITHUB_WORKSPACE}\vulkan_sdk", "--accept-licenses", "--default-answer", "--confirm-command", "install", "com.lunarg.vulkan.volk", "com.lunarg.vulkan.vma")
           Start-Process -FilePath .\vulkan_sdk.exe -ArgumentList $installerArgs -Wait -NoNewWindow
           Remove-Item vulkan_sdk.exe
 
@@ -196,7 +196,7 @@ jobs:
         shell: pwsh
         run: |
           Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/${env:VULKAN_SDK_VERSION}/windows/vulkansdk-windows-X64-${env:VULKAN_SDK_VERSION}.exe" -OutFile vulkan_sdk.exe
-          $installerArgs = @("--root", "${env:GITHUB_WORKSPACE}\vulkan_sdk", "--accept-licenses", "--default-answer", "--confirm-command", "install")
+          $installerArgs = @("--root", "${env:GITHUB_WORKSPACE}\vulkan_sdk", "--accept-licenses", "--default-answer", "--confirm-command", "install", "com.lunarg.vulkan.volk", "com.lunarg.vulkan.vma")
           Start-Process -FilePath .\vulkan_sdk.exe -ArgumentList $installerArgs -Wait -NoNewWindow
           Remove-Item vulkan_sdk.exe
 
@@ -288,7 +288,7 @@ jobs:
         shell: pwsh
         run: |
           Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/${env:VULKAN_SDK_VERSION}/windows/vulkansdk-windows-X64-${env:VULKAN_SDK_VERSION}.exe" -OutFile vulkan_sdk.exe
-          $installerArgs = @("--root", "${env:GITHUB_WORKSPACE}\vulkan_sdk", "--accept-licenses", "--default-answer", "--confirm-command", "install")
+          $installerArgs = @("--root", "${env:GITHUB_WORKSPACE}\vulkan_sdk", "--accept-licenses", "--default-answer", "--confirm-command", "install", "com.lunarg.vulkan.volk", "com.lunarg.vulkan.vma")
           Start-Process -FilePath .\vulkan_sdk.exe -ArgumentList $installerArgs -Wait -NoNewWindow
           Remove-Item vulkan_sdk.exe
 
@@ -380,7 +380,7 @@ jobs:
         shell: pwsh
         run: |
           Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/${env:VULKAN_SDK_VERSION}/windows/vulkansdk-windows-X64-${env:VULKAN_SDK_VERSION}.exe" -OutFile vulkan_sdk.exe
-          $installerArgs = @("--root", "${env:GITHUB_WORKSPACE}\vulkan_sdk", "--accept-licenses", "--default-answer", "--confirm-command", "install")
+          $installerArgs = @("--root", "${env:GITHUB_WORKSPACE}\vulkan_sdk", "--accept-licenses", "--default-answer", "--confirm-command", "install", "com.lunarg.vulkan.volk", "com.lunarg.vulkan.vma")
           Start-Process -FilePath .\vulkan_sdk.exe -ArgumentList $installerArgs -Wait -NoNewWindow
           Remove-Item vulkan_sdk.exe
 
@@ -446,7 +446,7 @@ jobs:
         shell: pwsh
         run: |
           Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/${env:VULKAN_SDK_VERSION}/windows/vulkansdk-windows-X64-${env:VULKAN_SDK_VERSION}.exe" -OutFile vulkan_sdk.exe
-          $installerArgs = @("--root", "${env:GITHUB_WORKSPACE}\vulkan_sdk", "--accept-licenses", "--default-answer", "--confirm-command", "install")
+          $installerArgs = @("--root", "${env:GITHUB_WORKSPACE}\vulkan_sdk", "--accept-licenses", "--default-answer", "--confirm-command", "install", "com.lunarg.vulkan.volk", "com.lunarg.vulkan.vma")
           Start-Process -FilePath .\vulkan_sdk.exe -ArgumentList $installerArgs -Wait -NoNewWindow
           Remove-Item vulkan_sdk.exe
 
@@ -537,7 +537,7 @@ jobs:
         shell: pwsh
         run: |
           Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/${env:VULKAN_SDK_VERSION}/windows/vulkansdk-windows-X64-${env:VULKAN_SDK_VERSION}.exe" -OutFile vulkan_sdk.exe
-          $installerArgs = @("--root", "${env:GITHUB_WORKSPACE}\vulkan_sdk", "--accept-licenses", "--default-answer", "--confirm-command", "install")
+          $installerArgs = @("--root", "${env:GITHUB_WORKSPACE}\vulkan_sdk", "--accept-licenses", "--default-answer", "--confirm-command", "install", "com.lunarg.vulkan.volk", "com.lunarg.vulkan.vma")
           Start-Process -FilePath .\vulkan_sdk.exe -ArgumentList $installerArgs -Wait -NoNewWindow
           Remove-Item vulkan_sdk.exe
 

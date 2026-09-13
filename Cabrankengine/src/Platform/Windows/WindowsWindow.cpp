@@ -38,21 +38,13 @@ namespace cbk {
 	}
 
 	void WindowsWindow::setVSync(bool enabled) {
-		CBK_PROFILE_FUNCTION();
-
-		if (enabled)
-			glfwSwapInterval(1);
-		else
-			glfwSwapInterval(0);
+		// TODO: handle this
+		// Vulkan: vsync is the swapchain present mode (FIFO_KHR), not a GLFW knob.
 		m_Data.VSync = enabled;
 	}
 
 	bool WindowsWindow::isVSync() const {
 		return m_Data.VSync;
-	}
-
-	rendering::GraphicsContext* WindowsWindow::getContext() const {
-		return m_Context.get();
 	}
 
 	void WindowsWindow::init(const WindowProps& props) {
@@ -78,9 +70,6 @@ namespace cbk {
 
 			m_Window = glfwCreateWindow(props.Width, props.Height, m_Data.Title.c_str(), nullptr, nullptr);
 		}
-
-		m_Context = GraphicsContext::create();
-		m_Context->init();
 
 		glfwSetWindowUserPointer(m_Window, &m_Data);
 		setVSync(true);
@@ -161,11 +150,6 @@ namespace cbk {
 
 	void WindowsWindow::shutdown() {
 		CBK_PROFILE_FUNCTION();
-
-		// Tear down the graphics backend (Vulkan device/allocator/instance, or no-op
-		// for OpenGL) before the surface/window goes away.
-		if (m_Context)
-			m_Context->shutdown();
 		glfwDestroyWindow(m_Window);
 	}
 } // namespace cbk
