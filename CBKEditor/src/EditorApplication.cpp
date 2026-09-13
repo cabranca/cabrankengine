@@ -74,8 +74,19 @@ class EditorLayer : public Layer {
 		}
 
 		if (ImGui::BeginMenuBar()) {
+			if (ImGui::BeginMenu("Scene")) {
+				if (ImGui::MenuItem("New Scene"))
+					Application::get().loadScene(scene::Scene());
+				if (ImGui::MenuItem("Save Scene"))
+					SceneSerializer::serialize(m_Scene, "scenes/testScene.cbkscn");
+				if (ImGui::MenuItem("Save Scene as..."))
+					CBK_APP_WARN("Save as not implemented yet!");
+				if (ImGui::MenuItem("Load Scene"))
+					Application::get().loadScene(SceneSerializer::deserialize("testScene.cbkscn"));
+				ImGui::EndMenu();
+			}
 			if (ImGui::BeginMenu("Window")) {
-				if (ImGui::MenuItem("Reset Layout"))
+				if (ImGui::MenuItem("Reset Layout to default"))
 					m_ResetLayout = true;
 				ImGui::EndMenu();
 			}
@@ -104,6 +115,7 @@ class EditorLayer : public Layer {
 	Ref<OutlinerPanel> m_Outliner;
 	std::vector<Ref<Panel>> m_Panels;
 	bool m_ResetLayout = false;
+	scene::Scene m_Scene;
 };
 
 class Editor : public Application {
