@@ -74,7 +74,7 @@ jobs:
               - '.github/workflows/ci-linux.yml'
 
   # -----------------------------------------------------------------------
-  # Engine vendor libraries (GLFW, glad, ImGui, FreeType)
+  # Engine vendor libraries (GLFW, ImGui, FreeType)
   # Keyed on vendor source only — a src-only engine change never triggers a rebuild
   # -----------------------------------------------------------------------
   build-engine-vendors:
@@ -109,14 +109,12 @@ jobs:
         id: vendor-cache
         uses: actions/cache@v4
         with:
-          key: engine-vendors-release-linux-${{ hashFiles('Cabrankengine/vendor/GLFW/**', 'Cabrankengine/vendor/glad/**', 'Cabrankengine/vendor/imgui/**', 'Cabrankengine/vendor/freetype/**') }}
+          key: engine-vendors-release-linux-${{ hashFiles('Cabrankengine/vendor/GLFW/**', 'Cabrankengine/vendor/imgui/**', 'Cabrankengine/vendor/freetype/**') }}
           path: |
             bin/Release-linux-x86_64/GLFW
-            bin/Release-linux-x86_64/glad
             bin/Release-linux-x86_64/ImGui
             bin/Release-linux-x86_64/FreeType
             bin-int/Release-linux-x86_64/GLFW
-            bin-int/Release-linux-x86_64/glad
             bin-int/Release-linux-x86_64/ImGui
             bin-int/Release-linux-x86_64/FreeType
 
@@ -142,7 +140,7 @@ jobs:
 
       - name: Build vendor libs
         if: steps.vendor-cache.outputs.cache-hit != 'true'
-        run: ./premake5 gmake && make GLFW glad ImGui FreeType config=release -j$(nproc)
+        run: ./premake5 gmake && make GLFW ImGui FreeType config=release -j$(nproc)
 
   # -----------------------------------------------------------------------
   # Assimp — keyed on its own source, independent of CBKAssetConverter
@@ -242,14 +240,12 @@ jobs:
       - name: Restore engine vendor libs
         uses: actions/cache/restore@v4
         with:
-          key: engine-vendors-release-linux-${{ hashFiles('Cabrankengine/vendor/GLFW/**', 'Cabrankengine/vendor/glad/**', 'Cabrankengine/vendor/imgui/**', 'Cabrankengine/vendor/freetype/**') }}
+          key: engine-vendors-release-linux-${{ hashFiles('Cabrankengine/vendor/GLFW/**', 'Cabrankengine/vendor/imgui/**', 'Cabrankengine/vendor/freetype/**') }}
           path: |
             bin/Release-linux-x86_64/GLFW
-            bin/Release-linux-x86_64/glad
             bin/Release-linux-x86_64/ImGui
             bin/Release-linux-x86_64/FreeType
             bin-int/Release-linux-x86_64/GLFW
-            bin-int/Release-linux-x86_64/glad
             bin-int/Release-linux-x86_64/ImGui
             bin-int/Release-linux-x86_64/FreeType
 
@@ -329,14 +325,12 @@ jobs:
       - name: Restore engine vendor libs
         uses: actions/cache/restore@v4
         with:
-          key: engine-vendors-release-linux-${{ hashFiles('Cabrankengine/vendor/GLFW/**', 'Cabrankengine/vendor/glad/**', 'Cabrankengine/vendor/imgui/**', 'Cabrankengine/vendor/freetype/**') }}
+          key: engine-vendors-release-linux-${{ hashFiles('Cabrankengine/vendor/GLFW/**', 'Cabrankengine/vendor/imgui/**', 'Cabrankengine/vendor/freetype/**') }}
           path: |
             bin/Release-linux-x86_64/GLFW
-            bin/Release-linux-x86_64/glad
             bin/Release-linux-x86_64/ImGui
             bin/Release-linux-x86_64/FreeType
             bin-int/Release-linux-x86_64/GLFW
-            bin-int/Release-linux-x86_64/glad
             bin-int/Release-linux-x86_64/ImGui
             bin-int/Release-linux-x86_64/FreeType
 
@@ -479,14 +473,12 @@ jobs:
       - name: Restore engine vendor libs
         uses: actions/cache/restore@v4
         with:
-          key: engine-vendors-release-linux-${{ hashFiles('Cabrankengine/vendor/GLFW/**', 'Cabrankengine/vendor/glad/**', 'Cabrankengine/vendor/imgui/**', 'Cabrankengine/vendor/freetype/**') }}
+          key: engine-vendors-release-linux-${{ hashFiles('Cabrankengine/vendor/GLFW/**', 'Cabrankengine/vendor/imgui/**', 'Cabrankengine/vendor/freetype/**') }}
           path: |
             bin/Release-linux-x86_64/GLFW
-            bin/Release-linux-x86_64/glad
             bin/Release-linux-x86_64/ImGui
             bin/Release-linux-x86_64/FreeType
             bin-int/Release-linux-x86_64/GLFW
-            bin-int/Release-linux-x86_64/glad
             bin-int/Release-linux-x86_64/ImGui
             bin-int/Release-linux-x86_64/FreeType
 

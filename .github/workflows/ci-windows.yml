@@ -73,7 +73,7 @@ jobs:
               - '.github/workflows/ci-windows.yml'
 
   # -----------------------------------------------------------------------
-  # Engine vendor libraries (GLFW, glad, ImGui, FreeType)
+  # Engine vendor libraries (GLFW, ImGui, FreeType)
   # Keyed on vendor source only — a src-only engine change never triggers a rebuild
   # -----------------------------------------------------------------------
   build-engine-vendors:
@@ -113,14 +113,12 @@ jobs:
         id: vendor-cache
         uses: actions/cache@v4
         with:
-          key: engine-vendors-release-windows-${{ steps.msvc.outputs.toolset }}-${{ hashFiles('Cabrankengine/vendor/GLFW/**', 'Cabrankengine/vendor/glad/**', 'Cabrankengine/vendor/imgui/**', 'Cabrankengine/vendor/freetype/**') }}
+          key: engine-vendors-release-windows-${{ steps.msvc.outputs.toolset }}-${{ hashFiles('Cabrankengine/vendor/GLFW/**', 'Cabrankengine/vendor/imgui/**', 'Cabrankengine/vendor/freetype/**') }}
           path: |
             bin/Release-windows-x86_64/GLFW
-            bin/Release-windows-x86_64/glad
             bin/Release-windows-x86_64/ImGui
             bin/Release-windows-x86_64/FreeType
             bin-int/Release-windows-x86_64/GLFW
-            bin-int/Release-windows-x86_64/glad
             bin-int/Release-windows-x86_64/ImGui
             bin-int/Release-windows-x86_64/FreeType
 
@@ -148,7 +146,7 @@ jobs:
         if: steps.vendor-cache.outputs.cache-hit != 'true'
         run: |
           ./premake5 vs2022
-          msbuild Cabrankengine.sln "/t:GLFW;glad;ImGui;FreeType" /p:Configuration=Release /p:Platform=x64 /verbosity:minimal /m
+          msbuild Cabrankengine.sln "/t:GLFW;ImGui;FreeType" /p:Configuration=Release /p:Platform=x64 /verbosity:minimal /m
 
   # -----------------------------------------------------------------------
   # Assimp — keyed on its own source, independent of CBKAssetConverter
@@ -253,14 +251,12 @@ jobs:
       - name: Restore engine vendor libs
         uses: actions/cache/restore@v4
         with:
-          key: engine-vendors-release-windows-${{ steps.msvc.outputs.toolset }}-${{ hashFiles('Cabrankengine/vendor/GLFW/**', 'Cabrankengine/vendor/glad/**', 'Cabrankengine/vendor/imgui/**', 'Cabrankengine/vendor/freetype/**') }}
+          key: engine-vendors-release-windows-${{ steps.msvc.outputs.toolset }}-${{ hashFiles('Cabrankengine/vendor/GLFW/**', 'Cabrankengine/vendor/imgui/**', 'Cabrankengine/vendor/freetype/**') }}
           path: |
             bin/Release-windows-x86_64/GLFW
-            bin/Release-windows-x86_64/glad
             bin/Release-windows-x86_64/ImGui
             bin/Release-windows-x86_64/FreeType
             bin-int/Release-windows-x86_64/GLFW
-            bin-int/Release-windows-x86_64/glad
             bin-int/Release-windows-x86_64/ImGui
             bin-int/Release-windows-x86_64/FreeType
 
@@ -349,14 +345,12 @@ jobs:
       - name: Restore engine vendor libs
         uses: actions/cache/restore@v4
         with:
-          key: engine-vendors-release-windows-${{ steps.msvc.outputs.toolset }}-${{ hashFiles('Cabrankengine/vendor/GLFW/**', 'Cabrankengine/vendor/glad/**', 'Cabrankengine/vendor/imgui/**', 'Cabrankengine/vendor/freetype/**') }}
+          key: engine-vendors-release-windows-${{ steps.msvc.outputs.toolset }}-${{ hashFiles('Cabrankengine/vendor/GLFW/**', 'Cabrankengine/vendor/imgui/**', 'Cabrankengine/vendor/freetype/**') }}
           path: |
             bin/Release-windows-x86_64/GLFW
-            bin/Release-windows-x86_64/glad
             bin/Release-windows-x86_64/ImGui
             bin/Release-windows-x86_64/FreeType
             bin-int/Release-windows-x86_64/GLFW
-            bin-int/Release-windows-x86_64/glad
             bin-int/Release-windows-x86_64/ImGui
             bin-int/Release-windows-x86_64/FreeType
 
@@ -508,14 +502,12 @@ jobs:
       - name: Restore engine vendor libs
         uses: actions/cache/restore@v4
         with:
-          key: engine-vendors-release-windows-${{ steps.msvc.outputs.toolset }}-${{ hashFiles('Cabrankengine/vendor/GLFW/**', 'Cabrankengine/vendor/glad/**', 'Cabrankengine/vendor/imgui/**', 'Cabrankengine/vendor/freetype/**') }}
+          key: engine-vendors-release-windows-${{ steps.msvc.outputs.toolset }}-${{ hashFiles('Cabrankengine/vendor/GLFW/**', 'Cabrankengine/vendor/imgui/**', 'Cabrankengine/vendor/freetype/**') }}
           path: |
             bin/Release-windows-x86_64/GLFW
-            bin/Release-windows-x86_64/glad
             bin/Release-windows-x86_64/ImGui
             bin/Release-windows-x86_64/FreeType
             bin-int/Release-windows-x86_64/GLFW
-            bin-int/Release-windows-x86_64/glad
             bin-int/Release-windows-x86_64/ImGui
             bin-int/Release-windows-x86_64/FreeType
 
