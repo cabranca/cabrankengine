@@ -10,6 +10,7 @@ on:
       - 'Sandbox/**'
       - 'UnitTests/**'
       - 'CBKAssetConverter/**'
+      - 'CBKEditor/**'
       - '.github/workflows/ci-windows.yml'
   pull_request:
     branches:
@@ -20,6 +21,7 @@ on:
       - 'Sandbox/**'
       - 'UnitTests/**'
       - 'CBKAssetConverter/**'
+      - 'CBKEditor/**'
       - '.github/workflows/ci-windows.yml'
 
 # Supersede in-flight runs when a PR branch is pushed again. Never cancels a
@@ -47,6 +49,7 @@ jobs:
     outputs:
       engine:    ${{ steps.filter.outputs.engine }}
       sandbox:   ${{ steps.filter.outputs.sandbox }}
+      editor:    ${{ steps.filter.outputs.editor }}
       converter: ${{ steps.filter.outputs.converter }}
       tests:     ${{ steps.filter.outputs.tests }}
     steps:
@@ -63,6 +66,11 @@ jobs:
               - '.github/workflows/ci-windows.yml'
             sandbox:
               - 'Sandbox/**'
+              - 'Cabrankengine/**'
+              - 'Common/**'
+              - '.github/workflows/ci-windows.yml'
+            editor:
+              - 'CBKEditor/**'
               - 'Cabrankengine/**'
               - 'Common/**'
               - '.github/workflows/ci-windows.yml'
@@ -408,6 +416,100 @@ jobs:
         run: |
           ./premake5 vs2022
           msbuild Cabrankengine.sln /t:Sandbox /p:Configuration=Release /p:Platform=x64 /verbosity:minimal /m
+
+  # -----------------------------------------------------------------------
+  # CBKEditor — waits for engine and vendors; skipped engine is treated as success
+  # -----------------------------------------------------------------------
+  build-editor:
+    name: Build CBKEditor (Release)
+    needs: [changes, build-cabrankengine, build-engine-vendors]
+    if: |
+      needs.changes.outputs.editor == 'true' &&
+      (needs.build-cabrankengine.result == 'success' || needs.build-cabrankengine.result == 'skipped')
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: microsoft/setup-msbuild@v2
+
+      - name: Get MSVC toolset version
+        id: msvc
+        shell: pwsh
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $installPath = & $vswhere -latest -property installationPath
+          $ver = (Get-Content "$installPath\VC\Auxiliary\Build\Microsoft.VCToolsVersion.default.txt").Trim()
+          echo "toolset=$ver" >> $env:GITHUB_OUTPUT
+
+      - name: Cache premake5
+        id: premake-cache
+        uses: actions/cache@v4
+        with:
+          key: premake5-5.0.0-beta8-windows
+          path: ./premake5.exe
+
+      - name: Download premake5
+        if: steps.premake-cache.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri "https://github.com/premake/premake-core/releases/download/v5.0.0-beta8/premake-5.0.0-beta8-windows.zip" -OutFile premake5.zip
+          Expand-Archive premake5.zip -DestinationPath .
+
+      - name: Restore engine vendor libs
+        uses: actions/cache/restore@v4
+        with:
+          key: engine-vendors-release-windows-${{ steps.msvc.outputs.toolset }}-${{ hashFiles('Cabrankengine/vendor/GLFW/**', 'Cabrankengine/vendor/imgui/**', 'Cabrankengine/vendor/freetype/**') }}
+          path: |
+            bin/Release-windows-x86_64/GLFW
+            bin/Release-windows-x86_64/ImGui
+            bin/Release-windows-x86_64/FreeType
+            bin-int/Release-windows-x86_64/GLFW
+            bin-int/Release-windows-x86_64/ImGui
+            bin-int/Release-windows-x86_64/FreeType
+
+      - name: Restore engine build outputs
+        uses: actions/cache/restore@v4
+        with:
+          key: engine-release-windows-${{ steps.msvc.outputs.toolset }}-${{ hashFiles('Cabrankengine/src/**', 'Common/**') }}
+          path: |
+            bin/Release-windows-x86_64/Cabrankengine
+            bin/Release-windows-x86_64/Common
+            bin-int/Release-windows-x86_64/Cabrankengine
+            bin-int/Release-windows-x86_64/Common
+
+      - name: Mark artifacts as up-to-date
+        shell: pwsh
+        run: Get-ChildItem -Path bin,bin-int -Recurse -File -ErrorAction SilentlyContinue | ForEach-Object { $_.LastWriteTime = Get-Date }
+
+      - name: Cache Vulkan SDK
+        id: vulkan-cache
+        uses: actions/cache@v4
+        with:
+          key: vulkan-sdk-${{ env.VULKAN_SDK_VERSION }}-windows-${{ env.VULKAN_SDK_COMPONENTS }}
+          path: ./vulkan_sdk
+
+      - name: Install Vulkan SDK
+        if: steps.vulkan-cache.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/${env:VULKAN_SDK_VERSION}/windows/vulkansdk-windows-X64-${env:VULKAN_SDK_VERSION}.exe" -OutFile vulkan_sdk.exe
+          $installerArgs = @("--root", "${env:GITHUB_WORKSPACE}\vulkan_sdk", "--accept-licenses", "--default-answer", "--confirm-command", "install") + ($env:VULKAN_SDK_COMPONENTS -split ' ')
+          Start-Process -FilePath .\vulkan_sdk.exe -ArgumentList $installerArgs -Wait -NoNewWindow
+          Remove-Item vulkan_sdk.exe
+          foreach ($header in @("volk\volk.h", "vma\vk_mem_alloc.h", "slang\slang.h")) {
+            if (-not (Test-Path "vulkan_sdk\Include\$header")) { throw "Vulkan SDK install is missing Include\$header" }
+          }
+
+      - name: Set Vulkan SDK environment
+        shell: pwsh
+        run: echo "VULKAN_SDK=$env:GITHUB_WORKSPACE\vulkan_sdk" >> $env:GITHUB_ENV
+
+      - name: Build
+        run: |
+          ./premake5 vs2022
+          msbuild Cabrankengine.sln /t:CBKEditor /p:Configuration=Release /p:Platform=x64 /verbosity:minimal /m
 
   # -----------------------------------------------------------------------
   # CBKAssetConverter — depends on Assimp cache

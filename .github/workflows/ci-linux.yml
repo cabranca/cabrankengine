@@ -10,6 +10,7 @@ on:
       - 'Sandbox/**'
       - 'UnitTests/**'
       - 'CBKAssetConverter/**'
+      - 'CBKEditor/**'
       - '.github/workflows/ci-linux.yml'
   pull_request:
     branches:
@@ -20,6 +21,7 @@ on:
       - 'Sandbox/**'
       - 'UnitTests/**'
       - 'CBKAssetConverter/**'
+      - 'CBKEditor/**'
       - '.github/workflows/ci-linux.yml'
 
 # Supersede in-flight runs when a PR branch is pushed again. Never cancels a
@@ -44,6 +46,7 @@ jobs:
     outputs:
       engine:    ${{ steps.filter.outputs.engine }}
       sandbox:   ${{ steps.filter.outputs.sandbox }}
+      editor:    ${{ steps.filter.outputs.editor }}
       converter: ${{ steps.filter.outputs.converter }}
       tests:     ${{ steps.filter.outputs.tests }}
     steps:
@@ -60,6 +63,11 @@ jobs:
               - '.github/workflows/ci-linux.yml'
             sandbox:
               - 'Sandbox/**'
+              - 'Cabrankengine/**'
+              - 'Common/**'
+              - '.github/workflows/ci-linux.yml'
+            editor:
+              - 'CBKEditor/**'
               - 'Cabrankengine/**'
               - 'Common/**'
               - '.github/workflows/ci-linux.yml'
@@ -369,6 +377,89 @@ jobs:
 
       - name: Build
         run: ./premake5 gmake && make Sandbox config=release -j$(nproc)
+
+  # -----------------------------------------------------------------------
+  # CBKEditor — waits for engine and vendors; skipped engine is treated as success
+  # -----------------------------------------------------------------------
+  build-editor:
+    name: Build CBKEditor (Release)
+    needs: [changes, build-cabrankengine, build-engine-vendors]
+    if: |
+      needs.changes.outputs.editor == 'true' &&
+      (needs.build-cabrankengine.result == 'success' || needs.build-cabrankengine.result == 'skipped')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y \
+            libx11-dev libxrandr-dev libxi-dev libxxf86vm-dev \
+            libxcursor-dev libxinerama-dev libgl1-mesa-dev
+
+      - name: Cache premake5
+        id: premake-cache
+        uses: actions/cache@v4
+        with:
+          key: premake5-5.0.0-beta8-linux
+          path: ./premake5
+
+      - name: Download premake5
+        if: steps.premake-cache.outputs.cache-hit != 'true'
+        run: |
+          curl -sSL https://github.com/premake/premake-core/releases/download/v5.0.0-beta8/premake-5.0.0-beta8-linux.tar.gz | tar -xz -C .
+          chmod +x ./premake5
+
+      - name: Restore engine vendor libs
+        uses: actions/cache/restore@v4
+        with:
+          key: engine-vendors-release-linux-${{ hashFiles('Cabrankengine/vendor/GLFW/**', 'Cabrankengine/vendor/imgui/**', 'Cabrankengine/vendor/freetype/**') }}
+          path: |
+            bin/Release-linux-x86_64/GLFW
+            bin/Release-linux-x86_64/ImGui
+            bin/Release-linux-x86_64/FreeType
+            bin-int/Release-linux-x86_64/GLFW
+            bin-int/Release-linux-x86_64/ImGui
+            bin-int/Release-linux-x86_64/FreeType
+
+      - name: Restore engine build outputs
+        uses: actions/cache/restore@v4
+        with:
+          key: engine-release-linux-${{ hashFiles('Cabrankengine/src/**', 'Common/**') }}
+          path: |
+            bin/Release-linux-x86_64/Cabrankengine
+            bin/Release-linux-x86_64/Common
+            bin-int/Release-linux-x86_64/Cabrankengine
+            bin-int/Release-linux-x86_64/Common
+
+      - name: Mark artifacts as up-to-date
+        run: find bin/ bin-int/ -type f 2>/dev/null | xargs -r touch
+
+      - name: Cache Vulkan SDK
+        id: vulkan-cache
+        uses: actions/cache@v4
+        with:
+          key: vulkan-sdk-${{ env.VULKAN_SDK_VERSION }}-linux
+          path: ./vulkan_sdk
+
+      - name: Install Vulkan SDK
+        if: steps.vulkan-cache.outputs.cache-hit != 'true'
+        run: |
+          curl -sSL "https://sdk.lunarg.com/sdk/download/${VULKAN_SDK_VERSION}/linux/vulkansdk-linux-x86_64-${VULKAN_SDK_VERSION}.tar.xz" -o vulkan_sdk.tar.xz
+          mkdir -p vulkan_sdk
+          tar -xJf vulkan_sdk.tar.xz -C vulkan_sdk --strip-components=1
+          rm vulkan_sdk.tar.xz
+
+      - name: Set Vulkan SDK environment
+        run: |
+          echo "VULKAN_SDK=${GITHUB_WORKSPACE}/vulkan_sdk/x86_64" >> "$GITHUB_ENV"
+          echo "LD_LIBRARY_PATH=${GITHUB_WORKSPACE}/vulkan_sdk/x86_64/lib:${LD_LIBRARY_PATH}" >> "$GITHUB_ENV"
+
+      - name: Build
+        run: ./premake5 gmake && make CBKEditor config=release -j$(nproc)
 
   # -----------------------------------------------------------------------
   # CBKAssetConverter — depends on Assimp cache
