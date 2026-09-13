@@ -28,6 +28,11 @@ concurrency:
   group: ci-windows-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+# Pinned LunarG Vulkan SDK version. The Windows SDK is built independently from
+# the Linux one and doesn't always share a patch number, so it gets its own pin.
+env:
+  VULKAN_SDK_VERSION: "1.4.350.0"
+
 jobs:
   # -----------------------------------------------------------------------
   # Detect which projects have changed
@@ -119,6 +124,26 @@ jobs:
             bin-int/Release-windows-x86_64/ImGui
             bin-int/Release-windows-x86_64/FreeType
 
+      - name: Cache Vulkan SDK
+        id: vulkan-cache
+        uses: actions/cache@v4
+        with:
+          key: vulkan-sdk-${{ env.VULKAN_SDK_VERSION }}-windows
+          path: ./vulkan_sdk
+
+      - name: Install Vulkan SDK
+        if: steps.vulkan-cache.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/${env:VULKAN_SDK_VERSION}/windows/vulkansdk-windows-X64-${env:VULKAN_SDK_VERSION}.exe" -OutFile vulkan_sdk.exe
+          $installerArgs = @("--root", "${env:GITHUB_WORKSPACE}\vulkan_sdk", "--accept-licenses", "--default-answer", "--confirm-command", "install")
+          Start-Process -FilePath .\vulkan_sdk.exe -ArgumentList $installerArgs -Wait -NoNewWindow
+          Remove-Item vulkan_sdk.exe
+
+      - name: Set Vulkan SDK environment
+        shell: pwsh
+        run: echo "VULKAN_SDK=$env:GITHUB_WORKSPACE\vulkan_sdk" >> $env:GITHUB_ENV
+
       - name: Build vendor libs
         if: steps.vendor-cache.outputs.cache-hit != 'true'
         run: |
@@ -160,6 +185,26 @@ jobs:
           path: |
             bin/Release-windows-x86_64/Assimp
             bin-int/Release-windows-x86_64/Assimp
+
+      - name: Cache Vulkan SDK
+        id: vulkan-cache
+        uses: actions/cache@v4
+        with:
+          key: vulkan-sdk-${{ env.VULKAN_SDK_VERSION }}-windows
+          path: ./vulkan_sdk
+
+      - name: Install Vulkan SDK
+        if: steps.vulkan-cache.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/${env:VULKAN_SDK_VERSION}/windows/vulkansdk-windows-X64-${env:VULKAN_SDK_VERSION}.exe" -OutFile vulkan_sdk.exe
+          $installerArgs = @("--root", "${env:GITHUB_WORKSPACE}\vulkan_sdk", "--accept-licenses", "--default-answer", "--confirm-command", "install")
+          Start-Process -FilePath .\vulkan_sdk.exe -ArgumentList $installerArgs -Wait -NoNewWindow
+          Remove-Item vulkan_sdk.exe
+
+      - name: Set Vulkan SDK environment
+        shell: pwsh
+        run: echo "VULKAN_SDK=$env:GITHUB_WORKSPACE\vulkan_sdk" >> $env:GITHUB_ENV
 
       - name: Build Assimp
         if: steps.assimp-cache.outputs.cache-hit != 'true'
@@ -235,6 +280,26 @@ jobs:
         shell: pwsh
         run: Get-ChildItem -Path bin,bin-int -Recurse -File -ErrorAction SilentlyContinue | ForEach-Object { $_.LastWriteTime = Get-Date }
 
+      - name: Cache Vulkan SDK
+        id: vulkan-cache
+        uses: actions/cache@v4
+        with:
+          key: vulkan-sdk-${{ env.VULKAN_SDK_VERSION }}-windows
+          path: ./vulkan_sdk
+
+      - name: Install Vulkan SDK
+        if: steps.vulkan-cache.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/${env:VULKAN_SDK_VERSION}/windows/vulkansdk-windows-X64-${env:VULKAN_SDK_VERSION}.exe" -OutFile vulkan_sdk.exe
+          $installerArgs = @("--root", "${env:GITHUB_WORKSPACE}\vulkan_sdk", "--accept-licenses", "--default-answer", "--confirm-command", "install")
+          Start-Process -FilePath .\vulkan_sdk.exe -ArgumentList $installerArgs -Wait -NoNewWindow
+          Remove-Item vulkan_sdk.exe
+
+      - name: Set Vulkan SDK environment
+        shell: pwsh
+        run: echo "VULKAN_SDK=$env:GITHUB_WORKSPACE\vulkan_sdk" >> $env:GITHUB_ENV
+
       - name: Build
         if: steps.engine-cache.outputs.cache-hit != 'true'
         run: |
@@ -309,6 +374,26 @@ jobs:
         shell: pwsh
         run: Get-ChildItem -Path bin,bin-int -Recurse -File -ErrorAction SilentlyContinue | ForEach-Object { $_.LastWriteTime = Get-Date }
 
+      - name: Cache Vulkan SDK
+        id: vulkan-cache
+        uses: actions/cache@v4
+        with:
+          key: vulkan-sdk-${{ env.VULKAN_SDK_VERSION }}-windows
+          path: ./vulkan_sdk
+
+      - name: Install Vulkan SDK
+        if: steps.vulkan-cache.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/${env:VULKAN_SDK_VERSION}/windows/vulkansdk-windows-X64-${env:VULKAN_SDK_VERSION}.exe" -OutFile vulkan_sdk.exe
+          $installerArgs = @("--root", "${env:GITHUB_WORKSPACE}\vulkan_sdk", "--accept-licenses", "--default-answer", "--confirm-command", "install")
+          Start-Process -FilePath .\vulkan_sdk.exe -ArgumentList $installerArgs -Wait -NoNewWindow
+          Remove-Item vulkan_sdk.exe
+
+      - name: Set Vulkan SDK environment
+        shell: pwsh
+        run: echo "VULKAN_SDK=$env:GITHUB_WORKSPACE\vulkan_sdk" >> $env:GITHUB_ENV
+
       - name: Build
         run: |
           ./premake5 vs2022
@@ -354,6 +439,26 @@ jobs:
       - name: Mark artifacts as up-to-date
         shell: pwsh
         run: Get-ChildItem -Path bin,bin-int -Recurse -File -ErrorAction SilentlyContinue | ForEach-Object { $_.LastWriteTime = Get-Date }
+
+      - name: Cache Vulkan SDK
+        id: vulkan-cache
+        uses: actions/cache@v4
+        with:
+          key: vulkan-sdk-${{ env.VULKAN_SDK_VERSION }}-windows
+          path: ./vulkan_sdk
+
+      - name: Install Vulkan SDK
+        if: steps.vulkan-cache.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/${env:VULKAN_SDK_VERSION}/windows/vulkansdk-windows-X64-${env:VULKAN_SDK_VERSION}.exe" -OutFile vulkan_sdk.exe
+          $installerArgs = @("--root", "${env:GITHUB_WORKSPACE}\vulkan_sdk", "--accept-licenses", "--default-answer", "--confirm-command", "install")
+          Start-Process -FilePath .\vulkan_sdk.exe -ArgumentList $installerArgs -Wait -NoNewWindow
+          Remove-Item vulkan_sdk.exe
+
+      - name: Set Vulkan SDK environment
+        shell: pwsh
+        run: echo "VULKAN_SDK=$env:GITHUB_WORKSPACE\vulkan_sdk" >> $env:GITHUB_ENV
 
       - name: Build
         run: |
@@ -427,6 +532,26 @@ jobs:
       - name: Mark artifacts as up-to-date
         shell: pwsh
         run: Get-ChildItem -Path bin,bin-int -Recurse -File -ErrorAction SilentlyContinue | ForEach-Object { $_.LastWriteTime = Get-Date }
+
+      - name: Cache Vulkan SDK
+        id: vulkan-cache
+        uses: actions/cache@v4
+        with:
+          key: vulkan-sdk-${{ env.VULKAN_SDK_VERSION }}-windows
+          path: ./vulkan_sdk
+
+      - name: Install Vulkan SDK
+        if: steps.vulkan-cache.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/${env:VULKAN_SDK_VERSION}/windows/vulkansdk-windows-X64-${env:VULKAN_SDK_VERSION}.exe" -OutFile vulkan_sdk.exe
+          $installerArgs = @("--root", "${env:GITHUB_WORKSPACE}\vulkan_sdk", "--accept-licenses", "--default-answer", "--confirm-command", "install")
+          Start-Process -FilePath .\vulkan_sdk.exe -ArgumentList $installerArgs -Wait -NoNewWindow
+          Remove-Item vulkan_sdk.exe
+
+      - name: Set Vulkan SDK environment
+        shell: pwsh
+        run: echo "VULKAN_SDK=$env:GITHUB_WORKSPACE\vulkan_sdk" >> $env:GITHUB_ENV
 
       - name: Build
         run: |

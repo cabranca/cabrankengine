@@ -28,8 +28,9 @@ concurrency:
   group: ci-linux-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
-# Pinned LunarG Vulkan SDK version (Linux default renderer). Bump here to update
-# every job's download URL and cache key in one place.
+# Pinned LunarG Vulkan SDK version. The engine is Vulkan-only on every platform,
+# so every job needs it. Bump here to update every job's download URL and cache
+# key in one place.
 env:
   VULKAN_SDK_VERSION: "1.4.350.1"
 
@@ -119,12 +120,29 @@ jobs:
             bin-int/Release-linux-x86_64/ImGui
             bin-int/Release-linux-x86_64/FreeType
 
+      - name: Cache Vulkan SDK
+        id: vulkan-cache
+        uses: actions/cache@v4
+        with:
+          key: vulkan-sdk-${{ env.VULKAN_SDK_VERSION }}-linux
+          path: ./vulkan_sdk
+
+      - name: Install Vulkan SDK
+        if: steps.vulkan-cache.outputs.cache-hit != 'true'
+        run: |
+          curl -sSL "https://sdk.lunarg.com/sdk/download/${VULKAN_SDK_VERSION}/linux/vulkansdk-linux-x86_64-${VULKAN_SDK_VERSION}.tar.xz" -o vulkan_sdk.tar.xz
+          mkdir -p vulkan_sdk
+          tar -xJf vulkan_sdk.tar.xz -C vulkan_sdk --strip-components=1
+          rm vulkan_sdk.tar.xz
+
+      - name: Set Vulkan SDK environment
+        run: |
+          echo "VULKAN_SDK=${GITHUB_WORKSPACE}/vulkan_sdk/x86_64" >> "$GITHUB_ENV"
+          echo "LD_LIBRARY_PATH=${GITHUB_WORKSPACE}/vulkan_sdk/x86_64/lib:${LD_LIBRARY_PATH}" >> "$GITHUB_ENV"
+
       - name: Build vendor libs
         if: steps.vendor-cache.outputs.cache-hit != 'true'
-        # Renderer-agnostic vendor libs: --renderer=opengl skips the Vulkan SDK
-        # requirement in premake5.lua (the SDK is only needed to compile the
-        # engine's Vulkan backend, not these libraries).
-        run: ./premake5 gmake --renderer=opengl && make GLFW glad ImGui FreeType config=release -j$(nproc)
+        run: ./premake5 gmake && make GLFW glad ImGui FreeType config=release -j$(nproc)
 
   # -----------------------------------------------------------------------
   # Assimp — keyed on its own source, independent of CBKAssetConverter
@@ -164,10 +182,29 @@ jobs:
             bin/Release-linux-x86_64/Assimp
             bin-int/Release-linux-x86_64/Assimp
 
+      - name: Cache Vulkan SDK
+        id: vulkan-cache
+        uses: actions/cache@v4
+        with:
+          key: vulkan-sdk-${{ env.VULKAN_SDK_VERSION }}-linux
+          path: ./vulkan_sdk
+
+      - name: Install Vulkan SDK
+        if: steps.vulkan-cache.outputs.cache-hit != 'true'
+        run: |
+          curl -sSL "https://sdk.lunarg.com/sdk/download/${VULKAN_SDK_VERSION}/linux/vulkansdk-linux-x86_64-${VULKAN_SDK_VERSION}.tar.xz" -o vulkan_sdk.tar.xz
+          mkdir -p vulkan_sdk
+          tar -xJf vulkan_sdk.tar.xz -C vulkan_sdk --strip-components=1
+          rm vulkan_sdk.tar.xz
+
+      - name: Set Vulkan SDK environment
+        run: |
+          echo "VULKAN_SDK=${GITHUB_WORKSPACE}/vulkan_sdk/x86_64" >> "$GITHUB_ENV"
+          echo "LD_LIBRARY_PATH=${GITHUB_WORKSPACE}/vulkan_sdk/x86_64/lib:${LD_LIBRARY_PATH}" >> "$GITHUB_ENV"
+
       - name: Build Assimp
         if: steps.assimp-cache.outputs.cache-hit != 'true'
-        # Renderer-agnostic: --renderer=opengl avoids the Vulkan SDK requirement.
-        run: ./premake5 gmake --renderer=opengl && make Assimp config=release -j$(nproc)
+        run: ./premake5 gmake && make Assimp config=release -j$(nproc)
 
   # -----------------------------------------------------------------------
   # Cabrankengine
@@ -381,9 +418,28 @@ jobs:
       - name: Mark artifacts as up-to-date
         run: find bin/ bin-int/ -type f 2>/dev/null | xargs -r touch
 
+      - name: Cache Vulkan SDK
+        id: vulkan-cache
+        uses: actions/cache@v4
+        with:
+          key: vulkan-sdk-${{ env.VULKAN_SDK_VERSION }}-linux
+          path: ./vulkan_sdk
+
+      - name: Install Vulkan SDK
+        if: steps.vulkan-cache.outputs.cache-hit != 'true'
+        run: |
+          curl -sSL "https://sdk.lunarg.com/sdk/download/${VULKAN_SDK_VERSION}/linux/vulkansdk-linux-x86_64-${VULKAN_SDK_VERSION}.tar.xz" -o vulkan_sdk.tar.xz
+          mkdir -p vulkan_sdk
+          tar -xJf vulkan_sdk.tar.xz -C vulkan_sdk --strip-components=1
+          rm vulkan_sdk.tar.xz
+
+      - name: Set Vulkan SDK environment
+        run: |
+          echo "VULKAN_SDK=${GITHUB_WORKSPACE}/vulkan_sdk/x86_64" >> "$GITHUB_ENV"
+          echo "LD_LIBRARY_PATH=${GITHUB_WORKSPACE}/vulkan_sdk/x86_64/lib:${LD_LIBRARY_PATH}" >> "$GITHUB_ENV"
+
       - name: Build
-        # Renderer-agnostic: --renderer=opengl avoids the Vulkan SDK requirement.
-        run: ./premake5 gmake --renderer=opengl && make CBKAssetConverter config=release -j$(nproc)
+        run: ./premake5 gmake && make CBKAssetConverter config=release -j$(nproc)
 
   # -----------------------------------------------------------------------
   # UnitTests — waits for engine and vendors; skipped engine is treated as success
