@@ -31,6 +31,8 @@ project "CBKEditor"
             'if exist "%{prj.location}\\config.json" copy /Y "%{prj.location}\\config.json" "%{cfg.targetdir}\\config.json"'
         }
 
+        links { "slang", "slang-compiler" }
+        libdirs({ "%{LibDir.vulkan}" })
         defines({ "CBK_RENDERER_VULKAN" })
 
     filter "system:linux"

@@ -44,8 +44,6 @@ project("Cabrankengine")
 
 		externalincludedirs({ "%{IncludeDir.vulkan}" })
 		defines({ "GLFW_INCLUDE_NONE", "CBK_RENDERER_VULKAN" })
-		libdirs({ "%{LibDir.vulkan}" })
-		links({ "vulkan-1.lib" })
 
 	filter("system:linux")
 		systemversion("latest")
