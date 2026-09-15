@@ -24,6 +24,10 @@ namespace cbk::editor {
 		end();
 	}
 
+	void OutlinerPanel::reset() {
+		m_SelectedEntity = ecs::k_InvalidEntity;
+	}
+
 	void OutlinerPanel::setSelectedEntityCallBack(const std::function<void(ecs::Entity)>& callback) {
 		m_Callbacks.push_back(callback);
 	}

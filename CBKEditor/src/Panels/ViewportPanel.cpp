@@ -36,4 +36,6 @@ namespace cbk::editor {
 		end();
 		ImGui::PopStyleVar();
 	}
+
+	void ViewportPanel::reset() {}
 } // namespace cbk::editor

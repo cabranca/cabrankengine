@@ -36,6 +36,8 @@ namespace cbk {
 		// Pops the top overlay from the stack
 		void popOverlay(Layer* layer);
 
+		void queueSceneLoad(scene::Scene scene);
+
 		// Returns a reference to the Window
 		[[nodiscard]] Window& getWindow() {
 			return *m_Window;
@@ -47,12 +49,6 @@ namespace cbk {
 		}
 		[[nodiscard]] const scene::Scene& getScene() const {
 			return m_Scene;
-		}
-
-		// Loads a scene with its register and resets systems
-		void loadScene(scene::Scene scene) {
-			m_Scene = std::move(scene);
-			m_RenderLayer->setScene(&m_Scene);
 		}
 
 		// Returns a Ref to the ECS Registry
@@ -75,6 +71,9 @@ namespace cbk {
 		// Callback for the WindowResize Event
 		bool onWindowResize(WindowResizeEvent& e);
 
+		// Loads a scene with its register and resets systems
+		void loadScene();
+
 		// Be careful when changing the order of declaration (or destruction).
 		// Members are destroyed in reverse declaration order. m_Window and m_Scene
 		// must be declared BEFORE m_LayerStack so they outlive it: when the stack is
@@ -85,6 +84,7 @@ namespace cbk {
 		// (and with it the device) is shut down there.
 		Scope<Window> m_Window;                // Ptr to the app window
 		scene::Scene m_Scene;                  // Scene with the game world and registry
+		Scope<scene::Scene> m_SceneToLoad = nullptr;
 		ImGuiLayer* m_ImGuiLayer;              // ImGui layer for rendering the UI. The Stack owns this.
 		rendering::RenderLayer* m_RenderLayer; // The Stack owns this.
 		LayerStack m_LayerStack;               // Stack of layers to forward the events to

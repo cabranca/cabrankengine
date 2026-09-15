@@ -13,10 +13,12 @@ namespace cbk::editor {
 
 		void onImGuiRender() override;
 
+		void reset() override;
+
 		void setSelectedEntityCallBack(const std::function<void(ecs::Entity)>& callback);
 
 	  private:
-		ecs::Entity m_SelectedEntity = 0;
+		ecs::Entity m_SelectedEntity = ecs::k_InvalidEntity;
 		std::vector<std::function<void(ecs::Entity)>> m_Callbacks;
 	};
 } // namespace cbk::editor

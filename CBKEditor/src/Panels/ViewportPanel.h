@@ -16,6 +16,8 @@ namespace cbk::editor {
 
 		void onImGuiRender() override;
 
+		void reset() override;
+
 		[[nodiscard]] bool isFocused() const {
 			return m_Focused;
 		}

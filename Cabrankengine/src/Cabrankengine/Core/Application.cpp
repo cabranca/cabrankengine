@@ -67,6 +67,8 @@ namespace cbk {
 		// Then the registry: CModel -> Model -> Mesh holds a Ref<GeometryDescriptor> and a
 		// Ref<Material>, i.e. the VMA buffers and images.
 		m_Scene.clear();
+		if (m_SceneToLoad)
+			m_SceneToLoad->clear();
 
 		Renderer::shutdown();
 	}
@@ -83,6 +85,8 @@ namespace cbk {
 
 			if (!m_Minimized) {
 				CBK_PROFILE_SCOPE("LayerStack OnUpdate");
+				if (m_SceneToLoad)
+					loadScene();
 				RenderCommand::beginFrame();
 
 				for (auto& layer: m_LayerStack)
@@ -136,6 +140,17 @@ namespace cbk {
 
 	void Application::popOverlay(Layer* layer) {
 		m_LayerStack.popOverlay(layer);
+	}
+
+	void Application::queueSceneLoad(scene::Scene scene) {
+		m_SceneToLoad = createScope<scene::Scene>(std::move(scene));
+	}
+
+	void Application::loadScene() {
+		RenderCommand::waitIdle();
+		m_Scene = std::move(*m_SceneToLoad);
+		m_SceneToLoad = nullptr;
+		m_RenderLayer->setScene(&m_Scene);
 	}
 
 	bool Application::onWindowClose(WindowCloseEvent& e) {

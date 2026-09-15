@@ -21,6 +21,8 @@ namespace cbk::editor {
 
 		virtual void onImGuiRender() = 0;
 
+		virtual void reset() = 0;
+
 		[[nodiscard]] const std::string& getName() const {
 			return m_Name;
 		}

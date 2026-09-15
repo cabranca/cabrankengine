@@ -24,7 +24,7 @@ using namespace cbk::scene::arch;
 class EditorLayer : public Layer {
   public:
 	EditorLayer() : Layer("Editor") {
-		Application::get().loadScene(SceneSerializer::deserialize("testScene.cbkscn"));
+		Application::get().queueSceneLoad(SceneSerializer::deserialize("scenes/testScene.cbkscn"));
 
 		m_Outliner = createRef<OutlinerPanel>();
 
@@ -75,14 +75,42 @@ class EditorLayer : public Layer {
 
 		if (ImGui::BeginMenuBar()) {
 			if (ImGui::BeginMenu("Scene")) {
-				if (ImGui::MenuItem("New Scene"))
-					Application::get().loadScene(scene::Scene());
-				if (ImGui::MenuItem("Save Scene"))
-					SceneSerializer::serialize(m_Scene, "scenes/testScene.cbkscn");
-				if (ImGui::MenuItem("Save Scene as..."))
-					CBK_APP_WARN("Save as not implemented yet!");
-				if (ImGui::MenuItem("Load Scene"))
-					Application::get().loadScene(SceneSerializer::deserialize("testScene.cbkscn"));
+				if (ImGui::MenuItem("New Scene")) {
+					Application::get().queueSceneLoad(scene::Scene());
+					for (auto& panel: m_Panels)
+						panel->reset();
+				}
+				if (ImGui::MenuItem("Save Scene")) {
+					SceneSerializer::serialize(Application::get().getScene(), "scenes/testScene.cbkscn");
+				}
+				if (ImGui::MenuItem("Save Scene as...")) {
+					char filename[1024];
+					FILE *f = popen("zenity --file-selection --save", "r");
+					if (f) {
+						if (fgets(filename, 1024, f)) {
+							filename[strlen(filename)-1] = '\0'; // Zenity sets a \n after the filename in stdout so I have to trim it
+							SceneSerializer::serialize(Application::get().getScene(), filename);
+						}
+						pclose(f);
+					}
+
+				}
+				if (ImGui::MenuItem("Load Scene")) {
+					// Source - https://stackoverflow.com/a/30431988
+					// Posted by Ziming Song, modified by community. See post 'Timeline' for change history
+					// Retrieved 2026-09-14, License - CC BY-SA 4.0
+					char filename[1024];
+					FILE *f = popen("zenity --file-selection", "r");
+					if (f) {
+						if (fgets(filename, 1024, f)) {
+							filename[strlen(filename)-1] = '\0'; // Zenity sets a \n after the filename in stdout so I have to trim it
+							Application::get().queueSceneLoad(SceneSerializer::deserialize(filename));
+							for (auto& panel: m_Panels)
+								panel->reset();
+						}
+						pclose(f);
+					}
+				}
 				ImGui::EndMenu();
 			}
 			if (ImGui::BeginMenu("Window")) {
@@ -115,7 +143,6 @@ class EditorLayer : public Layer {
 	Ref<OutlinerPanel> m_Outliner;
 	std::vector<Ref<Panel>> m_Panels;
 	bool m_ResetLayout = false;
-	scene::Scene m_Scene;
 };
 
 class Editor : public Application {

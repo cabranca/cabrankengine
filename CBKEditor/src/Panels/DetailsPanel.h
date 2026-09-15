@@ -13,8 +13,10 @@ namespace cbk::editor {
 
 		void onImGuiRender() override;
 
+		void reset() override;
+
 	  private:
 		scene::Scene& m_Scene;
-		ecs::Entity m_SelectedEntity = 0;
+		ecs::Entity m_SelectedEntity = ecs::k_InvalidEntity;
 	};
 } // namespace cbk::editor

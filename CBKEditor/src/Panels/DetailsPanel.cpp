@@ -28,4 +28,8 @@ namespace cbk::editor {
 			createTransformPanel(transform.value());
 		end();
 	}
+
+	void DetailsPanel::reset() {
+		m_SelectedEntity = ecs::k_InvalidEntity;
+	}
 } // namespace cbk::editor
