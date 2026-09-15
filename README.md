@@ -1,10 +1,26 @@
 # Cabrankengine
 
-A 2D/3D game engine written in C++23, built from scratch as a learning project and portfolio piece. It runs on a Vulkan backend (with an OpenGL 4.5 fallback) and covers the full stack: ECS architecture, a batch renderer, Phong and PBR material pipelines, scene serialization, a custom binary asset format, and a WebAssembly compilation target.
+A C++23 game engine and editor built from scratch as a learning project and portfolio piece. The `main` branch is being rebuilt around a modern **Vulkan 1.4** renderer, and **CBKEditor**, an ImGui-based scene editor, is growing alongside it. The engine covers an ECS core, Phong and PBR material pipelines, scene serialization, and a custom binary asset format.
+
+> The OpenGL 4.5 / OpenGL ES backends and the WebAssembly target were removed from `main`. Their last working state, including the 2D batch renderer shown below, lives on the [`legacy`](https://github.com/cabranca/cabrankengine/tree/legacy) branch.
+
+---
+
+## Status
+
+| Area | State on `main` |
+|------|-----------------|
+| Vulkan renderer (Linux, Windows) | Working, being modernized |
+| Metal renderer (macOS) | Broken since the renderer refactor, port pending |
+| CBKEditor | Dockable Outliner / Viewport / Details panels; new, save, save as and load scene. A transform gizmo is next |
+| 2D batch renderer, text rendering | Disabled on `main` after the pipeline refactor |
+| OpenGL, WebAssembly | Removed (see `legacy`) |
 
 ---
 
 ## Showcase
+
+*Captured on the `legacy` branch (OpenGL backend).*
 
 ### Phong and PBR lighting
 
@@ -30,30 +46,32 @@ A 2D/3D game engine written in C++23, built from scratch as a learning project a
 
 ## Features
 
-- **Entity Component System** — Registry-based ECS with typed component arrays, signature-filtered systems, and up to 20 000 concurrent entities
-- **Vulkan renderer** — dynamic-rendering backend (no render passes), per-material pipelines and self-recording materials; default on Linux
-- **OpenGL 4.5 backend** — fallback renderer, default on Windows
-- **2D batch renderer** — sprites, tiling, tint; all quads submitted in a single draw call
-- **3D rendering** — Phong and PBR material pipelines (roughness/metalness, normal maps, HDR)
-- **Lighting** — directional and point lights with attenuation
-- **Camera system** — perspective and orthographic projections, first-person controller
-- **Scene serialization** — save/load scenes from JSON; entities, components, and assets round-trip cleanly
-- **Custom asset pipeline** — `CBKAssetConverter` converts `.obj/.fbx/.gltf` → `.cbkm` and images → `.cbkt`; PBR metal/roughness packing included
-- **WebAssembly target** — the engine compiles to WASM via Emscripten and runs in the browser
-- **ImGui integration** — real-time parameter editing and debug overlays
-- **Collision shapes** — AABB, sphere, OBB, capsule, plane, cylinder (2D/3D)
-- **Unit tests** — ECS, math, and collision solver covered with Catch2
+- **Entity Component System**: registry-based ECS with typed component arrays, signature-filtered systems, and up to 20 000 concurrent entities
+- **Vulkan 1.4 renderer**: dynamic rendering (no render passes), synchronization2, VMA-backed memory, and Slang shaders compiled to SPIR-V at runtime
+- **Pipeline-per-material-kind**: a shared scene UBO and point-light SSBO serve every pipeline, each material instance gets its own descriptor set, and per-draw data goes through push constants
+- **Render-to-texture**: the scene can render offscreen and be shown inside the editor viewport, or go straight to the swapchain for standalone apps
+- **3D materials**: Phong and PBR (metal/roughness workflow)
+- **Lighting**: a directional light plus up to 10 point lights with attenuation
+- **Camera system**: perspective and orthographic projections, plus a first-person controller
+- **CBKEditor**: docked Outliner, Viewport and Details panels, a default layout with reset, and scene new / save / save as / load
+- **Scene serialization**: scenes save and load as JSON (`.cbkscn`)
+- **Custom asset pipeline**: `CBKAssetConverter` converts `.obj/.fbx/.gltf` to `.cbkm` and images to LZ4-compressed `.cbkt`, including PBR metal/roughness packing
+- **Collision shapes**: AABB, sphere, OBB, capsule, plane, cylinder (2D/3D)
+- **Unit tests**: ECS, math, and the collision solver, with Catch2
 
 ---
 
 ## Quick Start
 
 ```cpp
-// MyLayer.cpp
+// MyApp.cpp
 #include <Cabrankengine.h>
 #include <Cabrankengine/Core/EntryPoint.h>
 
 using namespace cbk;
+using namespace cbk::ecs;
+using namespace cbk::math;
+using namespace cbk::scene;
 using namespace cbk::scene::arch;
 
 class MyLayer : public Layer {
@@ -64,16 +82,16 @@ public:
 
         // 3D model with PBR materials
         PBRModelArch gun{ "assets/models/gun/Cerberus_LP.cbkm" };
-        gun.transform().Position = { 2.f, -2.f, 2.f };
-        gun.transform().Scale    = Vector3(0.1f);
+        gun.transform().Position = { 2.f, 0.f, -5.f };
+        gun.transform().Scale    = Vector3(0.05f);
 
         // Directional light
         DirectionalLightArch sun{};
-        sun.light().Direction = { 0.f, -1.f, 0.f };
-        sun.light().Radiance  = { 1.f, 1.f, 1.f };
+        sun.light().Direction = { 1.f, -1.f, -1.f };
+        sun.light().Radiance  = { 2.f, 2.f, 2.f };
 
-        // Or load a saved scene
-        // Application::get().loadScene(SceneSerializer::deserialize("scene.json"));
+        // Or load a saved scene. The swap happens at the start of the next frame.
+        // Application::get().queueSceneLoad(SceneSerializer::deserialize("scenes/myScene.cbkscn"));
     }
 
     void onUpdate(Timestep dt) override {}
@@ -82,7 +100,8 @@ public:
 
 class MyApp : public Application {
 public:
-    MyApp() { pushLayer(createScope<MyLayer>()); }
+    // false renders straight to the window; CBKEditor passes true to render into a texture.
+    MyApp() : Application(false) { pushLayer(createScope<MyLayer>()); }
 };
 
 Application* cbk::createApplication() { return new MyApp(); }
@@ -97,51 +116,73 @@ For a step-by-step walkthrough see [docs/getting-started.md](docs/getting-starte
 ### Requirements
 
 - C++23 compiler (GCC 13+ / Clang 17+ / MSVC 19.38+)
-- [Premake5](https://premake.github.io/)
-- **Vulkan SDK** (Linux default) — or OpenGL 4.5 fallback (see below)
-- Metal — macOS *(WIP: compiles and renders with a hardcoded shader; material system not yet wired up)*
+- [Premake5](https://premake.github.io/) 5.0.0-beta8
+- **Vulkan SDK 1.4** on every platform (it supplies volk, VMA and Slang), and a GPU driver with Vulkan 1.4 support
 - GNU Make (Linux) or Visual Studio 2022 (Windows)
+- `zenity` on Linux, for the editor's file dialogs
+- macOS builds use Metal through metal-cpp, which is *currently broken on `main`*
 
-### Vulkan SDK (Linux)
+### Vulkan SDK
 
-The Linux backend defaults to Vulkan. Install the LunarG SDK with the `--set-dep-ld` flag (required by the latest installer to match the engine's linker config) and export `VULKAN_SDK`:
+On **Linux**, install the LunarG SDK with the `--set-dep-ld` flag (required by the latest installer to match the engine's linker config), then export `VULKAN_SDK`:
 
 ```bash
 ./vulkansdk-linux-x86_64-*.run --set-dep-ld
 export VULKAN_SDK=$HOME/VulkanSDK/<version>/x86_64
 ```
 
-To skip Vulkan and use OpenGL 4.5 instead, pass `--renderer=opengl` to Premake:
-
-```bash
-premake5 gmake --renderer=opengl
-```
+On **Windows**, include the volk and VMA components when installing the SDK. Premake reads `VULKAN_SDK` and fails without it.
 
 ### Steps
 
 ```bash
 # Clone with submodules (vendor dependencies are submodules)
-git clone --recurse-submodules https://github.com/cabranca/game-dev.git
-cd game-dev
+git clone --recurse-submodules https://github.com/cabranca/cabrankengine.git
+cd cabrankengine
 
 # Generate build files
-premake5 gmake      # Linux (Vulkan by default)
-premake5 vs2022      # Windows (OpenGL by default)
+premake5 gmake       # Linux / macOS
+premake5 vs2022      # Windows
 
-# Build (debug by default)
-make
-make config=release
-
-# Run the Sandbox example
-./bin/Debug-linux-x86_64/Sandbox/Sandbox
+# Build everything, or a single target
+make config=release -j$(nproc)
+make config=release CBKEditor
 ```
 
-For the asset converter:
+### Assets
+
+The engine only loads the converted `.cbkm` / `.cbkt` formats, which are gitignored. After a fresh clone, run the converter over the raw sources in `Sandbox/assets/`:
 
 ```bash
-make config=debug CBKAssetConverter
-./bin/Debug-linux-x86_64/CBKAssetConverter/CBKAssetConverter assets/models/my_model.obj
+./bin/Release-linux-x86_64/CBKAssetConverter/CBKAssetConverter <path/to/model.obj> [--max-tex <N>]
 ```
+
+See [docs/asset-pipeline.md](docs/asset-pipeline.md) for details.
+
+### Running
+
+Run each binary **from its own output directory**, because asset, config and scene paths are relative to the working directory:
+
+```bash
+cd bin/Release-linux-x86_64/Sandbox   && ./Sandbox
+cd bin/Release-linux-x86_64/CBKEditor && ./CBKEditor
+```
+
+`CBKEditor/assets/` is gitignored. Populate it (shaders plus converted models) before building the editor, and put a scene at `scenes/testScene.cbkscn` next to the binary, because the editor opens it on startup.
+
+### Tests
+
+```bash
+make config=debug UnitTests
+./bin/Debug-linux-x86_64/UnitTests/UnitTests
+```
+
+### Editor setup (clangd)
+
+If clangd floods `Cabrankengine/` with `'algorithm' file not found` or unresolved-symbol
+errors, it has autodetected the wrong GCC. Pass `--query-driver=/usr/bin/g++*` to the clangd
+binary (`clangd.arguments` in VS Code, `cmd` in nvim-lspconfig). Full explanation in
+[docs/getting-started.md](docs/getting-started.md#editor-setup-clangd).
 
 ---
 
@@ -152,7 +193,8 @@ make config=debug CBKAssetConverter
 | [Getting Started](docs/getting-started.md) | Prerequisites, build steps, first entity walkthrough |
 | [Architecture](docs/architecture.md) | Module layout, ECS design, rendering pipeline, system execution order |
 | [API Reference](docs/api-reference.md) | Registry, components, archetype builders |
-| [Asset Pipeline](docs/asset-pipeline.md) | CBKAssetConverter — converting models and textures |
+| [Asset Pipeline](docs/asset-pipeline.md) | CBKAssetConverter: converting models and textures |
+| [ImGui Widgets](docs/imgui-widgets.md) | Cheat sheet for the widgets in the vendored ImGui docking fork |
 
 ---
 
@@ -161,16 +203,18 @@ make config=debug CBKAssetConverter
 | Library | Purpose |
 |---------|---------|
 | [GLFW](https://www.glfw.org/) | Window and input |
-| [volk](https://github.com/zeux/volk) | Vulkan meta-loader |
-| [VMA](https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator) | Vulkan memory allocation |
-| [glad](https://glad.dav1d.de/) | OpenGL loader (OpenGL backend) |
-| [ImGui](https://github.com/ocornut/imgui) | Immediate-mode debug UI |
-| [stb_image](https://github.com/nothings/stb) | Image loading |
+| [volk](https://github.com/zeux/volk) | Vulkan meta-loader (from the Vulkan SDK) |
+| [VMA](https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator) | Vulkan memory allocation (from the Vulkan SDK) |
+| [Slang](https://github.com/shader-slang/slang) | Runtime shader compilation to SPIR-V (from the Vulkan SDK) |
+| [metal-cpp](https://developer.apple.com/metal/cpp/) | Metal C++ bindings (macOS) |
+| [ImGui](https://github.com/ocornut/imgui) | Editor and debug UI (docking branch) |
 | [spdlog](https://github.com/gabime/spdlog) | Logging |
-| [nlohmann/json](https://github.com/nlohmann/json) | JSON serialization |
+| [nlohmann/json](https://github.com/nlohmann/json) | Scene and config serialization |
 | [FreeType](https://freetype.org/) | Font rendering |
+| [LZ4](https://github.com/lz4/lz4) | Texture compression in `.cbkt` |
 | [Catch2](https://github.com/catchorg/Catch2) | Unit testing |
-| [Assimp](https://assimp.org/) | Model loading (asset converter only) |
+| [Assimp](https://assimp.org/) | Model import (asset converter only) |
+| [stb_image](https://github.com/nothings/stb) | Image import (asset converter only) |
 
 ---
 
@@ -179,17 +223,20 @@ make config=debug CBKAssetConverter
 Done:
 
 - [x] Vulkan renderer backend
-- [x] WebAssembly target (compiles and runs in the browser via Emscripten)
+- [x] Pipeline-per-material-kind refactor (Phong, PBR)
+- [x] Render-to-texture scene output
+- [x] Editor: dockable panels and scene new / save / load
 
-Planned:
+In progress / next:
 
-- [ ] Finish Metal integration (macOS)
-- [ ] WebGPU target
+- [ ] Editor: transform gizmo
+- [ ] Fix and finish Metal integration (macOS)
+
+Later:
+
 - [ ] SIMD math library
 - [ ] Audio backend
 - [ ] Scripting layer
-
-> **Note:** a browser-based editor (Cabrankeditor) was the original motivation for the WebAssembly target. The WASM groundwork is in place, but building the editor itself is **not** part of this project's planned scope — it's left as a possible future direction for anyone who wants to take it on.
 
 ---
 
@@ -201,5 +248,5 @@ Not yet defined. Until then, the project is for personal learning and portfolio 
 
 ## Authors
 
-- **Joaquin Cabrera** (cabranca) — creator and main developer
-- **Francisco Pintar** (Franpintar) — contributor
+- **Joaquin Cabrera** (cabranca): creator and main developer
+- **Francisco Pintar** (Franpintar): contributor

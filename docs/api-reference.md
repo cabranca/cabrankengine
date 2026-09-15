@@ -161,6 +161,8 @@ struct CCameraController {
 
 2D sprite. Loaded texture is cached in `Texture`; set `Path` and it loads on first use.
 
+> Sprite rendering is disabled on `main`: `SpriteRenderSystem` is registered, but `RenderLayer` doesn't run it.
+
 ```cpp
 struct CSprite {
     std::string              Path;
@@ -190,6 +192,8 @@ JSON alongside the path.
 
 Rendered text string.
 
+> Text rendering is disabled on `main`: `TextRenderSystem` is registered, but `RenderLayer` doesn't run it.
+
 ```cpp
 struct CText {
     std::string   Text;
@@ -200,7 +204,7 @@ struct CText {
 
 ### CDirectionalLight
 
-Infinite directional light (sun-like). Used by Phong and PBR render systems.
+Infinite directional light (sun-like). `RenderLayer` uses only the first `CDirectionalLight` entity it finds.
 
 ```cpp
 struct CDirectionalLight {
@@ -211,7 +215,7 @@ struct CDirectionalLight {
 
 ### CPointLight
 
-Point light with distance attenuation. Place the entity at the desired world position via `CTransform`.
+Point light with distance attenuation. Place the entity at the desired world position via `CTransform`. The GPU light buffer holds at most 10 point lights.
 
 ```cpp
 struct CPointLight {
@@ -308,7 +312,7 @@ camera.camera().FovY        = cbk::math::PI / 3.f;
 
 ### SpriteArch
 
-A 2D sprite entity with `CTransform + CSprite`.
+A 2D sprite entity with `CTransform + CSprite`. Its render path is disabled on `main` (see [CSprite](#csprite)).
 
 ```cpp
 SpriteArch bg{ "assets/textures/sky.cbkt" };
@@ -337,7 +341,7 @@ gun.transform().Scale = Vector3(0.05f);
 
 ### TextArch
 
-A text entity with `CTransform + CText`.
+A text entity with `CTransform + CText`. Its render path is disabled on `main` (see [CText](#ctext)).
 
 ```cpp
 TextArch label{};

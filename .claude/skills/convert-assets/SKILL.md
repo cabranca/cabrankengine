@@ -27,7 +27,7 @@ CBKAssetConverter <file> [--max-tex <N>]
 
 - Models: `.obj`, `.fbx`, `.gltf`, `.dae` → `.cbkm`
 - Textures: `.png`, `.jpg`, `.jpeg`, `.tga`, `.bmp`, `.hdr` → `.cbkt`
-- `--max-tex <N>` caps texture dimensions at N (default 0 = no cap). Useful for keeping WASM builds small.
+- `--max-tex <N>` caps texture dimensions at N (default 0 = no cap). Useful for keeping test assets and GPU memory small.
 
 Anything else logs `Unsupported file format` and exits 0 — so check the log, not the exit code.
 
@@ -56,3 +56,5 @@ cd bin/Release-linux-x86_64/Sandbox && ./Sandbox --log-level=debug
 ```
 
 Note that premake copies `assets/` into the output directory as a **post-build** step. Converting assets after a build leaves the copy under `bin/` stale — rebuild (or copy the new files across) before running, or the Sandbox will keep loading the old ones.
+
+CBKEditor is separate: `CBKEditor/assets/` is gitignored as a whole, so the sweep above never touches it, and its post-build copy only runs if the directory exists. If the editor is missing assets, copy the converted files (and `shaders/`) from `Sandbox/assets/` into `CBKEditor/assets/` — ask before overwriting anything already there.

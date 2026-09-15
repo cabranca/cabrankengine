@@ -22,10 +22,10 @@ For convenience, add it to your PATH or alias it.
 ## Usage
 
 ```
-CBKAssetConverter <file>
+CBKAssetConverter <file> [--max-tex <N>]
 ```
 
-The converter detects the format from the file extension and writes the output alongside the input file.
+The converter takes one file per invocation, detects the format from the file extension, and writes the output alongside the input file. `--max-tex <N>` caps texture dimensions at N pixels (the default, 0, means no cap).
 
 ---
 
@@ -37,7 +37,7 @@ The converter detects the format from the file extension and writes the output a
 |-------------|-------|
 | `.obj` | Wavefront OBJ |
 | `.fbx` | Autodesk FBX |
-| `.gltf` / `.glb` | GL Transmission Format |
+| `.gltf` | GL Transmission Format (`.glb` is not accepted) |
 | `.dae` | COLLADA |
 
 Powered by [Assimp](https://assimp.org/). Extracts meshes, vertices, indices, UV coordinates, normals, tangents, texture paths, and material properties (shininess, metalness, roughness, base color).
@@ -159,3 +159,12 @@ PBRModelArch gun{ "assets/models/gun/Cerberus_LP.cbkm" };
 ```
 
 The engine loads the `.cbkm` at startup and resolves the embedded texture paths relative to the model file's directory.
+
+---
+
+## Getting Assets Into a Running App
+
+Converted files are gitignored, and apps load assets relative to their working directory. Premake copies each project's `assets/` folder next to its binary as a **post-build** step. That has two consequences:
+
+- Converting after a build leaves the copy under `bin/` stale. Rebuild, or copy the new files across, before running.
+- `CBKEditor/assets/` is gitignored as a whole and is copied only if it exists. Populate it yourself: at least `shaders/` (with `Phong.slang` and `PBR.slang`), plus the converted models your scenes reference.
